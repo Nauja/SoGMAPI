@@ -12,12 +12,14 @@
 				{
 					"name": "Skeleton",
 					"category": "Samples",
-					"version": "0.1a"
+					"version": "0.1a",
+					"file": "Skeleton.dll"
 				},
 				{
 					"name": "Skin",
 					"category": "Samples",
-					"version": "0.1a"
+					"version": "0.1a",
+					"file": "Skin.dll"
 				}
 			]
 		}

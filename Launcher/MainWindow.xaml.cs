@@ -91,7 +91,9 @@ namespace Launcher
         public class ModRelease
         {
             public string name;
+            public string category;
             public string version;
+            public string file;
         }
 
         public class Release
@@ -99,11 +101,12 @@ namespace Launcher
             public string version;
             public string gameVersion;
             public string gameChecksum;
-            public string apiVersion;
             public string modLoaderVersion;
+            public string modLoaderChecksum;
+            public string apiVersion;
             public string launcherVersion;
 
-            public Dictionary<string, List<ModRelease>> mods;
+            public List<ModRelease> mods;
         }
 
         public class ReleaseList
@@ -111,28 +114,72 @@ namespace Launcher
             public List<Release> releases;
         }
 
+        private string exeChecksum()
+        {
+            return checkMD5(System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe"));
+        }
+
         private void OnChecksum()
         {
-            MessageBox.Show(checkMD5(System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe")));
+            MessageBox.Show(exeChecksum());
         }
 
         private void OnInstall()
         {
+            ReleaseList list = null;
             WebClient webClient = new WebClient();
             using (var stream = webClient.OpenRead("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/list.json"))
             {
                 using (var reader = new StreamReader(stream))
                 {
                     var listContent = reader.ReadToEnd();
-                    var list = JsonConvert.DeserializeObject<ReleaseList>(listContent);
-                    int i = 0;
+                    list = JsonConvert.DeserializeObject<ReleaseList>(listContent);
                 }
             }
+            if (list == null)
+            {
+                MessageBox.Show("Couldn't get list.json", "Install");
+                return;
+            }
+            var checksum = exeChecksum();
+            for (int i = 0; i < list.releases.Count; ++i)
+            {
+                var release = list.releases[i];
+                if (release.gameChecksum == checksum)
+                {
+                    for (int j = i; j >= 0; --j)
+                    {
+                        if (list.releases[j].gameVersion != "")
+                        {
+                            var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe");
+                            var dstBackup = dst + "_Backup";
+                            if (File.Exists(dstBackup))
+                                File.Delete(dstBackup);
+                            File.Copy(dst, dst + "_Backup");
+                            webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + list.releases[j].modLoaderVersion + "/ModLoader/Secrets Of Grindea.exe", dst);
+                            MessageBox.Show(string.Format("Installed ModLoader version {0}", list.releases[j].modLoaderVersion), "Install");
+                            return;
+                        }
+                    }
+                }
+            }
+            MessageBox.Show("Error", "Install");
         }
 
         private void OnUninstall()
         {
-
+            var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe");
+            var src = dst + "_Backup";
+            if (!File.Exists(src))
+            {
+                MessageBox.Show("No exe backup", "Uninstall");
+                return;
+            }
+            if (File.Exists(dst))
+                File.Delete(dst);
+            File.Copy(src, dst);
+            File.Delete(src);
+            MessageBox.Show("Done", "Uninstall");
         }
 
         private void OnBackupSaves()
@@ -171,7 +218,47 @@ namespace Launcher
 
         private void OnInstallMod()
         {
-
+            ReleaseList list = null;
+            WebClient webClient = new WebClient();
+            using (var stream = webClient.OpenRead("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/list.json"))
+            {
+                using (var reader = new StreamReader(stream))
+                {
+                    var listContent = reader.ReadToEnd();
+                    list = JsonConvert.DeserializeObject<ReleaseList>(listContent);
+                }
+            }
+            if (list == null)
+            {
+                MessageBox.Show("Couldn't get list.json", "Install");
+                return;
+            }
+            var checksum = exeChecksum();
+            for (int i = list.releases.Count - 1; i >= 0; --i)
+            {
+                var release = list.releases[i];
+                if (release.modLoaderChecksum == checksum)
+                {
+                    for (int j = i; j >= 0; --j)
+                    {
+                        foreach (var mod in list.releases[j].mods)
+                        {
+                            if (mod.name == "Skin")
+                            {
+                                var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Mods");
+                                var dstBackup = dst + "_Backup";
+                                if (File.Exists(dstBackup))
+                                    File.Delete(dstBackup);
+                                File.Copy(dst, dst + "_Backup");
+                                webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + mod.version + "/Mods/" + mod.category + "/" + mod.file, dst);
+                                MessageBox.Show(string.Format("Installed Mod {0} version {1}", mod.name, mod.version), "Install");
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            MessageBox.Show("Error", "Install");
         }
 
         private void OnUninstallMod()

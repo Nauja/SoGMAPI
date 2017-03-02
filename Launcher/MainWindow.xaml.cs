@@ -245,11 +245,9 @@ namespace Launcher
                         {
                             if (mod.name == "Skin")
                             {
-                                var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Mods");
-                                var dstBackup = dst + "_Backup";
-                                if (File.Exists(dstBackup))
-                                    File.Delete(dstBackup);
-                                File.Copy(dst, dst + "_Backup");
+                                var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Mods/" + mod.file);
+                                if (File.Exists(dst))
+                                    File.Delete(dst);
                                 webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + mod.version + "/Mods/" + mod.category + "/" + mod.file, dst);
                                 MessageBox.Show(string.Format("Installed Mod {0} version {1}", mod.name, mod.version), "Install");
                                 return;

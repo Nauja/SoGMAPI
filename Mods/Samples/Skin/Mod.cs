@@ -18,7 +18,7 @@ namespace SoG.ModLoader.Mods.Samples.Skin
         public override void OnLoad(IModLoader modLoader)
         {
             base.OnLoad(modLoader);
-            modLoader.PlayerPaletteAPI.RegisterPlayerPalette(API.PlayerPalette.Type.Skin, "Bluish", Path.Combine(Directory, "BluishSkin"));
+            //modLoader.PlayerPaletteAPI.RegisterPlayerPalette(API.PlayerPalette.Type.Skin, "Bluish", Path.Combine(Directory, "BluishSkin"));
         }
     }
 }

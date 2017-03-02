@@ -8,16 +8,16 @@
 			"modLoaderVersion": "0.1a",
 			"launcherVersion": "0.1a",
 			"mods": [
-				"samples": [
-					{
-						"name": "Skeleton",
-						"version": "0.1a"
-					},
-					{
-						"name": "Skin",
-						"version": "0.1a"
-					}
-				]
+				{
+					"name": "Skeleton",
+					"category": "Samples",
+					"version": "0.1a"
+				},
+				{
+					"name": "Skin",
+					"category": "Samples",
+					"version": "0.1a"
+				}
 			]
 		}
 	]

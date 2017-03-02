@@ -1,0 +1,24 @@
+{
+	"releases": [
+		{
+			"version": "0.1a",
+			"gameVersion": "0.675a",
+			"gameChecksum": "1d‌​58‌​74‌​30‌​74‌​38‌​89‌​a8‌​23‌​b8‌​fd‌​ff‌​a4‌​ea‌​db‌​d9",
+			"apiVersion": "0.1a",
+			"modLoaderVersion": "0.1a",
+			"launcherVersion": "0.1a",
+			"mods": [
+				"samples": [
+					{
+						"name": "Skeleton",
+						"version": "0.1a"
+					},
+					{
+						"name": "Skin",
+						"version": "0.1a"
+					}
+				]
+			]
+		}
+	]
+}

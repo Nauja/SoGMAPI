@@ -77,11 +77,57 @@ namespace Launcher
             }
         }
 
+        public static string checkMD5(string filename)
+        {
+            using (var md5 = System.Security.Cryptography.MD5.Create())
+            {
+                using (var stream = File.OpenRead(filename))
+                {
+                    return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "‌​").ToLower();
+                }
+            }
+        }
+
+        public class ModRelease
+        {
+            public string name;
+            public string version;
+        }
+
+        public class Release
+        {
+            public string version;
+            public string gameVersion;
+            public string gameChecksum;
+            public string apiVersion;
+            public string modLoaderVersion;
+            public string launcherVersion;
+
+            public Dictionary<string, List<ModRelease>> mods;
+        }
+
+        public class ReleaseList
+        {
+            public List<Release> releases;
+        }
+
+        private void OnChecksum()
+        {
+            MessageBox.Show(checkMD5(System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe")));
+        }
+
         private void OnInstall()
         {
-            /*WebClient webClient = new WebClient();
-            webClient.DownloadFile()
-            JsonConvert*/
+            WebClient webClient = new WebClient();
+            using (var stream = webClient.OpenRead("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/list.json"))
+            {
+                using (var reader = new StreamReader(stream))
+                {
+                    var listContent = reader.ReadToEnd();
+                    var list = JsonConvert.DeserializeObject<ReleaseList>(listContent);
+                    int i = 0;
+                }
+            }
         }
 
         private void OnUninstall()

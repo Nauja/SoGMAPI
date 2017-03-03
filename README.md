@@ -42,8 +42,10 @@ Please note that the modified game executable is not and will never be a cracked
 
 ## Guides
 
-For players:
+### For players
+
 * [Using the launcher]()
 
-For programmers:
+### For modders
+
 * [Creating your first mod]()

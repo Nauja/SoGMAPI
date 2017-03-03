@@ -15,7 +15,7 @@ I will not be responsible if you lose your saves.
 
 ## Latest release
 
-You can find the latest version number of this repository on the badge above.
+The badge above indicates the latest version of this repository.
 
 Here are the latest versions of:
 * [Launcher: 0.1a](https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/0.1a/Launcher/)

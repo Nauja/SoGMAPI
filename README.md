@@ -30,3 +30,9 @@ This repository won't contain:
 * The ModLoader source code.
 
 Please note that the modified game executable is not and will never be a cracked version of the game. To play it you still have to buy the game on steam.
+
+## Repository structure
+
+* SoGModLoader.sln: a visual studio solution containing the projects for the launcher, the modding API, and the sample mods.
+* Releases: all releases.
+* Releases/list.json: json formatted list of all releases, used by the launcher to install the ModLoader and samples.

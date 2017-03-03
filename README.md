@@ -5,7 +5,7 @@
 
 Modding API for [Secret of Grindea](http://store.steampowered.com/app/269770/)
 
-## Alpha
+## Disclaimer
 
 **Everything here is in alpha and should be treated as such.**
 

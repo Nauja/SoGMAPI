@@ -11,6 +11,8 @@ Modding API for Secret of Grindea
 
 This means that you should not use it in a real game and that you should always make a backup of your saves as they may become corrupted or incompatible with the game at any time. Plus, at the moment it may be very unstable and break some features or the game.
 
+I will not be responsible if you lose your saves.
+
 ## How it works
 
 The official game executable **Secrets Of Grindea.exe** is modified to include the ModLoader. The ModLoader is a bridge between the game source code and the modding API. It takes care of loading and initialiazing mods installed in the **Mods** subfolder when the game starts.

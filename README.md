@@ -13,6 +13,15 @@ This means that you should not use it in a real game and that you should always 
 
 I will not be responsible if you lose your saves.
 
+## Latest release
+
+You can find the latest version number of this repository on the badge above.
+
+Here are the latest versions of:
+* [Launcher: 0.1a](https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/0.1a/Launcher/)
+* [ModLoader: 0.1a](https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/0.1a/ModLoader/)
+* [Modding API: 0.1a](https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/0.1a/API/)
+
 ## How it works
 
 The official game executable **Secrets Of Grindea.exe** is modified to include the ModLoader. The ModLoader is a bridge between the game source code and the modding API. It takes care of loading and initialiazing mods installed in the **Mods** subfolder when the game starts.

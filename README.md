@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/badge/release-v0.1a-blue.svg)]()
 [![Status](https://img.shields.io/badge/status-alpha-red.svg)]()
 
-Modding API for Secret of Grindea
+Modding API for [Secret of Grindea](http://store.steampowered.com/app/269770/)
 
 ## Alpha
 
@@ -28,3 +28,5 @@ This repository contains:
 This repository won't contain:
 * The game source code.
 * The ModLoader source code.
+
+Please note that the modified game executable is not and will never be a cracked version of the game. To play it you still have to buy the game on steam.

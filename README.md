@@ -40,10 +40,10 @@ This repository won't contain:
 
 Please note that the modified game executable is not and will never be a cracked version of the game. To play it you still have to buy the game on steam.
 
-## Launcher guide
+## Guides
 
-This is an application making it easy for players to install the ModLoader and manage installed mods.
+For players:
+* [Using the launcher]()
 
-### Installing the ModLoader
-
-WIP
+For programmers:
+* [Creating your first mod]()

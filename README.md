@@ -42,6 +42,8 @@ Please note that the modified game executable is not and will never be a cracked
 
 ## Guides
 
+List of most useful guides available on the wiki.
+
 ### For players
 
 * [Using the launcher]()

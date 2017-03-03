@@ -9,6 +9,8 @@ Modding API for Secret of Grindea
 
 The official game executable **Secrets Of Grindea.exe** is modified to include the ModLoader. The ModLoader is a bridge between the game source code and the modding API. It takes care of loading and initialiazing mods installed in the **Mods** subfolder when the game starts.
 
+For each [official version of the game](http://secretsofgrindea.com/forum/index.php?forums/patch-notes.10/) I will upload here a modified version of the game executable with the injected ModLoader. You can manually replace your game executable by the modified one, but it is recommended to use the launcher as it will automatically install the correct version and keep you up to date.
+
 This repository contains:
 * The modified game executable: containing the ModLoader.
 * A launcher: allowing to install the ModLoader and manage installed mods.

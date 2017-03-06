@@ -29,7 +29,7 @@
         /// <summary>
         /// Id.
         /// </summary>
-        int Id
+        IModId<int> Id
         {
             get;
         }

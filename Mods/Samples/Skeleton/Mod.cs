@@ -9,6 +9,11 @@ namespace SoG.ModLoader.Mods.Samples.Skeleton
             get { return "Nauja"; }
         }
 
+        public override string UniqueName
+        {
+            get { return "SoG.ModLoader.Mods.Samples.Skeleton"; }
+        }
+
         public override string Name
         {
             get { return "Skeleton"; }

@@ -1,9 +1,22 @@
-﻿namespace SoG.ModLoader.API
+﻿using System;
+
+namespace SoG.ModLoader.API
 {
     public abstract class ModBase : IMod
     {
         #region Infos
+        public int Id
+        {
+            get { return UniqueName.GetHashCode(); }
+        }
+
         public virtual string Author
+        {
+            get;
+            protected set;
+        }
+
+        public virtual string UniqueName
         {
             get;
             protected set;

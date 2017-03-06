@@ -10,6 +10,11 @@ namespace SoG.ModLoader.Mods.Samples.Skin
             get { return "Nauja"; }
         }
 
+        public override string UniqueName
+        {
+            get { return "SoG.ModLoader.Mods.Samples.Skin"; }
+        }
+
         public override string Name
         {
             get { return "Skin"; }

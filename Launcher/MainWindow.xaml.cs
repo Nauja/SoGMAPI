@@ -243,7 +243,7 @@ namespace Launcher
                             File.Copy(dst, dst + "_Backup");
                             WebClient webClient = new WebClient();
                             webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + releaseList.releases[j].modLoaderVersion + "/ModLoader/Secrets Of Grindea.exe", dst);
-                            MessageBox.Show(string.Format("Installed ModLoader version {0}", releaseList.releases[j].modLoaderVersion), "Install");
+                            MessageBox.Show(string.Format("Installed ModLoader version m{0}", releaseList.releases[j].modLoaderVersion), "Install");
                             RefreshExeVersion();
                             return;
                         }

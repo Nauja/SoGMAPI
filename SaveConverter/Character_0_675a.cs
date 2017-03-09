@@ -1,10 +1,40 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace SoG.ModLoader.SaveConverter
 {
+    public interface ICharacter : ISave
+    {
+        string Name
+        {
+            get;
+        }
+
+        int Level
+        {
+            get;
+        }
+    }
+
+    public abstract class CharacterBase : SaveBase, ICharacter
+    {
+        public abstract string Name
+        {
+            get;
+        }
+
+        public abstract int Level
+        {
+            get;
+        }
+
+        public CharacterBase(string version) : base(version)
+        { }
+    }
+
     namespace Vanilla
     {
-        public class Character_v0_675a : SaveBase
+        public class Character_v0_675a : CharacterBase
         {
             public class Quickslot
             {
@@ -148,6 +178,16 @@ namespace SoG.ModLoader.SaveConverter
             public List<KeyValuePair<string, float>> arbitraryPersistentCharacterValues = new List<KeyValuePair<string, float>>();
             public List<LocalHousingConfiguration> localHousingConfigurations = new List<LocalHousingConfiguration>();
 
+            public override string Name
+            {
+                get { return networkNickname; }
+            }
+
+            public override int Level
+            {
+                get { return level; }
+            }
+
             public Character_v0_675a() : base(SaveConverter.Save.v0_675a)
             { }
 
@@ -193,12 +233,7 @@ namespace SoG.ModLoader.SaveConverter
                 hideFacegear = other.hideFacegear;
                 lastOneHand = other.lastOneHand;
                 lastBow = other.lastBow;
-                for (var i = 0; i < quickslots.Length; ++i)
-                {
-                    quickslots[i].type = (Quickslot.Type)other.quickslots[i].type;
-                    quickslots[i].itemId = other.quickslots[i].itemId;
-                    quickslots[i].spellId = other.quickslots[i].spellId;
-                }
+                quickslots = other.quickslots;
                 hairColor = ConvertModId(other.hairColor, (byte)1);
                 skinColor = ConvertModId(other.skinColor, (byte)1);
                 ponchoColor = ConvertModId(other.ponchoColor, (byte)1);
@@ -249,7 +284,7 @@ namespace SoG.ModLoader.SaveConverter
 
     namespace ModLoader
     {
-        public class Character_m0_675a : SaveBase
+        public class Character_m0_675a : CharacterBase
         {
             public int hatId;
             public int facegearId;
@@ -314,6 +349,16 @@ namespace SoG.ModLoader.SaveConverter
             public byte currentPhaseShiftShape;
             public List<KeyValuePair<string, float>> arbitraryPersistentCharacterValues = new List<KeyValuePair<string, float>>();
             public List<Vanilla.Character_v0_675a.LocalHousingConfiguration> localHousingConfigurations = new List<Vanilla.Character_v0_675a.LocalHousingConfiguration>();
+            
+            public override string Name
+            {
+                get { return networkNickname; }
+            }
+
+            public override int Level
+            {
+                get { return level; }
+            }
 
             public Character_m0_675a() : base(SaveConverter.Save.m0_675a)
             { }

@@ -7,11 +7,45 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button x:Name="buttonInstall" Content="Install" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
-        <Button x:Name="buttonUninstall" Content="Uninstall" HorizontalAlignment="Left" Margin="10,37,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
-        <Button x:Name="buttonBackup" Content="Backup Saves" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
-        <Button x:Name="buttonRestore" Content="Restore Saves" HorizontalAlignment="Left" Margin="90,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
-        <Button x:Name="buttonInstallMod" Content="Install Mod" HorizontalAlignment="Left" Margin="195,10,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
-        <Button x:Name="buttonUninstallMod" Content="Uninstall Mod" HorizontalAlignment="Left" Margin="195,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+        <TabControl x:Name="tabControl" SelectionChanged="tabControl_SelectionChanged">
+            <TabItem x:Name="tabModLoader" Header="ModLoader">
+                <Grid Background="#FFE5E5E5">
+                    <Button x:Name="buttonInstall" Content="Install" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+                    <Button x:Name="buttonUninstall" Content="Uninstall" HorizontalAlignment="Left" Margin="10,37,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+                    <Button x:Name="buttonBackup" Content="Backup Saves" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonRestore" Content="Restore Saves" HorizontalAlignment="Left" Margin="90,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonInstallMod" Content="Install Mod" HorizontalAlignment="Left" Margin="195,10,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonUninstallMod" Content="Uninstall Mod" HorizontalAlignment="Left" Margin="195,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonLaunch" Content="Launch" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="tabSaves" Header="Saves">
+                <Grid Background="#FFE5E5E5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ListView Grid.Column="0" Grid.Row="0" x:Name="listSaves">
+                        <ListView.View>
+                            <GridView AllowsColumnReorder="true">
+                                <GridViewColumn DisplayMemberBinding="{Binding Path=Version}" Header="Version" Width="100"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Path=Name}" Header="Name" Width="100"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Path=Level}" Header="Level" Width="100"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Path=Path}" Header="Path" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0, 5, 0, 0" Orientation="Horizontal">
+                        <Button x:Name="buttonSavesRefresh" Content="Refresh" HorizontalAlignment="Left" Width="Auto" Click="button_Click" Height="22"/>
+                        <Button x:Name="buttonSavesConvert" Content="Convert" HorizontalAlignment="Left" Width="Auto" Click="button_Click" Height="22" Margin="10,0,0,0"/>
+                        <ComboBox x:Name="listSavesVersions" Width="120" Margin="5,0,0,0"/>
+                        <Button x:Name="buttonSavesOpenFolder" Content="Open Folder" HorizontalAlignment="Left" Width="Auto" Click="button_Click" Height="22" Margin="10,0,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

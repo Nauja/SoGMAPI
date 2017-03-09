@@ -15,6 +15,8 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Net;
 using Newtonsoft.Json;
+using SoG.ModLoader.SaveConverter;
+using Microsoft.Win32;
 
 namespace Launcher
 {
@@ -42,11 +44,55 @@ namespace Launcher
                 OnInstallMod();
             else if (sender == buttonUninstallMod)
                 OnUninstallMod();
+            else if (sender == buttonLaunch)
+                OnLaunch();
+            else if (sender == buttonSavesRefresh)
+                OnSavesRefresh();
+            else if (sender == buttonSavesConvert)
+                OnSavesConvert();
+            else if (sender == buttonSavesOpenFolder)
+                OnSavesOpenFolder();
         }
 
         public static string AppData
         {
             get { return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); }
+        }
+
+        public static string SavesDirectory
+        {
+            get { return System.IO.Path.Combine(AppData, "Secrets of Grindea"); }
+        }
+
+        public static string CharactersSavesDirectory
+        {
+            get { return System.IO.Path.Combine(SavesDirectory, "Characters"); }
+        }
+
+        public static string GameDirectory
+        {
+            get
+            {
+                RegistryKey regKey = Registry.CurrentUser;
+                regKey = regKey.OpenSubKey(@"Software\Valve\Steam");
+
+                if (regKey != null)
+                {
+                    string steamPath = regKey.GetValue("SteamPath").ToString();
+                    return System.IO.Path.Combine(steamPath, "steamapps/common/SecretsOfGrindea/");
+                }
+                return Directory.GetCurrentDirectory();
+            }
+        }
+
+        public static string ExePath
+        {
+            get { return System.IO.Path.Combine(GameDirectory, "Secrets Of Grindea.exe"); }
+        }
+
+        public static string BackupSavesDirectory
+        {
+            get { return System.IO.Path.Combine(GameDirectory, "BackupSaves"); }
         }
 
         public static void Copy(string sourceDirectory, string targetDirectory)
@@ -116,7 +162,7 @@ namespace Launcher
 
         private string exeChecksum()
         {
-            return checkMD5(System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe"));
+            return checkMD5(ExePath);
         }
 
         private void OnChecksum()
@@ -151,7 +197,7 @@ namespace Launcher
                     {
                         if (list.releases[j].gameVersion != "")
                         {
-                            var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe");
+                            var dst = ExePath;
                             var dstBackup = dst + "_Backup";
                             if (File.Exists(dstBackup))
                                 File.Delete(dstBackup);
@@ -168,7 +214,7 @@ namespace Launcher
 
         private void OnUninstall()
         {
-            var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Secrets Of Grindea.exe");
+            var dst = ExePath;
             var src = dst + "_Backup";
             if (!File.Exists(src))
             {
@@ -186,13 +232,13 @@ namespace Launcher
         {
             if (MessageBox.Show("Are you sure you want to replace the old backup ?", "Backup Saves", MessageBoxButton.OKCancel) != MessageBoxResult.OK)
                 return;
-            string src = System.IO.Path.Combine(AppData, "Secrets of Grindea");
+            string src = SavesDirectory;
             if (!Directory.Exists(src))
             {
                 MessageBox.Show(string.Format("{0} doesn't exist", src), "Backup Saves");
                 return;
             }
-            string dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "BackupSaves");
+            string dst = BackupSavesDirectory;
             if (Directory.Exists(dst))
                 Directory.Delete(dst, true);
             Copy(src, dst);
@@ -203,7 +249,7 @@ namespace Launcher
         {
             if (MessageBox.Show("Are you sure you want to replace saves by the existing backup ?", "Restore Saves", MessageBoxButton.OKCancel) != MessageBoxResult.OK)
                 return;
-            string src = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "BackupSaves");
+            string src = BackupSavesDirectory;
             if (!Directory.Exists(src))
             {
                 MessageBox.Show(string.Format("{0} doesn't exist", src), "Restore Saves");
@@ -262,6 +308,144 @@ namespace Launcher
         private void OnUninstallMod()
         {
 
+        }
+        
+        private void OnLaunch()
+        {
+            MessageBox.Show("Sorry but I don't work for now, try to start it manually :(", "Launch");
+            return;
+            string exePath = ExePath;
+            if (!File.Exists(exePath))
+                MessageBox.Show("Couldn't find executable", "Launch");
+            else
+            {
+                System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo();
+                psi.FileName = @"cmd";
+                psi.Arguments = "/C start \"Secrets Of Grindea.exe\"";
+                psi.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                System.Diagnostics.Process.Start(psi);
+            }
+        }
+
+        public class SaveItem
+        {
+            public ICharacter Character
+            {
+                get;
+                set;
+            }
+
+            public string Version
+            {
+                get;
+                set;
+            }
+
+            public string Name
+            {
+                get;
+                set;
+            }
+
+            public int Level
+            {
+                get;
+                set;
+            }
+
+            public string AbsolutePath
+            {
+                get;
+                set;
+            }
+
+            public string Path
+            {
+                get;
+                set;
+            }
+
+            public SaveItem(ICharacter character, string path, string prefix = "")
+            {
+                Character = character;
+                Version = character.Version;
+                Name = character.Name;
+                Level = character.Level;
+                AbsolutePath = path;
+                Path = prefix + System.IO.Path.GetFileName(path);
+            }
+        }
+
+        private void RefreshSavesVersions()
+        {
+            listSavesVersions.Items.Clear();
+            foreach (var version in Save.Versions)
+                listSavesVersions.Items.Add(version);
+            listSavesVersions.SelectedIndex = listSavesVersions.Items.Count - 1;
+        }
+
+        private void OnSavesRefresh()
+        {
+            listSaves.Items.Clear();
+            var path = CharactersSavesDirectory;
+            if (Directory.Exists(path))
+            {
+                foreach (var file in Directory.GetFiles(path))
+                {
+                    if (file.EndsWith(".cha"))
+                    {
+                        var character = CharacterLoader.Load(file);
+                        listSaves.Items.Add(new SaveItem(character, file));
+                    }
+                }
+            }
+            path = System.IO.Path.Combine(BackupSavesDirectory, "Characters");
+            if (Directory.Exists(path))
+            {
+                foreach (var file in Directory.GetFiles(path))
+                {
+                    if (file.EndsWith(".cha"))
+                    {
+                        var character = CharacterLoader.Load(file);
+                        listSaves.Items.Add(new SaveItem(character, file, "Backup "));
+                    }
+                }
+            }
+        }
+
+        private void OnSavesConvert()
+        {
+            var items = listSaves.SelectedItems;
+            var version = (string)listSavesVersions.SelectedItem;
+            if (items == null || items.Count == 0)
+            {
+                MessageBox.Show("Select a save to convert in the list above", "Convert Save");
+            }
+            else if (MessageBox.Show("Are you sure you want to convert selected saves to version " + version + " ?", "Convert Save", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                foreach (var item in items)
+                {
+                    var save = (SaveItem)item;
+                    CharacterLoader.Convert(save.AbsolutePath, save.AbsolutePath, version);
+                }
+                OnSavesRefresh();
+            }
+        }
+
+        private void OnSavesOpenFolder()
+        {
+            var items = listSaves.SelectedItems;
+            if (items != null && items.Count > 0)
+                System.Diagnostics.Process.Start(System.IO.Path.GetDirectoryName(((SaveItem)items[0]).AbsolutePath));
+        }
+
+        private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] == tabSaves)
+            {
+                RefreshSavesVersions();
+                OnSavesRefresh();
+            }
         }
     }
 }

@@ -7,25 +7,25 @@ namespace SoG.ModLoader.SaveConverter
 {
     public interface ICharacterLoader
     {
-        ISave Load(BinaryReader br);
+        ICharacter Load(BinaryReader br);
 
-        void Save(ISave character, BinaryWriter bw);
+        void Save(ICharacter character, BinaryWriter bw);
 
-        ISave Convert(ISave character);
+        ICharacter Convert(ICharacter character);
     }
 
-    public abstract class CharacterLoaderBase<T> : ICharacterLoader where T : ISave, new()
+    public abstract class CharacterLoaderBase<T> : ICharacterLoader where T : ICharacter, new()
     {
-        public abstract ISave Load(BinaryReader br);
+        public abstract ICharacter Load(BinaryReader br);
 
-        public void Save(ISave character, BinaryWriter bw)
+        public void Save(ICharacter character, BinaryWriter bw)
         {
             Save((T)character, bw);
         }
 
         protected abstract void Save(T character, BinaryWriter bw);
 
-        public virtual ISave Convert(ISave character)
+        public virtual ICharacter Convert(ICharacter character)
         {
             var res = new T();
             if (res.ConvertFrom(character))
@@ -38,17 +38,17 @@ namespace SoG.ModLoader.SaveConverter
 
     public class NullCharacterLoader : ICharacterLoader
     {
-        public ISave Convert(ISave character)
+        public ICharacter Convert(ICharacter character)
         {
             throw new NotImplementedException();
         }
 
-        public ISave Load(BinaryReader br)
+        public ICharacter Load(BinaryReader br)
         {
             throw new NotImplementedException();
         }
 
-        public void Save(ISave character, BinaryWriter bw)
+        public void Save(ICharacter character, BinaryWriter bw)
         {
             throw new NotImplementedException();
         }
@@ -56,7 +56,7 @@ namespace SoG.ModLoader.SaveConverter
 
     public static class CharacterLoader
     {
-        public static ISave Load(string filename)
+        public static ICharacter Load(string filename)
         {
             using (var stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
             {
@@ -85,7 +85,7 @@ namespace SoG.ModLoader.SaveConverter
             }
         }
 
-        public static void Save(string filename, ISave character)
+        public static void Save(string filename, ICharacter character)
         {
             using (var stream = new FileStream(filename, FileMode.OpenOrCreate, FileAccess.Write))
             {
@@ -99,7 +99,7 @@ namespace SoG.ModLoader.SaveConverter
 
         public static void Convert(string src, string dst, string version)
         {
-            ISave save = Load(src);
+            ICharacter save = Load(src);
             if (save.Version != version)
             {
                 ICharacterLoader loader = GetForVersion(version);
@@ -133,7 +133,7 @@ namespace SoG.ModLoader.SaveConverter
     {
         public class CharacterLoader_v0_675a : CharacterLoaderBase<Vanilla.Character_v0_675a>
         {
-            public override ISave Load(BinaryReader br)
+            public override ICharacter Load(BinaryReader br)
             {
                 var c = new Character_v0_675a();
                 br.ReadInt32();
@@ -469,7 +469,7 @@ namespace SoG.ModLoader.SaveConverter
                 return new ModId<byte>(br.ReadInt32(), br.ReadByte());
             }
 
-            public override ISave Load(BinaryReader br)
+            public override ICharacter Load(BinaryReader br)
             {
                 var c = new ModLoader.Character_m0_675a();
                 br.ReadInt32();

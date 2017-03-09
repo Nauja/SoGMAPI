@@ -340,19 +340,11 @@ namespace Launcher
         
         private void OnLaunch()
         {
-            MessageBox.Show("Sorry but I don't work for now, try to start it manually :(", "Launch");
-            return;
             string exePath = ExePath;
             if (!File.Exists(exePath))
                 MessageBox.Show("Couldn't find executable", "Launch");
             else
-            {
-                System.Diagnostics.ProcessStartInfo psi = new System.Diagnostics.ProcessStartInfo();
-                psi.FileName = @"cmd";
-                psi.Arguments = "/C start \"Secrets Of Grindea.exe\"";
-                psi.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-                System.Diagnostics.Process.Start(psi);
-            }
+                System.Diagnostics.Process.Start(exePath);
         }
 
         public class SaveItem

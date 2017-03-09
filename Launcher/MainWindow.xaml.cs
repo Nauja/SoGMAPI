@@ -25,9 +25,27 @@ namespace Launcher
     /// </summary>
     public partial class MainWindow : Window
     {
+        private ReleaseList releaseList;
+
         public MainWindow()
         {
             InitializeComponent();
+            // Download list.json from github.
+            WebClient webClient = new WebClient();
+            using (var stream = webClient.OpenRead("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/list.json"))
+            {
+                using (var reader = new StreamReader(stream))
+                {
+                    var listContent = reader.ReadToEnd();
+                    releaseList = JsonConvert.DeserializeObject<ReleaseList>(listContent);
+                }
+            }
+            if (releaseList == null)
+            {
+                MessageBox.Show("Couldn't get list.json", "Launcher");
+            }
+            // Refresh displayed exe version.
+            RefreshExeVersion();                            
         }
 
         private void button_Click(object sender, RoutedEventArgs e)
@@ -158,6 +176,34 @@ namespace Launcher
         public class ReleaseList
         {
             public List<Release> releases;
+
+            public string GetExeVersion(string checksum)
+            {
+                var version = GetGameVersion(checksum);
+                if (version != null)
+                    return version;
+                return GetModLoaderVersion(checksum);
+            }
+
+            public string GetGameVersion(string checksum)
+            {
+                foreach (var release in releases)
+                {
+                    if (release.gameChecksum == checksum)
+                        return "v" + release.gameVersion;
+                }
+                return null;
+            }
+
+            public string GetModLoaderVersion(string checksum)
+            {
+                foreach (var release in releases)
+                {
+                    if (release.modLoaderChecksum == checksum)
+                        return "m" + release.modLoaderVersion;
+                }
+                return null;
+            }
         }
 
         private string exeChecksum()
@@ -170,40 +216,33 @@ namespace Launcher
             MessageBox.Show(exeChecksum());
         }
 
+        private void RefreshExeVersion()
+        {
+            var version = releaseList?.GetExeVersion(exeChecksum());
+            labelExeVersion.Content = "Secrets of Grindea.exe version: " + (version == null ? "unknown" : version);
+        }
+
         private void OnInstall()
         {
-            ReleaseList list = null;
-            WebClient webClient = new WebClient();
-            using (var stream = webClient.OpenRead("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/list.json"))
-            {
-                using (var reader = new StreamReader(stream))
-                {
-                    var listContent = reader.ReadToEnd();
-                    list = JsonConvert.DeserializeObject<ReleaseList>(listContent);
-                }
-            }
-            if (list == null)
-            {
-                MessageBox.Show("Couldn't get list.json", "Install");
-                return;
-            }
             var checksum = exeChecksum();
-            for (int i = 0; i < list.releases.Count; ++i)
+            for (int i = 0; i < releaseList.releases.Count; ++i)
             {
-                var release = list.releases[i];
+                var release = releaseList.releases[i];
                 if (release.gameChecksum == checksum)
                 {
                     for (int j = i; j >= 0; --j)
                     {
-                        if (list.releases[j].gameVersion != "")
+                        if (releaseList.releases[j].gameVersion != "")
                         {
                             var dst = ExePath;
                             var dstBackup = dst + "_Backup";
                             if (File.Exists(dstBackup))
                                 File.Delete(dstBackup);
                             File.Copy(dst, dst + "_Backup");
-                            webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + list.releases[j].modLoaderVersion + "/ModLoader/Secrets Of Grindea.exe", dst);
-                            MessageBox.Show(string.Format("Installed ModLoader version {0}", list.releases[j].modLoaderVersion), "Install");
+                            WebClient webClient = new WebClient();
+                            webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + releaseList.releases[j].modLoaderVersion + "/ModLoader/Secrets Of Grindea.exe", dst);
+                            MessageBox.Show(string.Format("Installed ModLoader version {0}", releaseList.releases[j].modLoaderVersion), "Install");
+                            RefreshExeVersion();
                             return;
                         }
                     }
@@ -264,36 +303,22 @@ namespace Launcher
 
         private void OnInstallMod()
         {
-            ReleaseList list = null;
-            WebClient webClient = new WebClient();
-            using (var stream = webClient.OpenRead("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/list.json"))
-            {
-                using (var reader = new StreamReader(stream))
-                {
-                    var listContent = reader.ReadToEnd();
-                    list = JsonConvert.DeserializeObject<ReleaseList>(listContent);
-                }
-            }
-            if (list == null)
-            {
-                MessageBox.Show("Couldn't get list.json", "Install");
-                return;
-            }
             var checksum = exeChecksum();
-            for (int i = list.releases.Count - 1; i >= 0; --i)
+            for (int i = releaseList.releases.Count - 1; i >= 0; --i)
             {
-                var release = list.releases[i];
+                var release = releaseList.releases[i];
                 if (release.modLoaderChecksum == checksum)
                 {
                     for (int j = i; j >= 0; --j)
                     {
-                        foreach (var mod in list.releases[j].mods)
+                        foreach (var mod in releaseList.releases[j].mods)
                         {
                             if (mod.name == "Skin")
                             {
                                 var dst = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "Mods/" + mod.file);
                                 if (File.Exists(dst))
                                     File.Delete(dst);
+                                WebClient webClient = new WebClient();
                                 webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + mod.version + "/Mods/" + mod.category + "/" + mod.file, dst);
                                 MessageBox.Show(string.Format("Installed Mod {0} version {1}", mod.name, mod.version), "Install");
                                 return;

@@ -4,21 +4,21 @@
 			"version": "0.1a",
 			"gameVersion": "0.675a",
 			"gameChecksum": "59‌​8b‌​20‌​8b‌​91‌​2e‌​7b‌​a7‌​ad‌​e3‌​6f‌​c1‌​9c‌​02‌​a7‌​09",
-			"modLoaderVersion": "0.1a",
+			"modLoaderVersion": "0.675a",
 			"modLoaderChecksum": "fa‌​e7‌​f6‌​23‌​f0‌​9a‌​66‌​fb‌​b0‌​f0‌​f4‌​42‌​9e‌​a7‌​a8‌​89",
-			"apiVersion": "0.1a",
+			"apiVersion": "0.675a",
 			"launcherVersion": "0.1a",
 			"mods": [
 				{
 					"name": "Skeleton",
 					"category": "Samples",
-					"version": "0.1a",
+					"version": "0.675a",
 					"file": "Skeleton.dll"
 				},
 				{
 					"name": "Skin",
 					"category": "Samples",
-					"version": "0.1a",
+					"version": "0.675a",
 					"file": "Skin.dll"
 				}
 			]

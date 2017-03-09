@@ -10,12 +10,13 @@
         <TabControl x:Name="tabControl" SelectionChanged="tabControl_SelectionChanged">
             <TabItem x:Name="tabModLoader" Header="ModLoader">
                 <Grid Background="#FFE5E5E5">
-                    <Button x:Name="buttonInstall" Content="Install" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
-                    <Button x:Name="buttonUninstall" Content="Uninstall" HorizontalAlignment="Left" Margin="10,37,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
-                    <Button x:Name="buttonBackup" Content="Backup Saves" HorizontalAlignment="Left" Margin="90,10,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
-                    <Button x:Name="buttonRestore" Content="Restore Saves" HorizontalAlignment="Left" Margin="90,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
-                    <Button x:Name="buttonInstallMod" Content="Install Mod" HorizontalAlignment="Left" Margin="195,10,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
-                    <Button x:Name="buttonUninstallMod" Content="Uninstall Mod" HorizontalAlignment="Left" Margin="195,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Label x:Name="labelExeVersion" Content="ExeVersion" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,6,0,0" Width="Auto"/>
+                    <Button x:Name="buttonInstall" Content="Install" HorizontalAlignment="Left" Margin="10,37,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+                    <Button x:Name="buttonUninstall" Content="Uninstall" HorizontalAlignment="Left" Margin="10,64,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
+                    <Button x:Name="buttonBackup" Content="Backup Saves" HorizontalAlignment="Left" Margin="90,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonRestore" Content="Restore Saves" HorizontalAlignment="Left" Margin="90,64,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonInstallMod" Content="Install Mod" HorizontalAlignment="Left" Margin="195,37,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
+                    <Button x:Name="buttonUninstallMod" Content="Uninstall Mod" HorizontalAlignment="Left" Margin="195,64,0,0" VerticalAlignment="Top" Width="100" Click="button_Click"/>
                     <Button x:Name="buttonLaunch" Content="Launch" HorizontalAlignment="Left" Margin="10,256,0,0" VerticalAlignment="Top" Width="75" Click="button_Click"/>
                 </Grid>
             </TabItem>

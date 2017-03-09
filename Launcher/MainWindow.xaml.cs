@@ -143,6 +143,8 @@ namespace Launcher
 
         public static string checkMD5(string filename)
         {
+            if (!File.Exists(filename))
+                return null;
             using (var md5 = System.Security.Cryptography.MD5.Create())
             {
                 using (var stream = File.OpenRead(filename))

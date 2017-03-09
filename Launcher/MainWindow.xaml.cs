@@ -219,7 +219,7 @@ namespace Launcher
         private void RefreshExeVersion()
         {
             var version = releaseList?.GetExeVersion(exeChecksum());
-            labelExeVersion.Content = "Secrets of Grindea.exe version: " + (version == null ? "unknown" : version);
+            labelExeVersion.Content = "Secrets of Grindea.exe version: " + (version == null ? "unknown" : version + (version[0] == 'v' ? " (Vanilla)": " (ModLoader)"));
         }
 
         private void OnInstall()
@@ -265,6 +265,7 @@ namespace Launcher
             File.Copy(src, dst);
             File.Delete(src);
             MessageBox.Show("Done", "Uninstall");
+            RefreshExeVersion();
         }
 
         private void OnBackupSaves()

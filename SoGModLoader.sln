@@ -15,9 +15,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skeleton", "Mods\Samples\Sk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skin", "Mods\Samples\Skin\Skin.csproj", "{6709F746-3BEC-48A7-A45A-7E3C7B0B6C15}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Secrets Of Grindea", "..\SecretsOfGrindeaWorkspace\Secrets Of Grindea\Secrets Of Grindea.csproj", "{72F536FA-52AF-44EC-BFEC-9186F6EC0323}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveConverter", "SaveConverter\SaveConverter.csproj", "{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Secrets Of Grindea v0.675a", "..\SoGModLoaderPrivate\Secrets Of Grindea v0.675a.csproj", "{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,18 +77,6 @@ Global
 		{6709F746-3BEC-48A7-A45A-7E3C7B0B6C15}.Release|x64.Build.0 = Release|Any CPU
 		{6709F746-3BEC-48A7-A45A-7E3C7B0B6C15}.Release|x86.ActiveCfg = Release|Any CPU
 		{6709F746-3BEC-48A7-A45A-7E3C7B0B6C15}.Release|x86.Build.0 = Release|Any CPU
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Debug|x64.ActiveCfg = Debug|x64
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Debug|x64.Build.0 = Debug|x64
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Debug|x86.ActiveCfg = Debug|x86
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Debug|x86.Build.0 = Debug|x86
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Release|Any CPU.Build.0 = Release|Any CPU
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Release|x64.ActiveCfg = Release|x64
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Release|x64.Build.0 = Release|x64
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Release|x86.ActiveCfg = Release|x86
-		{72F536FA-52AF-44EC-BFEC-9186F6EC0323}.Release|x86.Build.0 = Release|x86
 		{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -101,6 +89,18 @@ Global
 		{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}.Release|x64.Build.0 = Release|Any CPU
 		{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}.Release|x86.ActiveCfg = Release|Any CPU
 		{4A2C0DF4-BF93-4064-9ACD-10E9CF720C4E}.Release|x86.Build.0 = Release|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Debug|x64.Build.0 = Debug|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Debug|x86.Build.0 = Debug|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Release|x64.ActiveCfg = Release|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Release|x64.Build.0 = Release|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Release|x86.ActiveCfg = Release|Any CPU
+		{C117E1C7-6EAD-4052-BF88-B0EB0C65E4DE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

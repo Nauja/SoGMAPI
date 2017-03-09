@@ -23,6 +23,10 @@ namespace SoG.ModLoader.SaveConverter
         {
             get;
         }
+
+        bool ConvertFrom(ISave other);
+
+        bool ConvertTo(ISave other);
     }
 
     public abstract class SaveBase : ISave
@@ -47,16 +51,15 @@ namespace SoG.ModLoader.SaveConverter
         {
             Version = version;
         }
+
+        public abstract bool ConvertFrom(ISave other);
+
+        public abstract bool ConvertTo(ISave other);
     }
 
     public static class Save
     {
         public static string v0_675a = "v0.675a";
         public static string m0_675a = "m0.675a";
-
-        public static T Load<T>(string path)
-        {
-
-        }
     }
 }

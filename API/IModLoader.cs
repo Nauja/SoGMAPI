@@ -21,6 +21,13 @@
         IMod GetMod<T>() where T : IMod;
 
         /// <summary>
+        /// Get the instance of a mod.
+        /// </summary>
+        /// <param name="id">Mod id</param>
+        /// <returns>Instance of the mod</returns>
+        IMod GetMod(int id);
+
+        /// <summary>
         /// Get the absolute path to a mod directory.
         /// </summary>
         /// <typeparam name="T">Mod type</typeparam>

@@ -1,5 +1,6 @@
 ﻿using SoG.ModLoader.API;
 using System.IO;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace SoG.ModLoader.Mods.Samples.Skin
 {
@@ -23,7 +24,8 @@ namespace SoG.ModLoader.Mods.Samples.Skin
         public override void OnLoad(IModLoader modLoader)
         {
             base.OnLoad(modLoader);
-            //modLoader.PlayerPaletteAPI.RegisterPlayerPalette(API.PlayerPalette.Type.Skin, "Bluish", Path.Combine(Directory, "BluishSkin"));
+            for (int i = 1; i <= 6; ++i)
+                modLoader.PlayerPaletteAPI.RegisterPlayerPalette(new PlayerPalette(null, (byte)(i - 1), PlayerPalette.Type.Skin, "Bluish", Path.Combine(Directory, "Skins/0" + i)));
         }
     }
 }

@@ -45,6 +45,7 @@ namespace Launcher
                 MessageBox.Show("Couldn't get list.json", "Launcher");
             }
             // Refresh displayed exe version.
+            RefreshLatestVersion();
             RefreshExeVersion();                            
         }
 
@@ -58,12 +59,12 @@ namespace Launcher
                 OnBackupSaves();
             else if (sender == buttonRestore)
                 OnRestoreSaves();
-            else if (sender == buttonInstallMod)
-                OnInstallMod();
-            else if (sender == buttonUninstallMod)
-                OnUninstallMod();
             else if (sender == buttonLaunch)
                 OnLaunch();
+            else if (sender == buttonModsInstall)
+                OnModsInstall();
+            else if (sender == buttonModsOpenFolder)
+                OnModsOpenFolder();
             else if (sender == buttonSavesRefresh)
                 OnSavesRefresh();
             else if (sender == buttonSavesConvert)
@@ -101,6 +102,11 @@ namespace Launcher
                 }
                 return Directory.GetCurrentDirectory();
             }
+        }
+
+        public static string ModsDirectory
+        {
+            get { return System.IO.Path.Combine(GameDirectory, "Mods"); }
         }
 
         public static string ExePath
@@ -169,6 +175,7 @@ namespace Launcher
             public string gameChecksum;
             public string modLoaderVersion;
             public string modLoaderChecksum;
+            public string modLoaderFile;
             public string apiVersion;
             public string launcherVersion;
 
@@ -178,6 +185,16 @@ namespace Launcher
         public class ReleaseList
         {
             public List<Release> releases;
+
+            public string GetLatestModLoaderVersion()
+            {
+                for (var i = releases.Count - 1; i >= 0; --i)
+                {
+                    if (releases[i].modLoaderVersion != null)
+                        return "m" + releases[i].modLoaderVersion;
+                }
+                return null;
+            }
 
             public string GetExeVersion(string checksum)
             {
@@ -206,27 +223,66 @@ namespace Launcher
                 }
                 return null;
             }
+
+            public Dictionary<string, List<ModRelease>> GetModsReleases()
+            {
+                var dic = new Dictionary<string, List<ModRelease>>();
+                foreach (var release in releases)
+                {
+                    if(release.mods != null)
+                    {
+                        foreach(var mod in release.mods)
+                        {
+                            if (!dic.ContainsKey(mod.name))
+                                dic[mod.name] = new List<ModRelease>();
+                            dic[mod.name].Add(mod);
+                        }
+                    }
+                }
+                return dic;
+            }
         }
 
-        private string exeChecksum()
+        private string ExeChecksum
         {
-            return checkMD5(ExePath);
+            get { return checkMD5(ExePath); }
+        }
+
+        private string ExeVersion
+        {
+            get { return releaseList?.GetExeVersion(ExeChecksum); }
         }
 
         private void OnChecksum()
         {
-            MessageBox.Show(exeChecksum());
+            MessageBox.Show(ExeChecksum);
+        }
+
+        private void RefreshLatestVersion()
+        {
+            var version = releaseList?.GetLatestModLoaderVersion();
+            labelLatestVersion.Content = "Latest ModLoader version: " + (version == null ? "unknown" : version);
         }
 
         private void RefreshExeVersion()
         {
-            var version = releaseList?.GetExeVersion(exeChecksum());
+            var checksum = ExeChecksum;
+            var version = ExeVersion;
             labelExeVersion.Content = "Secrets of Grindea.exe version: " + (version == null ? "unknown" : version + (version[0] == 'v' ? " (Vanilla)": " (ModLoader)"));
+            labelExeChecksum.Content = "Checksum: " + checksum;
+        }
+
+        private void Unzip(string path)
+        {
+            if (!path.EndsWith(".zip"))
+                return;
+            System.IO.Compression.ZipFile.ExtractToDirectory(path, System.IO.Path.GetDirectoryName(path));
+            File.Delete(path);
         }
 
         private void OnInstall()
         {
-            var checksum = exeChecksum();
+            var checksum = ExeChecksum;
             for (int i = 0; i < releaseList.releases.Count; ++i)
             {
                 var release = releaseList.releases[i];
@@ -236,14 +292,16 @@ namespace Launcher
                     {
                         if (releaseList.releases[j].gameVersion != "")
                         {
+                            var r = releaseList.releases[j];
                             var dst = ExePath;
                             var dstBackup = dst + "_Backup";
                             if (File.Exists(dstBackup))
                                 File.Delete(dstBackup);
                             File.Copy(dst, dst + "_Backup");
                             WebClient webClient = new WebClient();
-                            webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + releaseList.releases[j].modLoaderVersion + "/ModLoader/Secrets Of Grindea.exe", dst);
-                            MessageBox.Show(string.Format("Installed ModLoader version m{0}", releaseList.releases[j].modLoaderVersion), "Install");
+                            webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + r.modLoaderVersion + "/ModLoader/" + r.modLoaderFile, dst);
+                            Unzip(dst);
+                            MessageBox.Show(string.Format("Installed ModLoader version m{0}", r.modLoaderVersion), "Install");
                             RefreshExeVersion();
                             return;
                         }
@@ -306,7 +364,7 @@ namespace Launcher
 
         private void OnInstallMod()
         {
-            var checksum = exeChecksum();
+            var checksum = ExeChecksum;
             for (int i = releaseList.releases.Count - 1; i >= 0; --i)
             {
                 var release = releaseList.releases[i];
@@ -345,6 +403,93 @@ namespace Launcher
                 MessageBox.Show("Couldn't find executable", "Launch");
             else
                 System.Diagnostics.Process.Start(exePath);
+        }
+
+        public class ModReleaseItem
+        {
+            public string Version
+            {
+                get;
+                set;
+            }
+
+            public string Name
+            {
+                get;
+                set;
+            }
+
+            public List<ModRelease> Releases
+            {
+                get;
+                set;
+            }
+
+            public ModReleaseItem(List<ModRelease> releases)
+            {
+                Version = "m" + releases[releases.Count - 1].version;
+                Name = releases[0].name;
+                Releases = releases;
+            }
+        }
+
+        private void RefreshMods()
+        {
+            listMods.Items.Clear();
+            if (releaseList == null)
+                return;
+            foreach (var releases in releaseList.GetModsReleases())
+                listMods.Items.Add(new ModReleaseItem(releases.Value));
+        }
+
+        private void OnModsInstall()
+        {
+            var items = listMods.SelectedItems;
+            if (items == null || items.Count == 0)
+            {
+                MessageBox.Show("Select a mod to install in the list above", "Install");
+            }
+            else
+            {
+                var exeVersion = ExeVersion;
+                foreach (var item in items)
+                {
+                    var mod = (ModReleaseItem)item;
+                    var name = mod.Releases[0].name;
+                    var installed = false;
+                    for (var i = releaseList.releases.Count - 1; i >= 0 && !installed; --i)
+                    {
+                        var release = releaseList.releases[i];
+                        if ("m" + release.modLoaderVersion == exeVersion)
+                        {
+                            if (release.mods == null)
+                                continue;
+                            foreach (var modRelease in release.mods)
+                            {
+                                if (modRelease.name == name)
+                                {
+                                    var dst = System.IO.Path.Combine(ModsDirectory, modRelease.file);
+                                    WebClient webClient = new WebClient();
+                                    webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + modRelease.version + "/Mods/" + modRelease.category + "/" + modRelease.file, dst);
+                                    installed = true;
+                                    MessageBox.Show("Installed mod " + name + " version m" + modRelease.version, "Install");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!installed)
+                    {
+                        MessageBox.Show("Could not install mod " + name + ", no release for your version", "Install");
+                    }
+                }
+                OnSavesRefresh();
+            }
+        }
+
+        private void OnModsOpenFolder()
+        {
+            System.Diagnostics.Process.Start(ModsDirectory);
         }
 
         public class SaveItem
@@ -461,7 +606,11 @@ namespace Launcher
 
         private void tabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (e.AddedItems.Count > 0 && e.AddedItems[0] == tabSaves)
+            if (e.AddedItems.Count > 0 && e.AddedItems[0] == tabMods)
+            {
+                RefreshMods();
+            }
+            else if (e.AddedItems.Count > 0 && e.AddedItems[0] == tabSaves)
             {
                 RefreshSavesVersions();
                 OnSavesRefresh();

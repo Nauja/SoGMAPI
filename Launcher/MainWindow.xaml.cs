@@ -17,6 +17,7 @@ using System.Net;
 using Newtonsoft.Json;
 using SoG.ModLoader.SaveConverter;
 using Microsoft.Win32;
+using System.IO.Compression;
 
 namespace Launcher
 {
@@ -272,11 +273,45 @@ namespace Launcher
             labelExeChecksum.Content = "Checksum: " + checksum;
         }
 
+        public static void ImprovedExtractToDirectory(string sourceArchiveFileName,
+                                              string destinationDirectoryName)
+        {
+            //Opens the zip file up to be read
+            using (var archive = ZipFile.OpenRead(sourceArchiveFileName))
+            {
+                //Loops through each file in the zip file
+                foreach (ZipArchiveEntry file in archive.Entries)
+                {
+                    ImprovedExtractToFile(file, destinationDirectoryName);
+                }
+            }
+        }
+
+        public static void ImprovedExtractToFile(ZipArchiveEntry file,
+                                            string destinationPath)
+        {
+            //Gets the complete path for the destination file, including any
+            //relative paths that were in the zip file
+            string destinationFileName = System.IO.Path.Combine(destinationPath, file.FullName);
+
+            //Gets just the new path, minus the file name so we can create the
+            //directory if it does not exist
+            string destinationFilePath = System.IO.Path.GetDirectoryName(destinationFileName);
+
+            //Creates the directory (if it doesn't exist) for the new path
+            Directory.CreateDirectory(destinationFilePath);
+
+            //Determines what to do with the file based upon the
+            //method of overwriting chosen
+            //Just put the file in and overwrite anything that is found
+            file.ExtractToFile(destinationFileName, true);
+        }
+
         private void Unzip(string path)
         {
             if (!path.EndsWith(".zip"))
                 return;
-            System.IO.Compression.ZipFile.ExtractToDirectory(path, System.IO.Path.GetDirectoryName(path));
+            ImprovedExtractToDirectory(path, System.IO.Path.GetDirectoryName(path));
             File.Delete(path);
         }
 
@@ -293,12 +328,15 @@ namespace Launcher
                         if (releaseList.releases[j].gameVersion != "")
                         {
                             var r = releaseList.releases[j];
-                            var dst = ExePath;
-                            var dstBackup = dst + "_Backup";
-                            if (File.Exists(dstBackup))
-                                File.Delete(dstBackup);
-                            File.Copy(dst, dst + "_Backup");
+                            var exeSrc = ExePath;
+                            var exeDst = exeSrc + "_Backup";
+                            if (File.Exists(exeDst))
+                                File.Delete(exeDst);
+                            File.Copy(exeSrc, exeDst);
                             WebClient webClient = new WebClient();
+                            var dst = System.IO.Path.Combine(GameDirectory, r.modLoaderFile);
+                            if (File.Exists(dst))
+                                File.Delete(dst);
                             webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + r.modLoaderVersion + "/ModLoader/" + r.modLoaderFile, dst);
                             Unzip(dst);
                             MessageBox.Show(string.Format("Installed ModLoader version m{0}", r.modLoaderVersion), "Install");

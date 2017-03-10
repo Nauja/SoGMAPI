@@ -304,6 +304,8 @@ namespace Launcher
             //Determines what to do with the file based upon the
             //method of overwriting chosen
             //Just put the file in and overwrite anything that is found
+            if (Directory.Exists(destinationFileName))
+                return;
             file.ExtractToFile(destinationFileName, true);
         }
 
@@ -506,9 +508,13 @@ namespace Launcher
                             {
                                 if (modRelease.name == name)
                                 {
+                                    if (!Directory.Exists(ModsDirectory))
+                                        Directory.CreateDirectory(ModsDirectory);
                                     var dst = System.IO.Path.Combine(ModsDirectory, modRelease.file);
                                     WebClient webClient = new WebClient();
-                                    webClient.DownloadFile("https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + modRelease.version + "/Mods/" + modRelease.category + "/" + modRelease.file, dst);
+                                    var url = "https://raw.githubusercontent.com/Nauja/SoGModLoader/master/Releases/" + modRelease.version + "/Mods/" + modRelease.category + "/" + modRelease.file;
+                                    webClient.DownloadFile(url, dst);
+                                    Unzip(dst);
                                     installed = true;
                                     MessageBox.Show("Installed mod " + name + " version m" + modRelease.version, "Install");
                                     break;

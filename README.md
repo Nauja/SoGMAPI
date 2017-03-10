@@ -18,9 +18,9 @@ I will not be responsible if you lose your saves.
 The badge above indicates the latest version of this repository.
 
 Here are the latest versions of:
-* [Launcher: 0.1a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.1a/Launcher/)
-* [ModLoader: 0.1a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.1a/ModLoader/)
-* [Modding API: 0.1a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.1a/API/)
+* [Launcher: 0.1a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.675a/Launcher/Launcher.zip)
+* [ModLoader: 0.675a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.675a/ModLoader/ModLoader.zip)
+* [Modding API: 0.675a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.675a/API/)
 
 ## How it works
 

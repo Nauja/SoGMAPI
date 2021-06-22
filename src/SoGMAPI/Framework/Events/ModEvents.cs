@@ -21,7 +21,7 @@ namespace SoGModdingAPI.Framework.Events
         public IMultiplayerEvents Multiplayer { get; }
 
         /// <summary>Events raised when the player data changes.</summary>
-        // @todo public IPlayerEvents Player { get; }
+        public IPlayerEvents Player { get; }
 
         /// <summary>Events raised when something changes in the world.</summary>
         public IWorldEvents World { get; }

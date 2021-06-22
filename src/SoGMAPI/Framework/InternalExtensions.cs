@@ -152,36 +152,5 @@ namespace SoGModdingAPI.Framework
                 @lock.ExitWriteLock();
             }
         }
-
-        /****
-        ** IActiveClickableMenu
-        ****/
-        /// <summary>Get a string representation of the menu chain to the given menu (including the specified menu), in parent to child order.</summary>
-        /// <param name="menu">The menu whose chain to get.</param>
-        public static string GetMenuChainLabel(this IClickableMenu menu)
-        {
-            static IEnumerable<IClickableMenu> GetAncestors(IClickableMenu menu)
-            {
-                for (; menu != null; menu = menu.GetParentMenu())
-                    yield return menu;
-            }
-
-            return string.Join(" > ", GetAncestors(menu).Reverse().Select(p => p.GetType().FullName));
-        }
-
-        /****
-        ** Sprite batch
-        ****/
-        /// <summary>Get whether the sprite batch is between a begin and end pair.</summary>
-        /// <param name="spriteBatch">The sprite batch to check.</param>
-        /// <param name="reflection">The reflection helper with which to access private fields.</param>
-        public static bool IsOpen(this SpriteBatch spriteBatch, Reflector reflection)
-        {
-            string fieldName = Constants.GameFramework == GameFramework.Xna
-                ? "inBeginEndPair"
-                : "_beginCalled";
-
-            return reflection.GetField<bool>(Game1.spriteBatch, fieldName).GetValue();
-        }
     }
 }

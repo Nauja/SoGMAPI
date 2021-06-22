@@ -76,7 +76,7 @@
   <!-- launch SMAPI through Visual Studio -->
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'SoGMAPI'">
     <StartAction>Program</StartAction>
-    <StartProgram>$(GamePath)\SecretsOfGrindeaModdingAPI.exe</StartProgram>
+    <StartProgram>$(GamePath)\SoGModdingAPI.exe</StartProgram>
     <StartWorkingDirectory>$(GamePath)</StartWorkingDirectory>
   </PropertyGroup>
 

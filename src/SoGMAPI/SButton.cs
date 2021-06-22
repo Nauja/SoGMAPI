@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Microsoft.Xna.Framework.Input;
-using StardewValley;
+using SoG;
 
 namespace SoGModdingAPI
 {
@@ -618,12 +618,12 @@ namespace SoGModdingAPI
 
         /// <summary>Get the <see cref="SButton"/> equivalent for the given button.</summary>
         /// <param name="input">The Stardew Valley button to convert.</param>
-        public static SButton ToSButton(this InputButton input)
+        public static SButton ToSButton(this LocalInputHelper.KeyOrMouse input)
         {
             // derived from InputButton constructors
-            if (input.mouseLeft)
+            if (input.mouse == LocalInputHelper.MouseButton.Left_Mouse)
                 return SButton.MouseLeft;
-            if (input.mouseRight)
+            if (input.mouse == LocalInputHelper.MouseButton.Right_Mouse)
                 return SButton.MouseRight;
             return input.key.ToSButton();
         }
@@ -664,19 +664,26 @@ namespace SoGModdingAPI
         /// <param name="input">The button to convert.</param>
         /// <param name="button">The Stardew Valley input button equivalent.</param>
         /// <returns>Returns whether the value was converted successfully.</returns>
-        public static bool TryGetStardewInput(this SButton input, out InputButton button)
+        public static bool TryGetSoGInput(this SButton input, out LocalInputHelper.KeyOrMouse button)
         {
             // keyboard
             if (input.TryGetKeyboard(out Keys key))
             {
-                button = new InputButton(key);
+                button = new LocalInputHelper.KeyOrMouse(key);
                 return true;
             }
 
             // mouse
-            if (input == SButton.MouseLeft || input == SButton.MouseRight)
+            if (input == SButton.MouseLeft)
             {
-                button = new InputButton(mouseLeft: input == SButton.MouseLeft);
+                button = new LocalInputHelper.KeyOrMouse(LocalInputHelper.MouseButton.Left_Mouse);
+                return true;
+            }
+
+            // mouse
+            if (input == SButton.MouseRight)
+            {
+                button = new LocalInputHelper.KeyOrMouse(LocalInputHelper.MouseButton.Right_Mouse);
                 return true;
             }
 
@@ -687,16 +694,16 @@ namespace SoGModdingAPI
 
         /// <summary>Get whether the given button is equivalent to <see cref="Options.useToolButton"/>.</summary>
         /// <param name="input">The button.</param>
-        public static bool IsUseToolButton(this SButton input)
+        /* @todo public static bool IsUseToolButton(this SButton input)
         {
             return input == SButton.ControllerX || Game1.options.useToolButton.Any(p => p.ToSButton() == input);
-        }
+        }*/
 
         /// <summary>Get whether the given button is equivalent to <see cref="Options.actionButton"/>.</summary>
         /// <param name="input">The button.</param>
-        public static bool IsActionButton(this SButton input)
+        /* @todo public static bool IsActionButton(this SButton input)
         {
             return input == SButton.ControllerA || Game1.options.actionButton.Any(p => p.ToSButton() == input);
-        }
+        }*/
     }
 }

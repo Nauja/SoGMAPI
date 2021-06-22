@@ -9,8 +9,7 @@ using SoGModdingAPI.Framework.Content;
 using SoGModdingAPI.Framework.Exceptions;
 using SoGModdingAPI.Framework.Reflection;
 using SoGModdingAPI.Framework.Utilities;
-using StardewValley;
-using xTile;
+using static SoGModdingAPI.Framework.LocalizedContentManager;
 
 namespace SoGModdingAPI.Framework.ContentManagers
 {
@@ -30,7 +29,7 @@ namespace SoGModdingAPI.Framework.ContentManagers
         private IList<ModLinked<IAssetEditor>> Editors => this.Coordinator.Editors;
 
         /// <summary>Maps asset names to their localized form, like <c>LooseSprites\Billboard => LooseSprites\Billboard.fr-FR</c> (localized) or <c>Maps\AnimalShop => Maps\AnimalShop</c> (not localized).</summary>
-        private IDictionary<string, string> LocalizedAssetNames => LocalizedContentManager.localizedAssetNames;
+        private IDictionary<string, string> LocalizedAssetNames => new Dictionary<string, string>();
 
         /// <summary>Whether the next load is the first for any game content manager.</summary>
         private static bool IsFirstLoad = true;
@@ -54,178 +53,9 @@ namespace SoGModdingAPI.Framework.ContentManagers
         /// <param name="onLoadingFirstAsset">A callback to invoke the first time *any* game content manager loads an asset.</param>
         /// <param name="aggressiveMemoryOptimizations">Whether to enable more aggressive memory optimizations.</param>
         public GameContentManager(string name, IServiceProvider serviceProvider, string rootDirectory, CultureInfo currentCulture, ContentCoordinator coordinator, IMonitor monitor, Reflector reflection, Action<BaseContentManager> onDisposing, Action onLoadingFirstAsset, bool aggressiveMemoryOptimizations)
-            : base(name, serviceProvider, rootDirectory, currentCulture, coordinator, monitor, reflection, onDisposing, isNamespaced: false, aggressiveMemoryOptimizations: aggressiveMemoryOptimizations)
+            : base()
         {
             this.OnLoadingFirstAsset = onLoadingFirstAsset;
-        }
-
-        /// <inheritdoc />
-        public override T Load<T>(string assetName, LocalizedContentManager.LanguageCode language, bool useCache)
-        {
-            // raise first-load callback
-            if (GameContentManager.IsFirstLoad)
-            {
-                GameContentManager.IsFirstLoad = false;
-                this.OnLoadingFirstAsset();
-            }
-
-            // normalize asset name
-            assetName = this.AssertAndNormalizeAssetName(assetName);
-            if (this.TryParseExplicitLanguageAssetKey(assetName, out string newAssetName, out LanguageCode newLanguage))
-                return this.Load<T>(newAssetName, newLanguage, useCache);
-
-            // get from cache
-            if (useCache && this.IsLoaded(assetName, language))
-                return this.RawLoad<T>(assetName, language, useCache: true);
-
-            // get managed asset
-            if (this.Coordinator.TryParseManagedAssetKey(assetName, out string contentManagerID, out string relativePath))
-            {
-                T managedAsset = this.Coordinator.LoadManagedAsset<T>(contentManagerID, relativePath);
-                this.TrackAsset(assetName, managedAsset, language, useCache);
-                return managedAsset;
-            }
-
-            // load asset
-            T data;
-            if (this.AssetsBeingLoaded.Contains(assetName))
-            {
-                this.Monitor.Log($"Broke loop while loading asset '{assetName}'.", LogLevel.Warn);
-                this.Monitor.Log($"Bypassing mod loaders for this asset. Stack trace:\n{Environment.StackTrace}");
-                data = this.RawLoad<T>(assetName, language, useCache);
-            }
-            else
-            {
-                data = this.AssetsBeingLoaded.Track(assetName, () =>
-                {
-                    string locale = this.GetLocale(language);
-                    IAssetInfo info = new AssetInfo(locale, assetName, typeof(T), this.AssertAndNormalizeAssetName);
-                    IAssetData asset =
-                        this.ApplyLoader<T>(info)
-                        ?? new AssetDataForObject(info, this.RawLoad<T>(assetName, language, useCache), this.AssertAndNormalizeAssetName);
-                    asset = this.ApplyEditors<T>(info, asset);
-                    return (T)asset.Data;
-                });
-            }
-
-            // update cache & return data
-            this.TrackAsset(assetName, data, language, useCache);
-            return data;
-        }
-
-        /// <inheritdoc />
-        public override void OnLocaleChanged()
-        {
-            base.OnLocaleChanged();
-
-            // find assets for which a translatable version was loaded
-            HashSet<string> removeAssetNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (string key in this.LocalizedAssetNames.Where(p => p.Key != p.Value).Select(p => p.Key))
-                removeAssetNames.Add(this.TryParseExplicitLanguageAssetKey(key, out string assetName, out _) ? assetName : key);
-
-            // invalidate translatable assets
-            string[] invalidated = this
-                .InvalidateCache((key, type) =>
-                    removeAssetNames.Contains(key)
-                    || (this.TryParseExplicitLanguageAssetKey(key, out string assetName, out _) && removeAssetNames.Contains(assetName))
-                )
-                .Select(p => p.Key)
-                .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
-                .ToArray();
-            if (invalidated.Any())
-                this.Monitor.Log($"Invalidated {invalidated.Length} asset names: {string.Join(", ", invalidated)} for locale change.");
-        }
-
-        /// <inheritdoc />
-        public override LocalizedContentManager CreateTemporary()
-        {
-            return this.Coordinator.CreateGameContentManager("(temporary)");
-        }
-
-
-        /*********
-        ** Private methods
-        *********/
-        /// <inheritdoc />
-        protected override bool IsNormalizedKeyLoaded(string normalizedAssetName, LanguageCode language)
-        {
-            string cachedKey = null;
-            bool localized =
-                language != LocalizedContentManager.LanguageCode.en
-                && !this.Coordinator.IsManagedAssetKey(normalizedAssetName)
-                && this.LocalizedAssetNames.TryGetValue(normalizedAssetName, out cachedKey);
-
-            return localized
-                ? this.Cache.ContainsKey(cachedKey)
-                : this.Cache.ContainsKey(normalizedAssetName);
-        }
-
-        /// <inheritdoc />
-        protected override void TrackAsset<T>(string assetName, T value, LanguageCode language, bool useCache)
-        {
-            // handle explicit language in asset name
-            {
-                if (this.TryParseExplicitLanguageAssetKey(assetName, out string newAssetName, out LanguageCode newLanguage))
-                {
-                    this.TrackAsset(newAssetName, value, newLanguage, useCache);
-                    return;
-                }
-            }
-
-            // save to cache
-            // Note: even if the asset was loaded and cached right before this method was called,
-            // we need to fully re-inject it here for two reasons:
-            //   1. So we can look up an asset by its base or localized key (the game/XNA logic
-            //      only caches by the most specific key).
-            //   2. Because a mod asset loader/editor may have changed the asset in a way that
-            //      doesn't change the instance stored in the cache, e.g. using `asset.ReplaceWith`.
-            if (useCache)
-            {
-                string translatedKey = $"{assetName}.{this.GetLocale(language)}";
-                base.TrackAsset(assetName, value, language, useCache: true);
-                if (this.Cache.ContainsKey(translatedKey))
-                    base.TrackAsset(translatedKey, value, language, useCache: true);
-
-                // track whether the injected asset is translatable for is-loaded lookups
-                if (this.Cache.ContainsKey(translatedKey))
-                    this.LocalizedAssetNames[assetName] = translatedKey;
-                else if (this.Cache.ContainsKey(assetName))
-                    this.LocalizedAssetNames[assetName] = assetName;
-                else
-                    this.Monitor.Log($"Asset '{assetName}' could not be found in the cache immediately after injection.", LogLevel.Error);
-            }
-        }
-
-        /// <summary>Load an asset file directly from the underlying content manager.</summary>
-        /// <typeparam name="T">The type of asset to load.</typeparam>
-        /// <param name="assetName">The normalized asset key.</param>
-        /// <param name="language">The language code for which to load content.</param>
-        /// <param name="useCache">Whether to read/write the loaded asset to the asset cache.</param>
-        /// <remarks>Derived from <see cref="LocalizedContentManager.Load{T}(string, LocalizedContentManager.LanguageCode)"/>.</remarks>
-        private T RawLoad<T>(string assetName, LanguageCode language, bool useCache)
-        {
-            // use cached key
-            if (language == this.Language && this.LocalizedAssetNames.TryGetValue(assetName, out string cachedKey))
-                return base.RawLoad<T>(cachedKey, useCache);
-
-            // try translated key
-            if (language != LocalizedContentManager.LanguageCode.en)
-            {
-                string translatedKey = $"{assetName}.{this.GetLocale(language)}";
-                try
-                {
-                    T obj = base.RawLoad<T>(translatedKey, useCache);
-                    this.LocalizedAssetNames[assetName] = translatedKey;
-                    return obj;
-                }
-                catch (ContentLoadException)
-                {
-                    this.LocalizedAssetNames[assetName] = assetName;
-                }
-            }
-
-            // try base asset
-            return base.RawLoad<T>(assetName, useCache);
         }
 
         /// <summary>Parse an asset key that contains an explicit language into its asset name and language, if applicable.</summary>
@@ -317,7 +147,7 @@ namespace SoGModdingAPI.Framework.ContentManagers
                 Type actualType = asset.Data.GetType();
                 Type actualOpenType = actualType.IsGenericType ? actualType.GetGenericTypeDefinition() : null;
 
-                if (typeof(T) != actualType && (actualOpenType == typeof(Dictionary<,>) || actualOpenType == typeof(List<>) || actualType == typeof(Texture2D) || actualType == typeof(Map)))
+                if (typeof(T) != actualType && (actualOpenType == typeof(Dictionary<,>) || actualOpenType == typeof(List<>) || actualType == typeof(Texture2D)))
                 {
                     return (IAssetData)this.GetType()
                         .GetMethod(nameof(this.ApplyEditors), BindingFlags.NonPublic | BindingFlags.Instance)
@@ -386,53 +216,7 @@ namespace SoGModdingAPI.Framework.ContentManagers
                 return false;
             }
 
-            // when replacing a map, the vanilla tilesheets must have the same order and IDs
-            if (data is Map loadedMap)
-            {
-                TilesheetReference[] vanillaTilesheetRefs = this.Coordinator.GetVanillaTilesheetIds(info.AssetName);
-                foreach (TilesheetReference vanillaSheet in vanillaTilesheetRefs)
-                {
-                    // skip if match
-                    if (loadedMap.TileSheets.Count > vanillaSheet.Index && loadedMap.TileSheets[vanillaSheet.Index].Id == vanillaSheet.Id)
-                        continue;
-
-                    // handle mismatch
-                    {
-                        // only show warning if not farm map
-                        // This is temporary: mods shouldn't do this for any vanilla map, but these are the ones we know will crash. Showing a warning for others instead gives modders time to update their mods, while still simplifying troubleshooting.
-                        bool isFarmMap = info.AssetNameEquals("Maps/Farm") || info.AssetNameEquals("Maps/Farm_Combat") || info.AssetNameEquals("Maps/Farm_Fishing") || info.AssetNameEquals("Maps/Farm_Foraging") || info.AssetNameEquals("Maps/Farm_FourCorners") || info.AssetNameEquals("Maps/Farm_Island") || info.AssetNameEquals("Maps/Farm_Mining");
-
-                        int loadedIndex = this.TryFindTilesheet(loadedMap, vanillaSheet.Id);
-                        string reason = loadedIndex != -1
-                            ? $"mod reordered the original tilesheets, which {(isFarmMap ? "would cause a crash" : "often causes crashes")}.\nTechnical details for mod author: Expected order: {string.Join(", ", vanillaTilesheetRefs.Select(p => p.Id))}. See https://stardewvalleywiki.com/Modding:Maps#Tilesheet_order for help."
-                            : $"mod has no tilesheet with ID '{vanillaSheet.Id}'. Map replacements must keep the original tilesheets to avoid errors or crashes.";
-
-                        SCore.DeprecationManager.PlaceholderWarn("3.8.2", DeprecationLevel.PendingRemoval);
-                        if (isFarmMap)
-                        {
-                            mod.LogAsMod($"SMAPI blocked '{info.AssetName}' map load: {reason}", LogLevel.Error);
-                            return false;
-                        }
-                        mod.LogAsMod($"SMAPI found an issue with '{info.AssetName}' map load: {reason}", LogLevel.Warn);
-                    }
-                }
-            }
-
             return true;
-        }
-
-        /// <summary>Find a map tilesheet by ID.</summary>
-        /// <param name="map">The map whose tilesheets to search.</param>
-        /// <param name="id">The tilesheet ID to match.</param>
-        private int TryFindTilesheet(Map map, string id)
-        {
-            for (int i = 0; i < map.TileSheets.Count; i++)
-            {
-                if (map.TileSheets[i].Id == id)
-                    return i;
-            }
-
-            return -1;
         }
     }
 }

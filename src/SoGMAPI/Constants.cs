@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using SoG;
+using SoGModdingAPI.Enums;
 using SoGModdingAPI.Framework;
+using SoGModdingAPI.Framework.ModLoading;
 using SoGModdingAPI.Toolkit;
 using SoGModdingAPI.Toolkit.Framework;
 using SoGModdingAPI.Toolkit.Utilities;
@@ -32,10 +34,10 @@ namespace SoGModdingAPI
         public static string ExecutionPath { get; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         /// <summary>The absolute path to the folder containing SMAPI's internal files.</summary>
-        public static readonly string InternalFilesPath = Path.Combine(EarlyConstants.ExecutionPath, "smapi-internal");
+        public static readonly string InternalFilesPath = Path.Combine(EarlyConstants.ExecutionPath, "sogmapi-internal");
 
         /// <summary>The target game platform.</summary>
-        internal static GamePlatform Platform { get; } = (GamePlatform)Enum.Parse(typeof(GamePlatform), LowLevelEnvironmentUtility.DetectPlatform());
+        internal static GamePlatform Platform { get; } = GamePlatform.Windows; // @todo (GamePlatform)Enum.Parse(typeof(GamePlatform), LowLevelEnvironmentUtility.DetectPlatform());
 
         /// <summary>Whether SMAPI is being compiled for Windows with a 64-bit Linux version of the game. This is highly specialized and shouldn't be used in most cases.</summary>
         internal static bool IsWindows64BitHack { get; } =
@@ -54,7 +56,7 @@ namespace SoGModdingAPI
 #endif
 
         /// <summary>The game's assembly name.</summary>
-        internal static string GameAssemblyName => EarlyConstants.Platform == GamePlatform.Windows && !EarlyConstants.IsWindows64BitHack ? "Stardew Valley" : "StardewValley";
+        internal static string GameAssemblyName => EarlyConstants.Platform == GamePlatform.Windows && !EarlyConstants.IsWindows64BitHack ? "Secrets of Grindea" : "SecretsOfGrindea";
 
         /// <summary>The <see cref="Context.ScreenId"/> value which should appear in the SMAPI log, if any.</summary>
         internal static int? LogScreenId { get; set; }
@@ -91,7 +93,7 @@ namespace SoGModdingAPI
         public static string ExecutionPath { get; } = EarlyConstants.ExecutionPath;
 
         /// <summary>The directory path containing Stardew Valley's app data.</summary>
-        public static string DataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StardewValley");
+        public static string DataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Secrets of Grindea");
 
         /// <summary>The directory path in which error logs should be stored.</summary>
         public static string LogDir { get; } = Path.Combine(Constants.DataPath, "ErrorLogs");
@@ -132,7 +134,7 @@ namespace SoGModdingAPI
         internal static string ApiMetadataPath => Path.Combine(Constants.InternalFilesPath, "metadata.json");
 
         /// <summary>The filename prefix used for all SMAPI logs.</summary>
-        internal static string LogNamePrefix { get; } = "SMAPI-";
+        internal static string LogNamePrefix { get; } = "SoGMAPI-";
 
         /// <summary>The filename for SMAPI's main log, excluding the <see cref="LogExtension"/>.</summary>
         internal static string LogFilename { get; } = $"{Constants.LogNamePrefix}latest";
@@ -141,13 +143,13 @@ namespace SoGModdingAPI
         internal static string LogExtension { get; } = "txt";
 
         /// <summary>The file path for the log containing the previous fatal crash, if any.</summary>
-        internal static string FatalCrashLog => Path.Combine(Constants.LogDir, "SMAPI-crash.txt");
+        internal static string FatalCrashLog => Path.Combine(Constants.LogDir, "SoGMAPI-crash.txt");
 
         /// <summary>The file path which stores a fatal crash message for the next run.</summary>
-        internal static string FatalCrashMarker => Path.Combine(Constants.InternalFilesPath, "StardewModdingAPI.crash.marker");
+        internal static string FatalCrashMarker => Path.Combine(Constants.InternalFilesPath, "SoGModdingAPI.crash.marker");
 
         /// <summary>The file path which stores the detected update version for the next run.</summary>
-        internal static string UpdateMarker => Path.Combine(Constants.InternalFilesPath, "StardewModdingAPI.update.marker");
+        internal static string UpdateMarker => Path.Combine(Constants.InternalFilesPath, "SoGModdingAPI.update.marker");
 
         /// <summary>The default full path to search for mods.</summary>
         internal static string DefaultModsPath { get; } = Path.Combine(Constants.ExecutionPath, "Mods");
@@ -156,13 +158,13 @@ namespace SoGModdingAPI
         internal static string ModsPath { get; set; }
 
         /// <summary>The game's current semantic version.</summary>
-        internal static ISemanticVersion GameVersion { get; } = new GameVersion(Game1.version);
+        internal static ISemanticVersion GameVersion { get; } = new GameVersion("1.6.0"/* @todo Game1.version */);
 
         /// <summary>The target game platform as a SMAPI toolkit constant.</summary>
         internal static Platform Platform { get; } = (Platform)Constants.TargetPlatform;
 
         /// <summary>The language code for non-translated mod assets.</summary>
-        //internal static LocalizedContentManager.LanguageCode DefaultLanguage { get; } = LocalizedContentManager.LanguageCode.en;
+        internal static LocalizedContentManager.LanguageCode DefaultLanguage { get; } = LocalizedContentManager.LanguageCode.en;
 
 
         /*********
@@ -237,30 +239,30 @@ namespace SoGModdingAPI
             var targetAssemblies = new List<Assembly>();
 
             // get assembly renamed in SMAPI 3.0
-            removeAssemblyReferences.Add("StardewModdingAPI.Toolkit.CoreInterfaces");
-            targetAssemblies.Add(typeof(StardewModdingAPI.IManifest).Assembly);
+            removeAssemblyReferences.Add("SoGModdingAPI.Toolkit.CoreInterfaces");
+            targetAssemblies.Add(typeof(SoGModdingAPI.IManifest).Assembly);
 
             // get changes for platform
             if (Constants.Platform != Platform.Windows || EarlyConstants.IsWindows64BitHack)
             {
                 removeAssemblyReferences.AddRange(new[]
                 {
-                    "Netcode",
-                    "Stardew Valley"
+                    // @todo "Netcode",
+                    "Secrets Of Grindea"
                 });
                 targetAssemblies.Add(
-                    typeof(StardewValley.Game1).Assembly // note: includes Netcode types on Linux/macOS
+                    typeof(SoG.Game1).Assembly // note: includes Netcode types on Linux/macOS
                 );
             }
             else
             {
                 removeAssemblyReferences.Add(
-                    "StardewValley"
+                    "SecretsOfGrindea"
                 );
                 targetAssemblies.AddRange(new[]
                 {
-                    typeof(Netcode.NetBool).Assembly,
-                    typeof(StardewValley.Game1).Assembly
+                    // @todo typeof(Netcode.NetBool).Assembly,
+                    typeof(SoG.Game1).Assembly
                 });
             }
 
@@ -336,6 +338,8 @@ namespace SoGModdingAPI
         /// <summary>Get the current save folder, if any.</summary>
         private static DirectoryInfo GetSaveFolder()
         {
+            return null;
+            /* @todo
             // save not available
             if (Context.LoadStage == LoadStage.None)
                 return null;
@@ -356,7 +360,7 @@ namespace SoGModdingAPI
             }
 
             // if save doesn't exist yet, return the default one we expect to be created
-            return folder;
+            return folder;*/
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SoGModdingAPI.Framework.Input;
+using static SoGModdingAPI.Framework.Input.InputState;
 
 namespace SoGModdingAPI.Events
 {

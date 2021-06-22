@@ -14,7 +14,7 @@ namespace SoGModdingAPI.Utilities
         *********/
         /// <summary>Get the current input state for a button.</summary>
         [Obsolete("This property should only be used for unit tests.")]
-        internal Func<SButton, SButtonState> GetButtonState { get; set; } = SGame.GetInputState;
+        internal Func<SButton, SButtonState> GetButtonState { get; set; } = (SButton button) => { return new SButtonState(); };// SGame.GetInputState;
 
 
         /*********

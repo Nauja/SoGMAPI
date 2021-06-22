@@ -6,7 +6,7 @@ namespace SoGModdingAPI.Toolkit.Serialization.Converters
 {
     /// <summary>The base implementation for simplified converters which deserialize <typeparamref name="T"/> without overriding serialization.</summary>
     /// <typeparam name="T">The type to deserialize.</typeparam>
-    internal abstract class SimpleReadOnlyConverter<T> : JsonConverter
+    public abstract class SimpleReadOnlyConverter<T> : JsonConverter
     {
         /*********
         ** Accessors

@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework.Content
 {
@@ -105,7 +104,7 @@ namespace SoGModdingAPI.Framework.Content
                 return false;
 
             Texture2D original = this.Data;
-            Texture2D texture = new Texture2D(Game1.graphics.GraphicsDevice, Math.Max(original.Width, minWidth), Math.Max(original.Height, minHeight));
+            Texture2D texture = null; // @todo new Texture2D(Game1.graphics.GraphicsDevice, Math.Max(original.Width, minWidth), Math.Max(original.Height, minHeight));
             this.ReplaceWith(texture);
             this.PatchImage(original);
             return true;

@@ -13,13 +13,13 @@ namespace SoGModdingAPI.Events
         IInputEvents Input { get; }
 
         /// <summary>Events raised for multiplayer messages and connections.</summary>
-        // @todo IMultiplayerEvents Multiplayer { get; }
+        IMultiplayerEvents Multiplayer { get; }
 
         /// <summary>Events raised when the player data changes.</summary>
-        // @todo IPlayerEvents Player { get; }
+        IPlayerEvents Player { get; }
 
         /// <summary>Events raised when something changes in the world.</summary>
-        // @todo IWorldEvents World { get; }
+        IWorldEvents World { get; }
 
         /// <summary>Events serving specialized edge cases that shouldn't be used by most mods.</summary>
         ISpecializedEvents Specialized { get; }

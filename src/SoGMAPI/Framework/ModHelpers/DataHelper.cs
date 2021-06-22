@@ -5,7 +5,6 @@ using Newtonsoft.Json;
 using SoGModdingAPI.Enums;
 using SoGModdingAPI.Toolkit.Serialization;
 using SoGModdingAPI.Toolkit.Utilities;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {
@@ -142,12 +141,8 @@ namespace SoGModdingAPI.Framework.ModHelpers
         /// <param name="stage">The current load stage.</param>
         private IEnumerable<IDictionary<string, string>> GetDataFields(LoadStage stage)
         {
-            if (stage == LoadStage.None)
-                yield break;
-
-            yield return Game1.CustomData;
-            if (SaveGame.loaded != null)
-                yield return SaveGame.loaded.CustomData;
+            // @todo
+            yield return new Dictionary<string, string>();
         }
 
         /// <summary>Get the absolute path for a global data file.</summary>

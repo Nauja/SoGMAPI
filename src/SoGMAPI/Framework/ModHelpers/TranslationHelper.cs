@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {
@@ -20,7 +19,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
         public string Locale => this.Translator.Locale;
 
         /// <inheritdoc />
-        public LocalizedContentManager.LanguageCode LocaleEnum => this.Translator.LocaleEnum;
+        // @todo public LocalizedContentManager.LanguageCode LocaleEnum => this.Translator.LocaleEnum;
 
 
         /*********

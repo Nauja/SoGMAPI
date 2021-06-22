@@ -8,7 +8,6 @@ using System.Linq;
 using SoGModdingAPI.Framework.Content;
 using SoGModdingAPI.Framework.ContentManagers;
 using SoGModdingAPI.Framework.Exceptions;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {
@@ -38,10 +37,10 @@ namespace SoGModdingAPI.Framework.ModHelpers
         ** Accessors
         *********/
         /// <inheritdoc />
-        public string CurrentLocale => this.GameContentManager.GetLocale();
+        public string CurrentLocale => "en"; // @todo
 
         /// <inheritdoc />
-        public LocalizedContentManager.LanguageCode CurrentLocaleConstant => this.GameContentManager.Language;
+        // @todo public LocalizedContentManager.LanguageCode CurrentLocaleConstant => this.GameContentManager.Language;
 
         /// <summary>The observable implementation of <see cref="AssetEditors"/>.</summary>
         internal ObservableCollection<IAssetEditor> ObservableAssetEditors { get; } = new ObservableCollection<IAssetEditor>();
@@ -86,10 +85,10 @@ namespace SoGModdingAPI.Framework.ModHelpers
                 switch (source)
                 {
                     case ContentSource.GameContent:
-                        return this.GameContentManager.Load<T>(key, this.CurrentLocaleConstant, useCache: false);
+                    // @todo return this.GameContentManager.Load<T>(key, this.CurrentLocaleConstant, useCache: false);
 
                     case ContentSource.ModFolder:
-                        return this.ModContentManager.Load<T>(key, Constants.DefaultLanguage, useCache: false);
+                    // @todo return this.ModContentManager.Load<T>(key, Constants.DefaultLanguage, useCache: false);
 
                     default:
                         throw new SContentLoadException($"{this.ModName} failed loading content asset '{key}' from {source}: unknown content source '{source}'.");
@@ -111,17 +110,8 @@ namespace SoGModdingAPI.Framework.ModHelpers
         /// <inheritdoc />
         public string GetActualAssetKey(string key, ContentSource source = ContentSource.ModFolder)
         {
-            switch (source)
-            {
-                case ContentSource.GameContent:
-                    return this.GameContentManager.AssertAndNormalizeAssetName(key);
-
-                case ContentSource.ModFolder:
-                    return this.ModContentManager.GetInternalAssetKey(key);
-
-                default:
-                    throw new NotSupportedException($"Unknown content source '{source}'.");
-            }
+            // @todo
+            return key;
         }
 
         /// <inheritdoc />

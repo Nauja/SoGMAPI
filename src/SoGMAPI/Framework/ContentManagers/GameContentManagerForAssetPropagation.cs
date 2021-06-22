@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using Microsoft.Xna.Framework.Graphics;
 using SoGModdingAPI.Framework.Reflection;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework.ContentManagers
 {
@@ -24,16 +23,6 @@ namespace SoGModdingAPI.Framework.ContentManagers
         public GameContentManagerForAssetPropagation(string name, IServiceProvider serviceProvider, string rootDirectory, CultureInfo currentCulture, ContentCoordinator coordinator, IMonitor monitor, Reflector reflection, Action<BaseContentManager> onDisposing, Action onLoadingFirstAsset, bool aggressiveMemoryOptimizations)
             : base(name, serviceProvider, rootDirectory, currentCulture, coordinator, monitor, reflection, onDisposing, onLoadingFirstAsset, aggressiveMemoryOptimizations) { }
 
-        /// <inheritdoc />
-        public override T Load<T>(string assetName, LanguageCode language, bool useCache)
-        {
-            T data = base.Load<T>(assetName, language, useCache);
-
-            if (data is Texture2D texture)
-                texture.Tag = this.Tag;
-
-            return data;
-        }
 
         /// <summary>Get whether a texture was loaded by this content manager.</summary>
         /// <param name="texture">The texture to check.</param>

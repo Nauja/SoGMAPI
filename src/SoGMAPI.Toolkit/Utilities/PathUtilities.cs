@@ -137,7 +137,7 @@ namespace SoGModdingAPI.Toolkit.Utilities
 
         /// <summary>Get the paths which exceed the OS length limit.</summary>
         /// <param name="rootPath">The root path to search.</param>
-        internal static IEnumerable<string> GetTooLongPaths(string rootPath)
+        public static IEnumerable<string> GetTooLongPaths(string rootPath)
         {
             if (!Directory.Exists(rootPath))
                 return new string[0];

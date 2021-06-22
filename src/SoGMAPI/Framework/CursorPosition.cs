@@ -1,5 +1,4 @@
 using Microsoft.Xna.Framework;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework
 {
@@ -47,17 +46,17 @@ namespace SoGModdingAPI.Framework
         /// <inheritdoc />
         public Vector2 GetScaledAbsolutePixels()
         {
-            return Game1.uiMode
+            return new Vector2(0); /* @todo Game1.uiMode
                 ? Utility.ModifyCoordinatesForUIScale(this.AbsolutePixels)
-                : this.AbsolutePixels;
+                : this.AbsolutePixels;*/
         }
 
         /// <inheritdoc />
         public Vector2 GetScaledScreenPixels()
         {
-            return Game1.uiMode
+            return new Vector2(0); /* @todo  Game1.uiMode
                 ? Utility.ModifyCoordinatesForUIScale(this.ScreenPixels)
-                : this.ScreenPixels;
+                : this.ScreenPixels;*/
         }
     }
 }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using StardewValley;
-using xTile;
 
 namespace SoGModdingAPI
 {
@@ -24,7 +22,7 @@ namespace SoGModdingAPI
         string CurrentLocale { get; }
 
         /// <summary>The game's current locale as an enum value.</summary>
-        LocalizedContentManager.LanguageCode CurrentLocaleConstant { get; }
+        // @todo LocalizedContentManager.LanguageCode CurrentLocaleConstant { get; }
 
 
         /*********

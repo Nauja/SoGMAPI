@@ -10,11 +10,8 @@ using Microsoft.Xna.Framework.Content;
 using SoGModdingAPI.Framework.Content;
 using SoGModdingAPI.Framework.ContentManagers;
 using SoGModdingAPI.Framework.Reflection;
-using SoGModdingAPI.Metadata;
 using SoGModdingAPI.Toolkit.Serialization;
 using SoGModdingAPI.Toolkit.Utilities;
-using StardewValley;
-using xTile;
 
 namespace SoGModdingAPI.Framework
 {
@@ -25,16 +22,13 @@ namespace SoGModdingAPI.Framework
         ** Fields
         *********/
         /// <summary>An asset key prefix for assets from SMAPI mod folders.</summary>
-        private readonly string ManagedPrefix = "SMAPI";
+        private readonly string ManagedPrefix = "SoGMAPI";
 
         /// <summary>Whether to enable more aggressive memory optimizations.</summary>
         private readonly bool AggressiveMemoryOptimizations;
 
         /// <summary>Encapsulates monitoring and logging.</summary>
         private readonly IMonitor Monitor;
-
-        /// <summary>Provides metadata for core game assets.</summary>
-        private readonly CoreAssetPropagator CoreAssets;
 
         /// <summary>Simplifies access to private code.</summary>
         private readonly Reflector Reflection;
@@ -60,9 +54,6 @@ namespace SoGModdingAPI.Framework
 
         /// <summary>A cache of ordered tilesheet IDs used by vanilla maps.</summary>
         private readonly IDictionary<string, TilesheetReference[]> VanillaTilesheets = new Dictionary<string, TilesheetReference[]>(StringComparer.OrdinalIgnoreCase);
-
-        /// <summary>An unmodified content manager which doesn't intercept assets, used to compare asset data.</summary>
-        private readonly LocalizedContentManager VanillaContentManager;
 
 
         /*********
@@ -131,8 +122,6 @@ namespace SoGModdingAPI.Framework
                 aggressiveMemoryOptimizations: aggressiveMemoryOptimizations
             );
             this.ContentManagers.Add(contentManagerForAssetPropagation);
-            this.VanillaContentManager = new LocalizedContentManager(serviceProvider, rootDirectory);
-            this.CoreAssets = new CoreAssetPropagator(this.MainContentManager, contentManagerForAssetPropagation, this.Monitor, reflection, aggressiveMemoryOptimizations);
         }
 
         /// <summary>Get a new content manager which handles reading files from the game content folder with support for interception.</summary>
@@ -143,9 +132,9 @@ namespace SoGModdingAPI.Framework
             {
                 GameContentManager manager = new GameContentManager(
                     name: name,
-                    serviceProvider: this.MainContentManager.ServiceProvider,
-                    rootDirectory: this.MainContentManager.RootDirectory,
-                    currentCulture: this.MainContentManager.CurrentCulture,
+                    serviceProvider: null,
+                    rootDirectory: null,
+                    currentCulture: null,
                     coordinator: this,
                     monitor: this.Monitor,
                     reflection: this.Reflection,
@@ -167,20 +156,7 @@ namespace SoGModdingAPI.Framework
         {
             return this.ContentManagerLock.InWriteLock(() =>
             {
-                ModContentManager manager = new ModContentManager(
-                    name: name,
-                    gameContentManager: gameContentManager,
-                    serviceProvider: this.MainContentManager.ServiceProvider,
-                    rootDirectory: rootDirectory,
-                    modName: modName,
-                    currentCulture: this.MainContentManager.CurrentCulture,
-                    coordinator: this,
-                    monitor: this.Monitor,
-                    reflection: this.Reflection,
-                    jsonHelper: this.JsonHelper,
-                    onDisposing: this.OnDisposing,
-                    aggressiveMemoryOptimizations: this.AggressiveMemoryOptimizations
-                );
+                ModContentManager manager = new ModContentManager();
                 this.ContentManagers.Add(manager);
                 return manager;
             });
@@ -195,13 +171,7 @@ namespace SoGModdingAPI.Framework
         /// <summary>Perform any cleanup needed when the locale changes.</summary>
         public void OnLocaleChanged()
         {
-            this.ContentManagerLock.InReadLock(() =>
-            {
-                foreach (IContentManager contentManager in this.ContentManagers)
-                    contentManager.OnLocaleChanged();
-
-                this.VanillaContentManager.Unload();
-            });
+            // @todo
         }
 
         /// <summary>Clean up when the player is returning to the title screen.</summary>
@@ -277,15 +247,8 @@ namespace SoGModdingAPI.Framework
         /// <param name="relativePath">The internal SMAPI asset key.</param>
         public T LoadManagedAsset<T>(string contentManagerID, string relativePath)
         {
-            // get content manager
-            IContentManager contentManager = this.ContentManagerLock.InReadLock(() =>
-                this.ContentManagers.FirstOrDefault(p => p.IsNamespaced && p.Name == contentManagerID)
-            );
-            if (contentManager == null)
-                throw new InvalidOperationException($"The '{contentManagerID}' prefix isn't handled by any mod.");
-
-            // get fresh asset
-            return contentManager.Load<T>(relativePath, this.DefaultLanguage, useCache: false);
+            // @todo
+            return default(T);
         }
 
         /// <summary>Purge matched assets from the cache.</summary>
@@ -308,104 +271,8 @@ namespace SoGModdingAPI.Framework
         /// <returns>Returns the invalidated asset names.</returns>
         public IEnumerable<string> InvalidateCache(Func<IContentManager, string, Type, bool> predicate, bool dispose = false)
         {
-            // invalidate cache & track removed assets
-            IDictionary<string, Type> removedAssets = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
-            this.ContentManagerLock.InReadLock(() =>
-            {
-                // cached assets
-                foreach (IContentManager contentManager in this.ContentManagers)
-                {
-                    foreach (var entry in contentManager.InvalidateCache((key, type) => predicate(contentManager, key, type), dispose))
-                    {
-                        if (!removedAssets.ContainsKey(entry.Key))
-                            removedAssets[entry.Key] = entry.Value.GetType();
-                    }
-                }
-
-                // special case: maps may be loaded through a temporary content manager that's removed while the map is still in use.
-                // This notably affects the town and farmhouse maps.
-                if (Game1.locations != null)
-                {
-                    foreach (GameLocation location in Game1.locations)
-                    {
-                        if (location.map == null || string.IsNullOrWhiteSpace(location.mapPath.Value))
-                            continue;
-
-                        // get map path
-                        string mapPath = this.MainContentManager.AssertAndNormalizeAssetName(location.mapPath.Value);
-                        if (!removedAssets.ContainsKey(mapPath) && predicate(this.MainContentManager, mapPath, typeof(Map)))
-                            removedAssets[mapPath] = typeof(Map);
-                    }
-                }
-            });
-
-            // reload core game assets
-            if (removedAssets.Any())
-            {
-                // propagate changes to the game
-                this.CoreAssets.Propagate(
-                    assets: removedAssets.ToDictionary(p => p.Key, p => p.Value),
-                    ignoreWorld: Context.IsWorldFullyUnloaded,
-                    out IDictionary<string, bool> propagated,
-                    out bool updatedNpcWarps
-                );
-
-                // log summary
-                StringBuilder report = new StringBuilder();
-                {
-                    string[] invalidatedKeys = removedAssets.Keys.ToArray();
-                    string[] propagatedKeys = propagated.Where(p => p.Value).Select(p => p.Key).ToArray();
-
-                    string FormatKeyList(IEnumerable<string> keys) => string.Join(", ", keys.OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
-
-                    report.AppendLine($"Invalidated {invalidatedKeys.Length} asset names ({FormatKeyList(invalidatedKeys)}).");
-                    report.AppendLine(propagated.Count > 0
-                        ? $"Propagated {propagatedKeys.Length} core assets ({FormatKeyList(propagatedKeys)})."
-                        : "Propagated 0 core assets."
-                    );
-                    if (updatedNpcWarps)
-                        report.AppendLine("Updated NPC pathfinding cache.");
-                }
-                this.Monitor.Log(report.ToString().TrimEnd());
-            }
-            else
-                this.Monitor.Log("Invalidated 0 cache entries.");
-
-            return removedAssets.Keys;
-        }
-
-        /// <summary>Get all loaded instances of an asset name.</summary>
-        /// <param name="assetName">The asset name.</param>
-        [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This method is provided for Content Patcher.")]
-        public IEnumerable<object> GetLoadedValues(string assetName)
-        {
-            return this.ContentManagerLock.InReadLock(() =>
-            {
-                List<object> values = new List<object>();
-                foreach (IContentManager content in this.ContentManagers.Where(p => !p.IsNamespaced && p.IsLoaded(assetName, p.Language)))
-                {
-                    object value = content.Load<object>(assetName, this.Language, useCache: true);
-                    values.Add(value);
-                }
-                return values;
-            });
-        }
-
-        /// <summary>Get the tilesheet ID order used by the unmodified version of a map asset.</summary>
-        /// <param name="assetName">The asset path relative to the loader root directory, not including the <c>.xnb</c> extension.</param>
-        public TilesheetReference[] GetVanillaTilesheetIds(string assetName)
-        {
-            if (!this.VanillaTilesheets.TryGetValue(assetName, out TilesheetReference[] tilesheets))
-            {
-                tilesheets = this.TryLoadVanillaAsset(assetName, out Map map)
-                    ? map.TileSheets.Select((sheet, index) => new TilesheetReference(index, sheet.Id, sheet.ImageSource)).ToArray()
-                    : null;
-
-                this.VanillaTilesheets[assetName] = tilesheets;
-                this.VanillaContentManager.Unload();
-            }
-
-            return tilesheets ?? new TilesheetReference[0];
+            // @todo
+            return new string[] { };
         }
 
         /// <summary>Dispose held resources.</summary>
@@ -438,24 +305,6 @@ namespace SoGModdingAPI.Framework
             this.ContentManagerLock.InWriteLock(() =>
                 this.ContentManagers.Remove(contentManager)
             );
-        }
-
-        /// <summary>Get a vanilla asset without interception.</summary>
-        /// <typeparam name="T">The type of asset to load.</typeparam>
-        /// <param name="assetName">The asset path relative to the loader root directory, not including the <c>.xnb</c> extension.</param>
-        /// <param name="asset">The loaded asset data.</param>
-        private bool TryLoadVanillaAsset<T>(string assetName, out T asset)
-        {
-            try
-            {
-                asset = this.VanillaContentManager.Load<T>(assetName);
-                return true;
-            }
-            catch
-            {
-                asset = default;
-                return false;
-            }
         }
     }
 }

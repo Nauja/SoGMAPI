@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework
 {
@@ -104,7 +103,7 @@ namespace SoGModdingAPI.Framework
         *********/
         /// <summary>Get the locales which can provide translations for the given locale, in precedence order.</summary>
         /// <param name="locale">The locale for which to find valid locales.</param>
-        private IEnumerable<string> GetRelevantLocales(string locale)
+            private IEnumerable<string> GetRelevantLocales(string locale)
         {
             // given locale
             yield return locale;

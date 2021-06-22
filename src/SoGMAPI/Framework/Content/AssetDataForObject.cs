@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework.Graphics;
-using xTile;
 
 namespace SoGModdingAPI.Framework.Content
 {
@@ -36,12 +35,6 @@ namespace SoGModdingAPI.Framework.Content
         public IAssetDataForImage AsImage()
         {
             return new AssetDataForImage(this.Locale, this.AssetName, this.GetData<Texture2D>(), this.GetNormalizedPath, this.ReplaceWith);
-        }
-
-        /// <inheritdoc />
-        public IAssetDataForMap AsMap()
-        {
-            return new AssetDataForMap(this.Locale, this.AssetName, this.GetData<Map>(), this.GetNormalizedPath, this.ReplaceWith);
         }
 
         /// <inheritdoc />

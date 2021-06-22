@@ -66,8 +66,17 @@ namespace SoGModdingAPI.Framework.Events
         /****
         ** Multiplayer
         ****/
+        /// <summary>Raised after the mod context for a peer is received. This happens before the game approves the connection (<see cref="IMultiplayerEvents.PeerConnected"/>), so the player doesn't yet exist in the game. This is the earliest point where messages can be sent to the peer via SMAPI.</summary>
+        public readonly ManagedEvent<PeerContextReceivedEventArgs> PeerContextReceived;
+
+        /// <summary>Raised after a peer connection is approved by the game.</summary>
+        public readonly ManagedEvent<PeerConnectedEventArgs> PeerConnected;
+
         /// <summary>Raised after a mod message is received over the network.</summary>
         public readonly ManagedEvent<ModMessageReceivedEventArgs> ModMessageReceived;
+
+        /// <summary>Raised after the connection with a peer is severed.</summary>
+        public readonly ManagedEvent<PeerDisconnectedEventArgs> PeerDisconnected;
 
         /****
         ** Specialized

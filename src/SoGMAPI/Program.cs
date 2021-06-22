@@ -24,7 +24,7 @@ namespace SoGModdingAPI
         /// <param name="args">The command-line arguments.</param>
         public static void Main(string[] args)
         {
-            Console.Title = $"SMAPI {EarlyConstants.RawApiVersion}{(EarlyConstants.IsWindows64BitHack ? " 64-bit" : "")} - {Console.Title}";
+            Console.Title = $"SoGMAPI {EarlyConstants.RawApiVersion}{(EarlyConstants.IsWindows64BitHack ? " 64-bit" : "")} - {Console.Title}";
 
             try
             {
@@ -33,13 +33,13 @@ namespace SoGModdingAPI
                 Program.AssertGameVersion();
                 Program.Start(args);
             }
-            catch (BadImageFormatException ex) when (ex.FileName == "StardewValley" || ex.FileName == "Stardew Valley") // don't use EarlyConstants.GameAssemblyName, since we want to check both possible names
+            catch (BadImageFormatException ex) when (ex.FileName == "SecretsOfGrindea" || ex.FileName == "Secrets Of Grindea") // don't use EarlyConstants.GameAssemblyName, since we want to check both possible names
             {
-                Console.WriteLine($"SMAPI failed to initialize because your game's {ex.FileName}.exe seems to be invalid.\nThis may be a pirated version which modified the executable in an incompatible way; if so, you can try a different download or buy a legitimate version.\n\nTechnical details:\n{ex}");
+                Console.WriteLine($"SoGMAPI failed to initialize because your game's {ex.FileName}.exe seems to be invalid.\nThis may be a pirated version which modified the executable in an incompatible way; if so, you can try a different download or buy a legitimate version.\n\nTechnical details:\n{ex}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"SMAPI failed to initialize: {ex}");
+                Console.WriteLine($"SoGMAPI failed to initialize: {ex}");
                 Program.PressAnyKeyToExit(true);
             }
         }
@@ -77,17 +77,17 @@ namespace SoGModdingAPI
         {
             try
             {
-                _ = Type.GetType($"StardewValley.Game1, {EarlyConstants.GameAssemblyName}", throwOnError: true);
+                _ = Type.GetType($"SoG.Game1, {EarlyConstants.GameAssemblyName}", throwOnError: true);
             }
             catch (Exception ex)
             {
                 // file doesn't exist
                 if (!File.Exists(Path.Combine(EarlyConstants.ExecutionPath, $"{EarlyConstants.GameAssemblyName}.exe")))
-                    Program.PrintErrorAndExit("Oops! SMAPI can't find the game. Make sure you're running StardewModdingAPI.exe in your game folder.");
+                    Program.PrintErrorAndExit("Oops! SoGMAPI can't find the game. Make sure you're running SoGModdingAPI.exe in your game folder.");
 
                 // can't load file
                 Program.PrintErrorAndExit(
-                    message: "Oops! SMAPI couldn't load the game executable. The technical details below may have more info.",
+                    message: "Oops! SoGMAPI couldn't load the game executable. The technical details below may have more info.",
                     technicalMessage: $"Technical details: {ex}"
                 );
             }
@@ -101,14 +101,14 @@ namespace SoGModdingAPI
             {
                 ISemanticVersion suggestedApiVersion = Constants.GetCompatibleApiVersion(Constants.GameVersion);
                 Program.PrintErrorAndExit(suggestedApiVersion != null
-                    ? $"Oops! You're running Stardew Valley {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. You can install SMAPI {suggestedApiVersion} instead to fix this error, or update your game to the latest version."
-                    : $"Oops! You're running Stardew Valley {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. Please update your game before using SMAPI."
+                    ? $"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. You can install SoGMAPI {suggestedApiVersion} instead to fix this error, or update your game to the latest version."
+                    : $"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. Please update your game before using SoGMAPI."
                 );
             }
 
             // max version
             else if (Constants.MaximumGameVersion != null && Constants.GameVersion.IsNewerThan(Constants.MaximumGameVersion))
-                Program.PrintErrorAndExit($"Oops! You're running Stardew Valley {Constants.GameVersion}, but this version of SMAPI is only compatible up to Stardew Valley {Constants.MaximumGameVersion}. Please check for a newer version of SMAPI: https://smapi.io.");
+                Program.PrintErrorAndExit($"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but this version of SoGMAPI is only compatible up to Secrets Of Grindea {Constants.MaximumGameVersion}. Please check for a newer version of SoGMAPI: https://smapi.io.");
         }
 
         /// <summary>Initialize SMAPI and launch the game.</summary>
@@ -117,7 +117,7 @@ namespace SoGModdingAPI
         private static void Start(string[] args)
         {
             // get flags
-            bool writeToConsole = !args.Contains("--no-terminal") && Environment.GetEnvironmentVariable("SMAPI_NO_TERMINAL") == null;
+            bool writeToConsole = !args.Contains("--no-terminal") && Environment.GetEnvironmentVariable("SOGMAPI_NO_TERMINAL") == null;
 
             // get mods path
             string modsPath;
@@ -131,7 +131,7 @@ namespace SoGModdingAPI
 
                 // get from environment variables
                 if (string.IsNullOrWhiteSpace(rawModsPath))
-                    rawModsPath = Environment.GetEnvironmentVariable("SMAPI_MODS_PATH");
+                    rawModsPath = Environment.GetEnvironmentVariable("SOGMAPI_MODS_PATH");
 
                 // normalise
                 modsPath = !string.IsNullOrWhiteSpace(rawModsPath)

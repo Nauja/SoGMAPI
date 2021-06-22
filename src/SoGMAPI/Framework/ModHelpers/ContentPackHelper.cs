@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SoGModdingAPI.Toolkit;
 using SoGModdingAPI.Toolkit.Serialization.Models;
 
 namespace SoGModdingAPI.Framework.ModHelpers

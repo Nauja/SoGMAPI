@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using SoGModdingAPI.Events;
 using SoGModdingAPI.Framework.Input;
+using static SoGModdingAPI.Framework.Input.InputState;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {
@@ -39,7 +40,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
         public ICommandHelper ConsoleCommands { get; }
 
         /// <inheritdoc />
-        // @todo public IMultiplayerHelper Multiplayer { get; }
+        public IMultiplayerHelper Multiplayer { get; }
 
         /// <inheritdoc />
         public ITranslationHelper Translation { get; }
@@ -63,7 +64,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
         /// <param name="translationHelper">An API for reading translations stored in the mod's <c>i18n</c> folder.</param>
         /// <exception cref="ArgumentNullException">An argument is null or empty.</exception>
         /// <exception cref="InvalidOperationException">The <paramref name="modDirectory"/> path does not exist on disk.</exception>
-        public ModHelper(string modID, string modDirectory, Func<SInputState> currentInputState, IModEvents events, IContentHelper contentHelper, IContentPackHelper contentPackHelper, ICommandHelper commandHelper, IDataHelper dataHelper, IModRegistry modRegistry, IReflectionHelper reflectionHelper, /* @todo IMultiplayerHelper multiplayer, */ ITranslationHelper translationHelper)
+        public ModHelper(string modID, string modDirectory, Func<SInputState> currentInputState, IModEvents events, IContentHelper contentHelper, IContentPackHelper contentPackHelper, ICommandHelper commandHelper, IDataHelper dataHelper, IModRegistry modRegistry, IReflectionHelper reflectionHelper, IMultiplayerHelper multiplayer, ITranslationHelper translationHelper)
             : base(modID)
         {
             // validate directory
@@ -81,7 +82,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
             this.ModRegistry = modRegistry ?? throw new ArgumentNullException(nameof(modRegistry));
             this.ConsoleCommands = commandHelper ?? throw new ArgumentNullException(nameof(commandHelper));
             this.Reflection = reflectionHelper ?? throw new ArgumentNullException(nameof(reflectionHelper));
-            // @todo this.Multiplayer = multiplayer ?? throw new ArgumentNullException(nameof(multiplayer));
+            this.Multiplayer = multiplayer ?? throw new ArgumentNullException(nameof(multiplayer));
             this.Translation = translationHelper ?? throw new ArgumentNullException(nameof(translationHelper));
             this.Events = events;
         }

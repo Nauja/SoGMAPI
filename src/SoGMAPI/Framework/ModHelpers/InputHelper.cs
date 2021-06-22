@@ -1,6 +1,7 @@
 using System;
 using SoGModdingAPI.Framework.Input;
 using SoGModdingAPI.Utilities;
+using static SoGModdingAPI.Framework.Input.InputState;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {

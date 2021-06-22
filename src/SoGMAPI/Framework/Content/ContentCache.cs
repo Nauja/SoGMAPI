@@ -5,7 +5,6 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using SoGModdingAPI.Framework.Reflection;
 using SoGModdingAPI.Toolkit.Utilities;
-using StardewValley;
 
 namespace SoGModdingAPI.Framework.Content
 {

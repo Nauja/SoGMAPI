@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using StardewValley;
 
 namespace SoGModdingAPI
 {
@@ -13,7 +12,7 @@ namespace SoGModdingAPI
         string Locale { get; }
 
         /// <summary>The game's current language code.</summary>
-        LocalizedContentManager.LanguageCode LocaleEnum { get; }
+        // @todo LocalizedContentManager.LanguageCode LocaleEnum { get; }
 
 
         /*********

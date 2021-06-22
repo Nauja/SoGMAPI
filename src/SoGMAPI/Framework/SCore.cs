@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-#if SMAPI_FOR_XNA
+#if SOGMAPI_FOR_XNA
 using System.Windows.Forms;
 #endif
 using Newtonsoft.Json;
@@ -79,7 +79,7 @@ namespace SoGModdingAPI.Framework
         private readonly CommandManager CommandManager;
 
         /// <summary>The underlying game instance.</summary>
-        private SGameRunner Game;
+        private SGame Game;
 
         /// <summary>SMAPI's content manager.</summary>
         private ContentCoordinator ContentCore;
@@ -178,16 +178,16 @@ namespace SoGModdingAPI.Framework
             this.LogManager.LogIntro(modsPath, this.Settings.GetCustomSettings());
 
             // validate platform
-#if SMAPI_FOR_WINDOWS
+#if SOGMAPI_FOR_WINDOWS
             if (Constants.Platform != Platform.Windows)
             {
-                this.Monitor.Log("Oops! You're running Windows, but this version of SMAPI is for Linux or macOS. Please reinstall SMAPI to fix this.", LogLevel.Error);
+                this.Monitor.Log("Oops! You're running Windows, but this version of SoGMAPI is for Linux or macOS. Please reinstall SoGMAPI to fix this.", LogLevel.Error);
                 this.LogManager.PressAnyKeyToExit();
             }
 #else
             if (Constants.Platform == Platform.Windows)
             {
-                this.Monitor.Log($"Oops! You're running {Constants.Platform}, but this version of SMAPI is for Windows. Please reinstall SMAPI to fix this.", LogLevel.Error);
+                this.Monitor.Log($"Oops! You're running {Constants.Platform}, but this version of SoGMAPI is for Windows. Please reinstall SoGMAPI to fix this.", LogLevel.Error);
                 this.LogManager.PressAnyKeyToExit();
             }
 #endif
@@ -211,7 +211,7 @@ namespace SoGModdingAPI.Framework
                     this.Toolkit.JsonHelper.JsonSettings.Converters.Add(converter);
 
                 // add error handlers
-#if SMAPI_FOR_XNA
+#if SOGMAPI_FOR_XNA
                 Application.ThreadException += (sender, e) => this.Monitor.Log($"Critical thread exception: {e.Exception.GetLogSummary()}", LogLevel.Error);
                 Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 #endif
@@ -226,19 +226,30 @@ namespace SoGModdingAPI.Framework
                 // override game
                 this.Multiplayer = new SMultiplayer(this.Monitor, this.EventManager, this.Toolkit.JsonHelper, this.ModRegistry, this.Reflection, this.OnModMessageReceived, this.Settings.LogNetworkTraffic);
                 // @todo SGame.CreateContentManagerImpl = this.CreateContentManager; // must be static since the game accesses it before the SGame constructor is called
-                this.Game = new SGameRunner(
+                this.Game = new SGame(
+                    playerIndex: 0,
+                    instanceIndex: 0,
                     monitor: this.Monitor,
                     reflection: this.Reflection,
                     eventManager: this.EventManager,
+                    input: new InputState.SInputState(),
                     modHooks: new SModHooks(),
                     multiplayer: this.Multiplayer,
                     exitGameImmediately: this.ExitGameImmediately,
-
-                    onGameContentLoaded: this.OnGameContentLoaded,
-                    onGameUpdating: this.OnGameUpdating,
-                    onPlayerInstanceUpdating: this.OnPlayerInstanceUpdating,
-                    onGameExiting: this.OnGameExiting
+                    onUpdating: this.OnGameUpdating
                 );
+
+                // Assign Game1 instance to SoG.Program
+                Assembly a = Assembly.GetAssembly(typeof(Game1));
+                Type t = a?.GetType("SoG.Program");
+                FieldInfo f = t?.GetField("game", BindingFlags.Public | BindingFlags.Static);
+                if (f == null)
+                {
+                    this.Monitor.Log("Unable to find static SoG.Program.game variable.", LogLevel.Error);
+                    this.LogManager.PressAnyKeyToExit();
+                }
+                f.SetValue(null, this.Game);
+
                 // @todo StardewValley.GameRunner.instance = this.Game;
 
                 // apply game patches
@@ -261,7 +272,7 @@ namespace SoGModdingAPI.Framework
             }
             catch (Exception ex)
             {
-                this.Monitor.Log($"SMAPI failed to initialize: {ex.GetLogSummary()}", LogLevel.Error);
+                this.Monitor.Log($"SoGMAPI failed to initialize: {ex.GetLogSummary()}", LogLevel.Error);
                 this.LogManager.PressAnyKeyToExit();
                 return;
             }
@@ -278,7 +289,7 @@ namespace SoGModdingAPI.Framework
             try
             {
                 this.IsGameRunning = true;
-                // @todo this.Game.Run();
+                this.Game.Run();
             }
             catch (Exception ex)
             {
@@ -566,7 +577,7 @@ namespace SoGModdingAPI.Framework
             {
                 // create client
                 string url = this.Settings.WebApiBaseUrl;
-#if !SMAPI_FOR_WINDOWS
+#if !SOGMAPI_FOR_WINDOWS
                 url = url.Replace("https://", "http://"); // workaround for OpenSSL issues with the game's bundled Mono on Linux/macOS
 #endif
                 WebApiClient client = new WebApiClient(url, Constants.ApiVersion);

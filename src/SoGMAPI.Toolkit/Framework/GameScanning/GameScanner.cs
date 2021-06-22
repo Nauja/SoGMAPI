@@ -5,7 +5,7 @@ using System.Linq;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using SoGModdingAPI.Toolkit.Utilities;
-#if SMAPI_FOR_WINDOWS
+#if SOGMAPI_FOR_WINDOWS
 using Microsoft.Win32;
 #endif
 
@@ -57,8 +57,8 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
             return
                 dir.Exists
                 && (
-                    dir.EnumerateFiles("StardewValley.exe").Any()
-                    || dir.EnumerateFiles("Stardew Valley.exe").Any()
+                    dir.EnumerateFiles("SecretsOfGrindea.exe").Any()
+                    || dir.EnumerateFiles("Secrets Of Grindea.exe").Any()
                 );
         }
 
@@ -78,25 +78,23 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
                         string home = Environment.GetEnvironmentVariable("HOME");
 
                         // Linux
-                        yield return $"{home}/GOG Games/Stardew Valley/game";
-                        yield return Directory.Exists($"{home}/.steam/steam/steamapps/common/Stardew Valley")
-                            ? $"{home}/.steam/steam/steamapps/common/Stardew Valley"
-                            : $"{home}/.local/share/Steam/steamapps/common/Stardew Valley";
+                        yield return Directory.Exists($"{home}/.steam/steam/steamapps/common/SecretsOfGrindea")
+                            ? $"{home}/.steam/steam/steamapps/common/SecretsOfGrindea"
+                            : $"{home}/.local/share/Steam/steamapps/common/SecretsOfGrindea";
 
                         // macOS
-                        yield return "/Applications/Stardew Valley.app/Contents/MacOS";
-                        yield return $"{home}/Library/Application Support/Steam/steamapps/common/Stardew Valley/Contents/MacOS";
+                        yield return "/Applications/SecretsOfGrindea.app/Contents/MacOS";
+                        yield return $"{home}/Library/Application Support/Steam/steamapps/common/SecretsOfGrindea/Contents/MacOS";
                     }
                     break;
 
                 case Platform.Windows:
                     {
                         // Windows registry
-#if SMAPI_FOR_WINDOWS
+#if SOGMAPI_FOR_WINDOWS
                         IDictionary<string, string> registryKeys = new Dictionary<string, string>
                         {
-                            [@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 413150"] = "InstallLocation", // Steam
-                            [@"SOFTWARE\WOW6432Node\GOG.com\Games\1453375253"] = "PATH", // GOG on 64-bit Windows
+                            [@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 269770"] = "InstallLocation" // Steam
                         };
                         foreach (var pair in registryKeys)
                         {
@@ -108,7 +106,7 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
                         // via Steam library path
                         string steamPath = this.GetCurrentUserRegistryValue(@"Software\Valve\Steam", "SteamPath");
                         if (steamPath != null)
-                            yield return Path.Combine(steamPath.Replace('/', '\\'), @"steamapps\common\Stardew Valley");
+                            yield return Path.Combine(steamPath.Replace('/', '\\'), @"steamapps\common\SecretsOfGrindea");
 #endif
 
                         // default paths
@@ -136,7 +134,7 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
                 yield break;
 
             // get targets file
-            FileInfo file = new FileInfo(Path.Combine(homePath, "stardewvalley.targets"));
+            FileInfo file = new FileInfo(Path.Combine(homePath, "secretsofgrindea.targets"));
             if (!file.Exists)
                 yield break;
 
@@ -158,7 +156,7 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
                 yield return element.Value.Trim();
         }
 
-#if SMAPI_FOR_WINDOWS
+#if SOGMAPI_FOR_WINDOWS
         /// <summary>Get the value of a key in the Windows HKLM registry.</summary>
         /// <param name="key">The full path of the registry key relative to HKLM.</param>
         /// <param name="name">The name of the value.</param>

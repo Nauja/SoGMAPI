@@ -54,7 +54,7 @@ namespace SoGModdingAPI.Toolkit.Framework
         [SuppressMessage("ReSharper", "EmptyGeneralCatchClause", Justification = "Error suppressed deliberately to fallback to default behaviour.")]
         public static string GetFriendlyPlatformName(string platform)
         {
-#if SMAPI_FOR_WINDOWS
+#if SOGMAPI_FOR_WINDOWS
             try
             {
                 return new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem")

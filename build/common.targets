@@ -12,7 +12,7 @@
 
     <!--set platform-->
     <DefineConstants Condition="$(OS) == 'Windows_NT'">$(DefineConstants);SOGMAPI_FOR_WINDOWS</DefineConstants>
-    <DefineConstants Condition="$(OS) == 'Windows_NT' AND !$(DefineConstants.Contains(SMAPI_FOR_WINDOWS_64BIT_HACK))">$(DefineConstants);SOGMAPI_FOR_XNA</DefineConstants>
+    <DefineConstants Condition="$(OS) == 'Windows_NT' AND !$(DefineConstants.Contains(SOGMAPI_FOR_WINDOWS_64BIT_HACK))">$(DefineConstants);SOGMAPI_FOR_XNA</DefineConstants>
   </PropertyGroup>
 
   <!--find game folder-->

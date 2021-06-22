@@ -46,7 +46,7 @@ namespace SoGModdingAPI.Framework.Logging
             new ReplaceLogPattern(
                 search: new Regex(@"^System\.InvalidOperationException: Steamworks is not initialized\.[\s\S]+$", RegexOptions.Compiled | RegexOptions.CultureInvariant),
                 replacement:
-#if SMAPI_FOR_WINDOWS
+#if SOGMAPI_FOR_WINDOWS
                     "Oops! Steam achievements won't work because Steam isn't loaded. See 'Launch SMAPI through Steam or GOG Galaxy' in the install guide for more info: https://smapi.io/install.",
 #else
                     "Oops! Steam achievements won't work because Steam isn't loaded. You can launch the game through Steam to fix that.",

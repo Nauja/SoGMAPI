@@ -41,7 +41,7 @@ namespace SoGModdingAPI
 
         /// <summary>Whether SMAPI is being compiled for Windows with a 64-bit Linux version of the game. This is highly specialized and shouldn't be used in most cases.</summary>
         internal static bool IsWindows64BitHack { get; } =
-#if SMAPI_FOR_WINDOWS_64BIT_HACK
+#if SOGMAPI_FOR_WINDOWS_64BIT_HACK
             true;
 #else
             false;
@@ -49,7 +49,7 @@ namespace SoGModdingAPI
 
         /// <summary>The game framework running the game.</summary>
         internal static GameFramework GameFramework { get; } =
-#if SMAPI_FOR_XNA
+#if SOGMAPI_FOR_XNA
             GameFramework.Xna;
 #else
             GameFramework.MonoGame;

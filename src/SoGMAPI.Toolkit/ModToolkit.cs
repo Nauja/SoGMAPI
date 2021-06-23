@@ -47,8 +47,8 @@ namespace SoGModdingAPI.Toolkit
             this.UserAgent = $"SMAPI Mod Handler Toolkit/{version}";
         }
 
-        /// <summary>Find valid Stardew Valley install folders.</summary>
-        /// <remarks>This checks default game locations, and on Windows checks the Windows registry for GOG/Steam install data. A folder is considered 'valid' if it contains the Stardew Valley executable for the current OS.</remarks>
+        /// <summary>Find valid Secrets Of Grindea install folders.</summary>
+        /// <remarks>This checks default game locations, and on Windows checks the Windows registry for GOG/Steam install data. A folder is considered 'valid' if it contains the Secrets Of Grindea executable for the current OS.</remarks>
         public IEnumerable<DirectoryInfo> GetGameFolders()
         {
             return new GameScanner().Scan();

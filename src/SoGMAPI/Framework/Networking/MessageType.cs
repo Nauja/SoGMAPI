@@ -2,7 +2,7 @@
 
 namespace SoGModdingAPI.Framework.Networking
 {
-    /// <summary>Network message types recognized by SMAPI and Stardew Valley.</summary>
+    /// <summary>Network message types recognized by SoGMAPI and Secrets Of Grindea.</summary>
     internal enum MessageType : byte
     {
         /*********

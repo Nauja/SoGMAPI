@@ -193,6 +193,38 @@ namespace SoGModdingAPI.Framework
 #endif
         }
 
+
+        /// <summary>Assert that the game version is within <see cref="Constants.MinimumGameVersion"/> and <see cref="Constants.MaximumGameVersion"/>.</summary>
+        private void AssertGameVersion()
+        {
+            // Fill patch notes to generate version number
+            MethodInfo m = typeof(Game1).GetMethod("_Menu_FillPatchNotes", BindingFlags.NonPublic | BindingFlags.Instance);
+            m.Invoke(this.Game, new object[] { });
+            Constants.GameVersion = new SemanticVersion(GlobalData.MainMenu.PatchNoteMenu.lxNotes[0].sPatchName);
+            GlobalData.MainMenu.PatchNoteMenu.lxNotes.Clear();
+
+            // min version
+            if (Constants.GameVersion.IsOlderThan(Constants.MinimumGameVersion))
+            {
+                ISemanticVersion suggestedApiVersion = Constants.GetCompatibleApiVersion(Constants.GameVersion);
+                this.Monitor.Log(suggestedApiVersion != null
+                    ? $"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. You can install SoGMAPI {suggestedApiVersion} instead to fix this error, or update your game to the latest version."
+                    : $"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. Please update your game before using SoGMAPI.",
+                    LogLevel.Error
+                );
+                this.LogManager.PressAnyKeyToExit();
+            }
+
+            // max version
+            else if (Constants.MaximumGameVersion != null && Constants.GameVersion.IsNewerThan(Constants.MaximumGameVersion))
+            {
+                this.Monitor.Log($"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but this version of SoGMAPI is only compatible up to Secrets Of Grindea {Constants.MaximumGameVersion}. Please check for a newer version of SoGMAPI: https://smapi.io.",
+                    LogLevel.Error
+                );
+                this.LogManager.PressAnyKeyToExit();
+            }
+        }
+
         /// <summary>Launch SMAPI.</summary>
         [HandleProcessCorruptedStateExceptions, SecurityCritical] // let try..catch handle corrupted state exceptions
         public void RunInteractively()
@@ -226,7 +258,12 @@ namespace SoGModdingAPI.Framework
                 // override game
                 this.Multiplayer = new SMultiplayer(this.Monitor, this.EventManager, this.Toolkit.JsonHelper, this.ModRegistry, this.Reflection, this.OnModMessageReceived, this.Settings.LogNetworkTraffic);
                 // @todo SGame.CreateContentManagerImpl = this.CreateContentManager; // must be static since the game accesses it before the SGame constructor is called
-                this.Game = new SGame(
+                this.Game = new SGame();
+
+                // must be checked here
+                this.AssertGameVersion();
+
+                this.Game.PreInitialize(
                     playerIndex: 0,
                     instanceIndex: 0,
                     monitor: this.Monitor,
@@ -236,6 +273,7 @@ namespace SoGModdingAPI.Framework
                     modHooks: new SModHooks(),
                     multiplayer: this.Multiplayer,
                     exitGameImmediately: this.ExitGameImmediately,
+                    onInitialized: this.OnGameInitialized,
                     onUpdating: this.OnGameUpdating
                 );
 
@@ -250,8 +288,6 @@ namespace SoGModdingAPI.Framework
                 }
                 f.SetValue(null, this.Game);
 
-                // @todo StardewValley.GameRunner.instance = this.Game;
-
                 // apply game patches
                 new GamePatcher(this.Monitor).Apply(
                     new LoadContextPatch(this.Reflection, this.OnLoadStageChanged)
@@ -263,7 +299,7 @@ namespace SoGModdingAPI.Framework
                     if (this.IsGameRunning)
                     {
                         this.LogManager.WriteCrashLog();
-                        // @todo this.Game.Exit();
+                        this.Game.Exit();
                     }
                 });
 
@@ -388,11 +424,13 @@ namespace SoGModdingAPI.Framework
         /// <summary>Raised after the game finishes initializing.</summary>
         private void OnGameInitialized()
         {
+            UpdateWindowTitles();
+
             // validate XNB integrity
             if (!this.ValidateContentIntegrity())
-                this.Monitor.Log("SMAPI found problems in your game's content files which are likely to cause errors or crashes. Consider uninstalling XNB mods or reinstalling the game.", LogLevel.Error);
+                this.Monitor.Log("SoGMAPI found problems in your game's content files which are likely to cause errors or crashes. Consider uninstalling XNB mods or reinstalling the game.", LogLevel.Error);
 
-            // start SMAPI console
+            // start SoGMAPI console
             new Thread(
                 () => this.LogManager.RunConsoleInputLoop(
                     commandManager: this.CommandManager,
@@ -552,8 +590,8 @@ namespace SoGModdingAPI.Framework
         {
             string smapiVersion = $"{Constants.ApiVersion}{(EarlyConstants.IsWindows64BitHack ? " [64-bit]" : "")}";
 
-            string consoleTitle = $"SMAPI {smapiVersion} - running Stardew Valley {Constants.GameVersion}";
-            string gameTitle = $"Stardew Valley {Constants.GameVersion} - running SMAPI {smapiVersion}";
+            string consoleTitle = $"SoGMAPI {smapiVersion} - running Secrets Of Grindea {Constants.GameVersion}";
+            string gameTitle = $"Secrets of Grindea {Constants.GameVersion} - running SoGMAPI {smapiVersion}";
 
             if (this.ModRegistry.AreAllModsLoaded)
             {
@@ -562,7 +600,7 @@ namespace SoGModdingAPI.Framework
                 gameTitle += $" with {modsLoaded} mods";
             }
 
-            // @todo this.Game.Window.Title = gameTitle;
+            this.Game.Window.Title = gameTitle;
             this.LogManager.SetConsoleTitle(consoleTitle);
         }
 
@@ -622,7 +660,7 @@ namespace SoGModdingAPI.Framework
                 }
 
                 // check Stardew64Installer version
-                if (Constants.IsPatchedByStardew64Installer(out ISemanticVersion patchedByVersion))
+                if (Constants.IsPatchedBySecretsOfGrindea64Installer(out ISemanticVersion patchedByVersion))
                 {
                     ISemanticVersion updateFound = null;
                     string updateUrl = null;

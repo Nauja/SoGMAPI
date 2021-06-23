@@ -30,8 +30,8 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
             this.Platform = EnvironmentUtility.DetectPlatform();
         }
 
-        /// <summary>Find all valid Stardew Valley install folders.</summary>
-        /// <remarks>This checks default game locations, and on Windows checks the Windows registry for GOG/Steam install data. A folder is considered 'valid' if it contains the Stardew Valley executable for the current OS.</remarks>
+        /// <summary>Find all valid Secrets Of Grindea install folders.</summary>
+        /// <remarks>This checks default game locations, and on Windows checks the Windows registry for GOG/Steam install data. A folder is considered 'valid' if it contains the Secrets Of Grindea executable for the current OS.</remarks>
         public IEnumerable<DirectoryInfo> Scan()
         {
             // get install paths
@@ -66,7 +66,7 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
         /*********
         ** Private methods
         *********/
-        /// <summary>The default file paths where Stardew Valley can be installed.</summary>
+        /// <summary>The default file paths where Secrets Of Grindea can be installed.</summary>
         /// <remarks>Derived from the <a href="https://github.com/Pathoschild/Stardew.ModBuildConfig">crossplatform mod config</a>.</remarks>
         private IEnumerable<string> GetDefaultInstallPaths()
         {
@@ -112,10 +112,7 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
                         // default paths
                         foreach (string programFiles in new[] { @"C:\Program Files", @"C:\Program Files (x86)" })
                         {
-                            yield return $@"{programFiles}\GalaxyClient\Games\Stardew Valley";
-                            yield return $@"{programFiles}\GOG Galaxy\Games\Stardew Valley";
-                            yield return $@"{programFiles}\GOG Games\Stardew Valley";
-                            yield return $@"{programFiles}\Steam\steamapps\common\Stardew Valley";
+                            yield return $@"{programFiles}\Steam\steamapps\common\SecretsOfGrindea";
                         }
                     }
                     break;
@@ -125,7 +122,7 @@ namespace SoGModdingAPI.Toolkit.Framework.GameScanning
             }
         }
 
-        /// <summary>Get the custom install path from the <c>stardewvalley.targets</c> file in the home directory, if any.</summary>
+        /// <summary>Get the custom install path from the <c>secretsofgrindea.targets</c> file in the home directory, if any.</summary>
         private IEnumerable<string> GetCustomInstallPaths()
         {
             // get home path

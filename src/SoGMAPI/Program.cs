@@ -2,8 +2,11 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Threading;
+using SoG;
 using SoGModdingAPI.Framework;
+using SoGModdingAPI.Toolkit;
 
 namespace SoGModdingAPI
 {
@@ -30,7 +33,6 @@ namespace SoGModdingAPI
             {
                 AppDomain.CurrentDomain.AssemblyResolve += Program.CurrentDomain_AssemblyResolve;
                 Program.AssertGamePresent();
-                Program.AssertGameVersion();
                 Program.Start(args);
             }
             catch (BadImageFormatException ex) when (ex.FileName == "SecretsOfGrindea" || ex.FileName == "Secrets Of Grindea") // don't use EarlyConstants.GameAssemblyName, since we want to check both possible names
@@ -91,24 +93,6 @@ namespace SoGModdingAPI
                     technicalMessage: $"Technical details: {ex}"
                 );
             }
-        }
-
-        /// <summary>Assert that the game version is within <see cref="Constants.MinimumGameVersion"/> and <see cref="Constants.MaximumGameVersion"/>.</summary>
-        private static void AssertGameVersion()
-        {
-            // min version
-            if (Constants.GameVersion.IsOlderThan(Constants.MinimumGameVersion))
-            {
-                ISemanticVersion suggestedApiVersion = Constants.GetCompatibleApiVersion(Constants.GameVersion);
-                Program.PrintErrorAndExit(suggestedApiVersion != null
-                    ? $"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. You can install SoGMAPI {suggestedApiVersion} instead to fix this error, or update your game to the latest version."
-                    : $"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but the oldest supported version is {Constants.MinimumGameVersion}. Please update your game before using SoGMAPI."
-                );
-            }
-
-            // max version
-            else if (Constants.MaximumGameVersion != null && Constants.GameVersion.IsNewerThan(Constants.MaximumGameVersion))
-                Program.PrintErrorAndExit($"Oops! You're running Secrets Of Grindea {Constants.GameVersion}, but this version of SoGMAPI is only compatible up to Secrets Of Grindea {Constants.MaximumGameVersion}. Please check for a newer version of SoGMAPI: https://smapi.io.");
         }
 
         /// <summary>Initialize SMAPI and launch the game.</summary>

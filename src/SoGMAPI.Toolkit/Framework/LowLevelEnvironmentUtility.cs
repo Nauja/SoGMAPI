@@ -80,7 +80,7 @@ namespace SoGModdingAPI.Toolkit.Framework
             return name;
         }
 
-        /// <summary>Get the name of the Stardew Valley executable.</summary>
+        /// <summary>Get the name of the Secrets Of Grindea executable.</summary>
         /// <param name="platform">The current platform.</param>
         public static string GetExecutableName(string platform)
         {

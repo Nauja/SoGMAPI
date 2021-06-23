@@ -51,7 +51,7 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.Wiki
         /// <summary>The mod's compatibility with the latest beta version of the game (if any).</summary>
         public WikiCompatibilityInfo BetaCompatibility { get; set; }
 
-        /// <summary>Whether a Stardew Valley or SMAPI beta which affects mod compatibility is in progress. If this is true, <see cref="BetaCompatibility"/> should be used for beta versions of SMAPI instead of <see cref="Compatibility"/>.</summary>
+        /// <summary>Whether a Secrets Of Grindea or SoGMAPI beta which affects mod compatibility is in progress. If this is true, <see cref="BetaCompatibility"/> should be used for beta versions of SMAPI instead of <see cref="Compatibility"/>.</summary>
         public bool HasBetaInfo => this.BetaCompatibility != null;
 
         /// <summary>The human-readable warnings for players about this mod.</summary>

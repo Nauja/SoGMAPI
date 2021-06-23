@@ -1,6 +1,6 @@
 namespace SoGModdingAPI
 {
-    /// <summary>The implementation for a Stardew Valley mod.</summary>
+    /// <summary>The implementation for a Secrets Of Grindea mod.</summary>
     public interface IMod
     {
         /*********

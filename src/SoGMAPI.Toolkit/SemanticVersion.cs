@@ -11,7 +11,7 @@ namespace SoGModdingAPI.Toolkit
     /// - hyphens are synonymous with dots in prerelease tags and build metadata (like "-unofficial.3-pathoschild");
     /// - and "-unofficial" in prerelease tags is always lower-precedence (e.g. "1.0-beta" is newer than "1.0-unofficial").
     ///
-    /// This optionally also supports four-part versions, a non-standard extension used by Stardew Valley on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.
+    /// This optionally also supports four-part versions, a non-standard extension used by Secrets Of Grindea on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.
     /// </remarks>
     public class SemanticVersion : ISemanticVersion
     {
@@ -34,7 +34,7 @@ namespace SoGModdingAPI.Toolkit
         /// <inheritdoc />
         public int PatchVersion { get; }
 
-        /// <summary>The platform release. This is a non-standard semver extension used by Stardew Valley on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.</summary>
+        /// <summary>The platform release. This is a non-standard semver extension used by Secrets Of Grindea on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.</summary>
         public int PlatformRelease { get; }
 
         /// <inheritdoc />

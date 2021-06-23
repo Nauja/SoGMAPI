@@ -59,8 +59,10 @@ namespace SoGModdingAPI.Framework
         /// <summary>The initial override for <see cref="Multiplayer"/>. This value is null after initialization.</summary>
         private SMultiplayer InitialMultiplayer;
 
+        private Action OnInitialized;
+
         /// <summary>Raised when the instance is updating its state (roughly 60 times per second).</summary>
-        private readonly Action<SGame, GameTime, Action> OnUpdating;
+        private Action<SGame, GameTime, Action> OnUpdating;
 
 
         /*********
@@ -90,6 +92,15 @@ namespace SoGModdingAPI.Framework
         ** Public methods
         *********/
         /// <summary>Construct an instance.</summary>
+        public SGame()
+            : base()
+        {
+            Instance = this;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="playerIndex">The player index.</param>
         /// <param name="instanceIndex">The instance index.</param>
         /// <param name="monitor">Encapsulates monitoring and logging for SMAPI.</param>
@@ -100,11 +111,15 @@ namespace SoGModdingAPI.Framework
         /// <param name="multiplayer">The core multiplayer logic.</param>
         /// <param name="exitGameImmediately">Immediately exit the game without saving. This should only be invoked when an irrecoverable fatal error happens that risks save corruption or game-breaking bugs.</param>
         /// <param name="onUpdating">Raised when the instance is updating its state (roughly 60 times per second).</param>
-        public SGame(PlayerIndex playerIndex, int instanceIndex, Monitor monitor, Reflector reflection, EventManager eventManager, SInputState input, SModHooks modHooks, SMultiplayer multiplayer, Action<string> exitGameImmediately, Action<GameTime, Action> onUpdating)
-            : base()
+        public void PreInitialize(PlayerIndex playerIndex, int instanceIndex, Monitor monitor, Reflector reflection, EventManager eventManager, SInputState input, SModHooks modHooks, SMultiplayer multiplayer, Action<string> exitGameImmediately, Action onInitialized, Action<GameTime, Action> onUpdating)
         {
-            Instance = this;
+            this.OnInitialized = onInitialized;
         }
 
+        protected override void Initialize()
+        {
+            base.Initialize();
+            this.OnInitialized();
+        }
     }
 }

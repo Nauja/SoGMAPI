@@ -12,7 +12,7 @@
         /// <summary>The game's platform version.</summary>
         public GamePlatform Platform { get; set; }
 
-        /// <summary>The installed version of Stardew Valley.</summary>
+        /// <summary>The installed version of Secrets Of Grindea.</summary>
         public ISemanticVersion GameVersion { get; set; }
 
         /// <summary>The installed version of SMAPI.</summary>

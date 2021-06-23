@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SoGModdingAPI.Framework
 {
-    /// <summary>An extension of <see cref="ISemanticVersion"/> that correctly handles non-semantic versions used by Stardew Valley.</summary>
+    /// <summary>An extension of <see cref="ISemanticVersion"/> that correctly handles non-semantic versions used by Secrets Of Grindea.</summary>
     internal class GameVersion : Toolkit.SemanticVersion
     {
         /*********

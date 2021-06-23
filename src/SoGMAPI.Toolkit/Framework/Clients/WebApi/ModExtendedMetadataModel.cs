@@ -55,7 +55,7 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
         /// <summary>The latest unofficial version, if newer than <see cref="Main"/> and <see cref="Optional"/>.</summary>
         public ModEntryVersionModel Unofficial { get; set; }
 
-        /// <summary>The latest unofficial version for the current Stardew Valley or SMAPI beta, if any.</summary>
+        /// <summary>The latest unofficial version for the current Stardew Valley or SoGMAPI beta, if any.</summary>
         public ModEntryVersionModel UnofficialForBeta { get; set; }
 
         /****
@@ -74,11 +74,11 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
         /****
         ** Beta compatibility
         ****/
-        /// <summary>The compatibility status for the Stardew Valley beta (if any).</summary>
+        /// <summary>The compatibility status for the Secrets Of Grindea beta (if any).</summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public WikiCompatibilityStatus? BetaCompatibilityStatus { get; set; }
 
-        /// <summary>The human-readable summary of the compatibility status or workaround for the Stardew Valley beta (if any), without HTML formatting.</summary>
+        /// <summary>The human-readable summary of the compatibility status or workaround for the Secrets Of Grindea beta (if any), without HTML formatting.</summary>
         public string BetaCompatibilitySummary { get; set; }
 
         /// <summary>The beta game or SMAPI version which broke this mod, if applicable.</summary>
@@ -106,7 +106,7 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
         /// <param name="main">The main version.</param>
         /// <param name="optional">The latest optional version, if newer than <paramref name="main"/>.</param>
         /// <param name="unofficial">The latest unofficial version, if newer than <paramref name="main"/> and <paramref name="optional"/>.</param>
-        /// <param name="unofficialForBeta">The latest unofficial version for the current Stardew Valley or SMAPI beta, if any.</param>
+        /// <param name="unofficialForBeta">The latest unofficial version for the current Secrets Of Grindea or SoGMAPI beta, if any.</param>
         public ModExtendedMetadataModel(WikiModEntry wiki, ModDataRecord db, ModEntryVersionModel main, ModEntryVersionModel optional, ModEntryVersionModel unofficial, ModEntryVersionModel unofficialForBeta)
         {
             // versions

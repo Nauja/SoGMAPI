@@ -40,7 +40,7 @@ namespace SoGModdingAPI.Toolkit.Utilities
             return LowLevelEnvironmentUtility.GetFriendlyPlatformName(platform.ToString());
         }
 
-        /// <summary>Get the name of the Stardew Valley executable.</summary>
+        /// <summary>Get the name of the Secrets Of Grindea executable.</summary>
         /// <param name="platform">The current platform.</param>
         public static string GetExecutableName(Platform platform)
         {

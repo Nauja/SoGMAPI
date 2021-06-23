@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>StardewModdingAPI.Toolkit</RootNamespace>
+    <RootNamespace>SoGModdingAPI.Toolkit</RootNamespace>
     <Description>A library which encapsulates mod-handling logic for mod managers and tools. Not intended for use by mods.</Description>
     <TargetFrameworks>net4.5;netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

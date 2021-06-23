@@ -23,7 +23,7 @@ namespace SoGModdingAPI
         //
         // Adding an external dependency may seem to work in some cases, but will prevent SMAPI
         // from showing a human-readable error if the game isn't available. To test this, just
-        // rename "Stardew Valley.exe" in the game folder; you should see an error like "Oops!
+        // rename "Secrets Of Grindea.exe" in the game folder; you should see an error like "Oops!
         // SMAPI can't find the game", not a technical exception.
         //
 
@@ -62,7 +62,7 @@ namespace SoGModdingAPI
         internal static int? LogScreenId { get; set; }
 
         /// <summary>SMAPI's current raw semantic version.</summary>
-        internal static string RawApiVersion = "3.10.1";
+        internal static string RawApiVersion = "0.1.0";
     }
 
     /// <summary>Contains SMAPI's constants and assumptions.</summary>
@@ -77,10 +77,10 @@ namespace SoGModdingAPI
         /// <summary>SMAPI's current semantic version.</summary>
         public static ISemanticVersion ApiVersion { get; } = new Toolkit.SemanticVersion(EarlyConstants.RawApiVersion);
 
-        /// <summary>The minimum supported version of Stardew Valley.</summary>
-        public static ISemanticVersion MinimumGameVersion { get; } = new GameVersion("1.5.4");
+        /// <summary>The minimum supported version of Secrets Of Grindea.</summary>
+        public static ISemanticVersion MinimumGameVersion { get; } = new GameVersion("0.9.0");
 
-        /// <summary>The maximum supported version of Stardew Valley.</summary>
+        /// <summary>The maximum supported version of Secrets Of Grindea.</summary>
         public static ISemanticVersion MaximumGameVersion { get; } = null;
 
         /// <summary>The target game platform.</summary>
@@ -92,7 +92,7 @@ namespace SoGModdingAPI
         /// <summary>The path to the game folder.</summary>
         public static string ExecutionPath { get; } = EarlyConstants.ExecutionPath;
 
-        /// <summary>The directory path containing Stardew Valley's app data.</summary>
+        /// <summary>The directory path containing Secrets Of Grindea's app data.</summary>
         public static string DataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Secrets of Grindea");
 
         /// <summary>The directory path in which error logs should be stored.</summary>
@@ -158,7 +158,11 @@ namespace SoGModdingAPI
         internal static string ModsPath { get; set; }
 
         /// <summary>The game's current semantic version.</summary>
-        internal static ISemanticVersion GameVersion { get; } = new GameVersion("1.6.0"/* @todo Game1.version */);
+        internal static ISemanticVersion GameVersion
+        {
+            get;
+            set;
+        }
 
         /// <summary>The target game platform as a SMAPI toolkit constant.</summary>
         internal static Platform Platform { get; } = (Platform)Constants.TargetPlatform;
@@ -301,11 +305,11 @@ namespace SoGModdingAPI
             return new PlatformAssemblyMap(targetPlatform, removeAssemblyReferences.ToArray(), targetAssemblies.ToArray());
         }
 
-        /// <summary>Get whether the game assembly was patched by Stardew64Installer.</summary>
-        /// <param name="version">The version of Stardew64Installer which was applied to the game assembly, if any.</param>
-        internal static bool IsPatchedByStardew64Installer(out ISemanticVersion version)
+        /// <summary>Get whether the game assembly was patched by SecretsOfGrindea64Installer.</summary>
+        /// <param name="version">The version of SecretsOfGrindea64Installer which was applied to the game assembly, if any.</param>
+        internal static bool IsPatchedBySecretsOfGrindea64Installer(out ISemanticVersion version)
         {
-            PropertyInfo property = typeof(Game1).GetProperty("Stardew64InstallerVersion");
+            PropertyInfo property = typeof(Game1).GetProperty("SecretsOfGrindea64InstallerVersion");
             if (property == null)
             {
                 version = null;

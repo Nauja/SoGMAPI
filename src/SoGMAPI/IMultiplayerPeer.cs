@@ -27,7 +27,7 @@ namespace SoGModdingAPI
         /// <summary>The player's OS platform, if <see cref="HasSmapi"/> is true.</summary>
         GamePlatform? Platform { get; }
 
-        /// <summary>The installed version of Stardew Valley, if <see cref="HasSmapi"/> is true.</summary>
+        /// <summary>The installed version of Secrets Of Grindea, if <see cref="HasSmapi"/> is true.</summary>
         ISemanticVersion GameVersion { get; }
 
         /// <summary>The installed version of SMAPI, if <see cref="HasSmapi"/> is true.</summary>

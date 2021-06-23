@@ -617,7 +617,7 @@ namespace SoGModdingAPI
         }
 
         /// <summary>Get the <see cref="SButton"/> equivalent for the given button.</summary>
-        /// <param name="input">The Stardew Valley button to convert.</param>
+        /// <param name="input">The Secrets Of Grindea button to convert.</param>
         public static SButton ToSButton(this LocalInputHelper.KeyOrMouse input)
         {
             // derived from InputButton constructors
@@ -662,7 +662,7 @@ namespace SoGModdingAPI
 
         /// <summary>Get the <see cref="InputButton"/> equivalent for the given button.</summary>
         /// <param name="input">The button to convert.</param>
-        /// <param name="button">The Stardew Valley input button equivalent.</param>
+        /// <param name="button">The Secrets Of Grindea input button equivalent.</param>
         /// <returns>Returns whether the value was converted successfully.</returns>
         public static bool TryGetSoGInput(this SButton input, out LocalInputHelper.KeyOrMouse button)
         {

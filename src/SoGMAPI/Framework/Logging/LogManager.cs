@@ -248,7 +248,7 @@ namespace SoGModdingAPI.Framework.Logging
                     break;
 
                 // missing content folder exception
-                case FileNotFoundException ex when ex.Message == "Couldn't find file 'C:\\Program Files (x86)\\Steam\\SteamApps\\common\\Stardew Valley\\Content\\XACT\\FarmerSounds.xgs'.": // path in error is hardcoded regardless of install path
+                case FileNotFoundException ex when ex.Message == "Couldn't find file 'C:\\Program Files (x86)\\Steam\\SteamApps\\common\\SecretsOfGrindea\\Content\\XACT\\FarmerSounds.xgs'.": // path in error is hardcoded regardless of install path
                     this.Monitor.Log("The game can't find its Content\\XACT\\FarmerSounds.xgs file. You can usually fix this by resetting your content files (see https://smapi.io/troubleshoot#reset-content ), or by uninstalling and reinstalling the game.", LogLevel.Error);
                     this.Monitor.Log($"Technical details: {ex.GetLogSummary()}");
                     break;
@@ -281,7 +281,7 @@ namespace SoGModdingAPI.Framework.Logging
         {
             // log platform & patches
             {
-                this.Monitor.Log($"SMAPI {Constants.ApiVersion} with Stardew Valley {Constants.GameVersion} on {EnvironmentUtility.GetFriendlyPlatformName(Constants.Platform)}", LogLevel.Info);
+                this.Monitor.Log($"SoGMAPI {Constants.ApiVersion} with Secrets Of Grindea {Constants.GameVersion} on {EnvironmentUtility.GetFriendlyPlatformName(Constants.Platform)}", LogLevel.Info);
 
                 string[] patchLabels = this.GetPatchLabels().ToArray();
                 if (patchLabels.Any())
@@ -405,18 +405,18 @@ namespace SoGModdingAPI.Framework.Logging
             gameMonitor.Log(message, level);
         }
 
-        /// <summary>Get human-readable labels to log for detected SMAPI and Stardew Valley customizations.</summary>
+        /// <summary>Get human-readable labels to log for detected SoGMAPI and Secrets Of Grindea customizations.</summary>
         private IEnumerable<string> GetPatchLabels()
         {
             // custom game framework
             if (EarlyConstants.IsWindows64BitHack)
-                yield return $"running 64-bit SMAPI with {Constants.GameFramework}";
+                yield return $"running 64-bit SoGMAPI with {Constants.GameFramework}";
             else if ((Constants.GameFramework == GameFramework.Xna) != (Constants.Platform == Platform.Windows))
                 yield return $"running {Constants.GameFramework}";
 
-            // patched by Stardew64Installer
-            if (Constants.IsPatchedByStardew64Installer(out ISemanticVersion patchedByVersion))
-                yield return $"patched by Stardew64Installer {patchedByVersion}";
+            // patched by SecretsOfGrindea64Installer
+            if (Constants.IsPatchedBySecretsOfGrindea64Installer(out ISemanticVersion patchedByVersion))
+                yield return $"patched by SecretsOfGrindea64Installer {patchedByVersion}";
         }
 
         /// <summary>Write a summary of mod warnings to the console and log.</summary>

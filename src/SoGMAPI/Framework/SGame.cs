@@ -13,17 +13,59 @@ using SoGModdingAPI.Utilities;
 using SoGModdingAPI.Framework.Utilities;
 using SoG;
 using static SoGModdingAPI.Framework.Input.InputState;
+using System.Reflection;
+using SoGModdingAPI.Framework.ContentManagers;
+using Microsoft.Xna.Framework.Content;
+using System.Globalization;
+using System.Collections.Generic;
 
 namespace SoGModdingAPI.Framework
 {
-    public class LocalizedContentManager
+    internal class LocalizedContentManager : ContentManager
     {
-        public class LanguageCode
+        public static IDictionary<string, string> localizedAssetNames => new Dictionary<string, string>();
+
+        public readonly CultureInfo CurrentCulture;
+        public LanguageCode GetCurrentLanguage() { return LanguageCode.en; }
+
+        public enum LanguageCode
         {
-            public static LanguageCode en = new LanguageCode();
+            en
         }
 
         public static LanguageCode CurrentLanguageCode = LanguageCode.en;
+
+        protected LocalizedContentManager(IServiceProvider serviceProvider, string rootDirectory, CultureInfo currentCulture)
+            : base(serviceProvider, rootDirectory)
+        {
+            // init
+            this.CurrentCulture = currentCulture;
+        }
+
+        public LocalizedContentManager(IServiceProvider serviceProvider, string rootDirectory) : this(serviceProvider, rootDirectory, CultureInfo.CurrentCulture)
+        {
+        }
+
+        public virtual T Load<T>(string assetName, LanguageCode language)
+        {
+            return base.Load<T>(assetName);
+        }
+
+        public virtual T LoadBase<T>(string assetName)
+        {
+            return base.Load<T>(assetName);
+        }
+
+        public string LanguageCodeString(LanguageCode language)
+        {
+            return "en"; // @todo
+        }
+
+        public virtual LocalizedContentManager CreateTemporary()
+        {
+            return this;
+        }
+
     }
 
     /// <summary>SMAPI's extension of the game's core <see cref="Game1"/>, used to inject events.</summary>
@@ -61,8 +103,12 @@ namespace SoGModdingAPI.Framework
 
         private Action OnInitialized;
 
+        private Action OnContentLoaded;
+
         /// <summary>Raised when the instance is updating its state (roughly 60 times per second).</summary>
         private Action<SGame, GameTime, Action> OnUpdating;
+
+        private Action<SGame, GameTime, Action> OnPlayerInstanceUpdating;
 
 
         /*********
@@ -86,6 +132,10 @@ namespace SoGModdingAPI.Framework
 
         /// <summary>The cached <see cref="Farmer.UniqueMultiplayerID"/> value for this instance's player.</summary>
         public long? PlayerId { get; private set; }
+
+        /// <summary>Construct a content manager to read game content files.</summary>
+        /// <remarks>This must be static because the game accesses it before the <see cref="SGame"/> constructor is called.</remarks>
+        internal static Func<IServiceProvider, string, GameContentManager> CreateContentManagerImpl;
 
 
         /*********
@@ -111,15 +161,54 @@ namespace SoGModdingAPI.Framework
         /// <param name="multiplayer">The core multiplayer logic.</param>
         /// <param name="exitGameImmediately">Immediately exit the game without saving. This should only be invoked when an irrecoverable fatal error happens that risks save corruption or game-breaking bugs.</param>
         /// <param name="onUpdating">Raised when the instance is updating its state (roughly 60 times per second).</param>
-        internal void PreInitialize(PlayerIndex playerIndex, int instanceIndex, Monitor monitor, Reflector reflection, EventManager eventManager, SInputState input, SModHooks modHooks, SMultiplayer multiplayer, Action<string> exitGameImmediately, Action onInitialized, Action<GameTime, Action> onUpdating)
+        internal void PreInitialize(PlayerIndex playerIndex, int instanceIndex, Monitor monitor, Reflector reflection, EventManager eventManager, SInputState input, SModHooks modHooks, SMultiplayer multiplayer, Action<string> exitGameImmediately, Action onInitialized, Action onContentLoaded, Action<SGame, GameTime, Action> onUpdating, Action<SGame, GameTime, Action> onPlayerInstanceUpdating)
         {
             this.OnInitialized = onInitialized;
+            this.OnContentLoaded = onContentLoaded;
+            this.OnUpdating = onUpdating;
+            this.OnPlayerInstanceUpdating = onPlayerInstanceUpdating;
         }
 
+        /*********
+        ** Protected methods
+        *********/
         protected override void Initialize()
         {
             base.Initialize();
             this.OnInitialized();
+        }
+
+        protected override void LoadContent()
+        {
+            base.LoadContent();
+
+            // Replace contInitialLoad
+            GameContentManager contentManager = CreateContentManager(this.Content.ServiceProvider, this.Content.RootDirectory);
+            FieldInfo f = typeof(Game1).GetField("contInitialLoad", BindingFlags.NonPublic | BindingFlags.Instance);
+            f.SetValue(this, contentManager);
+            RenderMaster.LoadingScreenAssets.txSplash = contentManager.Load<Texture2D>("Splash");
+
+            this.OnContentLoaded();
+        }
+
+        protected override void Update(GameTime gameTime)
+        {
+            this.OnUpdating(this, gameTime, () => base.Update(gameTime));
+            this.OnPlayerInstanceUpdating(this, gameTime, () => { });
+        }
+
+        /*********
+        ** Private methods
+        *********/
+        /// <summary>Construct a content manager to read game content files.</summary>
+        /// <param name="serviceProvider">The service provider to use to locate services.</param>
+        /// <param name="rootDirectory">The root directory to search for content.</param>
+        internal GameContentManager CreateContentManager(IServiceProvider serviceProvider, string rootDirectory)
+        {
+            if (CreateContentManagerImpl == null)
+                throw new InvalidOperationException($"The {nameof(SGame)}.{nameof(CreateContentManagerImpl)} must be set.");
+
+            return CreateContentManagerImpl(serviceProvider, rootDirectory);
         }
     }
 }

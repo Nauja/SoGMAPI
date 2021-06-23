@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using SoGModdingAPI.Framework.Commands;
 using SoGModdingAPI.Framework.Models;
 using SoGModdingAPI.Framework.ModLoading;
 using SoGModdingAPI.Internal.ConsoleWriting;
@@ -14,7 +15,7 @@ using SoGModdingAPI.Toolkit.Utilities;
 
 namespace SoGModdingAPI.Framework.Logging
 {
-    /// <summary>Manages the SMAPI console window and log file.</summary>
+    /// <summary>Manages the SoGMAPI console window and log file.</summary>
     internal class LogManager : IDisposable
     {
         /*********
@@ -46,8 +47,8 @@ namespace SoGModdingAPI.Framework.Logging
             new ReplaceLogPattern(
                 search: new Regex(@"^System\.InvalidOperationException: Steamworks is not initialized\.[\s\S]+$", RegexOptions.Compiled | RegexOptions.CultureInvariant),
                 replacement:
-#if SOGMAPI_FOR_WINDOWS
-                    "Oops! Steam achievements won't work because Steam isn't loaded. See 'Launch SMAPI through Steam or GOG Galaxy' in the install guide for more info: https://smapi.io/install.",
+#if SoGMAPI_FOR_WINDOWS
+                    "Oops! Steam achievements won't work because Steam isn't loaded. See 'Launch SoGMAPI through Steam or GOG Galaxy' in the install guide for more info: https://SoGMAPI.io/install.",
 #else
                     "Oops! Steam achievements won't work because Steam isn't loaded. You can launch the game through Steam to fix that.",
 #endif
@@ -66,7 +67,7 @@ namespace SoGModdingAPI.Framework.Logging
         /*********
         ** Accessors
         *********/
-        /// <summary>The core logger and monitor for SMAPI.</summary>
+        /// <summary>The core logger and monitor for SoGMAPI.</summary>
         public Monitor Monitor { get; }
 
         /// <summary>The core logger and monitor on behalf of the game.</summary>
@@ -81,7 +82,7 @@ namespace SoGModdingAPI.Framework.Logging
         ****/
         /// <summary>Construct an instance.</summary>
         /// <param name="logPath">The log file path to write.</param>
-        /// <param name="colorConfig">The colors to use for text written to the SMAPI console.</param>
+        /// <param name="colorConfig">The colors to use for text written to the SoGMAPI console.</param>
         /// <param name="writeToConsole">Whether to output log messages to the console.</param>
         /// <param name="isVerbose">Whether verbose logging is enabled. This enables more detailed diagnostic messages than are normally needed.</param>
         /// <param name="isDeveloperMode">Whether to enable full console output for developers.</param>
@@ -98,7 +99,7 @@ namespace SoGModdingAPI.Framework.Logging
 
             // init fields
             this.LogFile = new LogFileManager(logPath);
-            this.Monitor = this.GetMonitor("SMAPI");
+            this.Monitor = this.GetMonitor("SoGMAPI");
             this.MonitorForGame = this.GetMonitor("game");
 
             // redirect direct console output
@@ -108,14 +109,14 @@ namespace SoGModdingAPI.Framework.Logging
             Console.SetOut(output);
         }
 
-        /// <summary>Get a monitor instance derived from SMAPI's current settings.</summary>
+        /// <summary>Get a monitor instance derived from SoGMAPI's current settings.</summary>
         /// <param name="name">The name of the module which will log messages with this instance.</param>
         public Monitor GetMonitor(string name)
         {
             return this.GetMonitorImpl(name);
         }
 
-        /// <summary>Set the title of the SMAPI console window.</summary>
+        /// <summary>Set the title of the SoGMAPI console window.</summary>
         /// <param name="title">The new window title.</param>
         public void SetConsoleTitle(string title)
         {
@@ -131,6 +132,8 @@ namespace SoGModdingAPI.Framework.Logging
         {
             // prepare console
             this.Monitor.Log("Type 'help' for help, or 'help <cmd>' for a command's usage", LogLevel.Info);
+            commandManager
+                .Add(new HelpCommand(commandManager), this.Monitor);
 
             // start handling command line input
             Thread inputThread = new Thread(() =>
@@ -187,7 +190,7 @@ namespace SoGModdingAPI.Framework.Logging
             }
             catch (Exception ex)
             {
-                this.Monitor.Log($"SMAPI failed trying to track the crash details: {ex.GetLogSummary()}", LogLevel.Error);
+                this.Monitor.Log($"SoGMAPI failed trying to track the crash details: {ex.GetLogSummary()}", LogLevel.Error);
             }
         }
 
@@ -199,7 +202,7 @@ namespace SoGModdingAPI.Framework.Logging
             File.WriteAllText(Constants.UpdateMarker, $"{version}|{url}");
         }
 
-        /// <summary>Check whether SMAPI crashed or detected an update during the last session, and display them in the SMAPI console.</summary>
+        /// <summary>Check whether SoGMAPI crashed or detected an update during the last session, and display them in the SoGMAPI console.</summary>
         public void HandleMarkerFiles()
         {
             // show update alert
@@ -214,9 +217,9 @@ namespace SoGModdingAPI.Framework.Logging
                             ? rawUpdateFound[1]
                             : Constants.HomePageUrl;
 
-                        this.Monitor.Log("A new version of SMAPI was detected last time you played.", LogLevel.Error);
+                        this.Monitor.Log("A new version of SoGMAPI was detected last time you played.", LogLevel.Error);
                         this.Monitor.Log($"You can update to {updateFound}: {url}.", LogLevel.Error);
-                        this.Monitor.Log("Press any key to continue playing anyway. (This only appears when using a SMAPI beta.)", LogLevel.Info);
+                        this.Monitor.Log("Press any key to continue playing anyway. (This only appears when using a SoGMAPI beta.)", LogLevel.Info);
                         Console.ReadKey();
                     }
                 }
@@ -226,8 +229,8 @@ namespace SoGModdingAPI.Framework.Logging
             // show details if game crashed during last session
             if (File.Exists(Constants.FatalCrashMarker))
             {
-                this.Monitor.Log("The game crashed last time you played. If it happens repeatedly, see 'get help' on https://smapi.io.", LogLevel.Error);
-                this.Monitor.Log("If you ask for help, make sure to share your SMAPI log: https://smapi.io/log.", LogLevel.Error);
+                this.Monitor.Log("The game crashed last time you played. If it happens repeatedly, see 'get help' on https://SoGMAPI.io.", LogLevel.Error);
+                this.Monitor.Log("If you ask for help, make sure to share your SoGMAPI log: https://SoGMAPI.io/log.", LogLevel.Error);
                 this.Monitor.Log("Press any key to delete the crash data and continue playing.", LogLevel.Info);
                 Console.ReadKey();
                 File.Delete(Constants.FatalCrashLog);
@@ -235,7 +238,7 @@ namespace SoGModdingAPI.Framework.Logging
             }
         }
 
-        /// <summary>Log a fatal exception which prevents SMAPI from launching.</summary>
+        /// <summary>Log a fatal exception which prevents SoGMAPI from launching.</summary>
         /// <param name="exception">The exception details.</param>
         public void LogFatalLaunchError(Exception exception)
         {
@@ -249,7 +252,7 @@ namespace SoGModdingAPI.Framework.Logging
 
                 // missing content folder exception
                 case FileNotFoundException ex when ex.Message == "Couldn't find file 'C:\\Program Files (x86)\\Steam\\SteamApps\\common\\SecretsOfGrindea\\Content\\XACT\\FarmerSounds.xgs'.": // path in error is hardcoded regardless of install path
-                    this.Monitor.Log("The game can't find its Content\\XACT\\FarmerSounds.xgs file. You can usually fix this by resetting your content files (see https://smapi.io/troubleshoot#reset-content ), or by uninstalling and reinstalling the game.", LogLevel.Error);
+                    this.Monitor.Log("The game can't find its Content\\XACT\\FarmerSounds.xgs file. You can usually fix this by resetting your content files (see https://SoGMAPI.io/troubleshoot#reset-content ), or by uninstalling and reinstalling the game.", LogLevel.Error);
                     this.Monitor.Log($"Technical details: {ex.GetLogSummary()}");
                     break;
 
@@ -258,7 +261,7 @@ namespace SoGModdingAPI.Framework.Logging
                     {
                         string[] affectedPaths = PathUtilities.GetTooLongPaths(Constants.ModsPath).ToArray();
                         string message = affectedPaths.Any()
-                            ? $"SMAPI can't launch because some of your mod files exceed the maximum path length on {Constants.Platform}.\nIf you need help fixing this error, see https://smapi.io/help\n\nAffected paths:\n   {string.Join("\n   ", affectedPaths)}"
+                            ? $"SoGMAPI can't launch because some of your mod files exceed the maximum path length on {Constants.Platform}.\nIf you need help fixing this error, see https://SoGMAPI.io/help\n\nAffected paths:\n   {string.Join("\n   ", affectedPaths)}"
                             : $"The game failed to launch: {exception.GetLogSummary()}";
                         this.MonitorForGame.Log(message, LogLevel.Error);
                     }
@@ -274,9 +277,9 @@ namespace SoGModdingAPI.Framework.Logging
         /****
         ** General log output
         ****/
-        /// <summary>Log the initial header with general SMAPI and system details.</summary>
+        /// <summary>Log the initial header with general SoGMAPI and system details.</summary>
         /// <param name="modsPath">The path from which mods will be loaded.</param>
-        /// <param name="customSettings">The custom SMAPI settings.</param>
+        /// <param name="customSettings">The custom SoGMAPI settings.</param>
         public void LogIntro(string modsPath, IDictionary<string, object> customSettings)
         {
             // log platform & patches
@@ -305,13 +308,13 @@ namespace SoGModdingAPI.Framework.Logging
         {
             // developer mode
             if (settings.DeveloperMode)
-                this.Monitor.Log("You enabled developer mode, so the console will be much more verbose. You can disable it by installing the non-developer version of SMAPI.", LogLevel.Info);
+                this.Monitor.Log("You enabled developer mode, so the console will be much more verbose. You can disable it by installing the non-developer version of SoGMAPI.", LogLevel.Info);
 
             // warnings
             if (!settings.CheckForUpdates)
-                this.Monitor.Log("You disabled update checks, so you won't be notified of new SMAPI or mod updates. Running an old version of SMAPI is not recommended. You can undo this by reinstalling SMAPI.", LogLevel.Warn);
+                this.Monitor.Log("You disabled update checks, so you won't be notified of new SoGMAPI or mod updates. Running an old version of SoGMAPI is not recommended. You can undo this by reinstalling SoGMAPI.", LogLevel.Warn);
             if (!settings.RewriteMods)
-                this.Monitor.Log("You disabled rewriting broken mods, so many older mods may fail to load. You can undo this by reinstalling SMAPI.", LogLevel.Info);
+                this.Monitor.Log("You disabled rewriting broken mods, so many older mods may fail to load. You can undo this by reinstalling SoGMAPI.", LogLevel.Info);
             if (!this.Monitor.WriteToConsole)
                 this.Monitor.Log("Writing to the terminal is disabled because the --no-terminal argument was received. This usually means launching the terminal failed.", LogLevel.Warn);
 
@@ -478,7 +481,7 @@ namespace SoGModdingAPI.Framework.Logging
             {
                 // broken code
                 this.LogModWarningGroup(modsWithWarnings, ModWarning.BrokenCodeLoaded, LogLevel.Error, "Broken mods",
-                    "These mods have broken code, but you configured SMAPI to load them anyway. This may cause bugs,",
+                    "These mods have broken code, but you configured SoGMAPI to load them anyway. This may cause bugs,",
                     "errors, or crashes in-game."
                 );
 
@@ -496,7 +499,7 @@ namespace SoGModdingAPI.Framework.Logging
 
                 // unvalidated update tick
                 this.LogModWarningGroup(modsWithWarnings, ModWarning.UsesUnvalidatedUpdateTick, LogLevel.Info, "Bypassed safety checks",
-                    "These mods bypass SMAPI's normal safety checks, so they're more likely to cause errors or save",
+                    "These mods bypass SoGMAPI's normal safety checks, so they're more likely to cause errors or save",
                     "corruption. If your game has issues, try removing these first."
                 );
 
@@ -511,7 +514,7 @@ namespace SoGModdingAPI.Framework.Logging
                         blurb: new[]
                         {
                             "You enabled paranoid warnings and these mods directly access the filesystem, shells/processes, or",
-                            "SMAPI console. (This is usually legitimate and innocent usage; this warning is only useful for",
+                            "SoGMAPI console. (This is usually legitimate and innocent usage; this warning is only useful for",
                             "further investigation.)"
                         },
                         modLabel: mod =>
@@ -531,7 +534,7 @@ namespace SoGModdingAPI.Framework.Logging
 
                 // no update keys
                 this.LogModWarningGroup(modsWithWarnings, ModWarning.NoUpdateKeys, LogLevel.Debug, "No update keys",
-                    "These mods have no update keys in their manifest. SMAPI may not notify you about updates for these",
+                    "These mods have no update keys in their manifest. SoGMAPI may not notify you about updates for these",
                     "mods. Consider notifying the mod authors about this problem."
                 );
 

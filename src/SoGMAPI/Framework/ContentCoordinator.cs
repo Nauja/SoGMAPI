@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Content;
 using SoGModdingAPI.Framework.Content;
 using SoGModdingAPI.Framework.ContentManagers;
 using SoGModdingAPI.Framework.Reflection;
+using SoGModdingAPI.Metadata;
 using SoGModdingAPI.Toolkit.Serialization;
 using SoGModdingAPI.Toolkit.Utilities;
 
@@ -21,7 +22,7 @@ namespace SoGModdingAPI.Framework
         /*********
         ** Fields
         *********/
-        /// <summary>An asset key prefix for assets from SMAPI mod folders.</summary>
+        /// <summary>An asset key prefix for assets from SoGMAPI mod folders.</summary>
         private readonly string ManagedPrefix = "SoGMAPI";
 
         /// <summary>Whether to enable more aggressive memory optimizations.</summary>
@@ -30,10 +31,13 @@ namespace SoGModdingAPI.Framework
         /// <summary>Encapsulates monitoring and logging.</summary>
         private readonly IMonitor Monitor;
 
+        /// <summary>Provides metadata for core game assets.</summary>
+        private readonly CoreAssetPropagator CoreAssets;
+
         /// <summary>Simplifies access to private code.</summary>
         private readonly Reflector Reflection;
 
-        /// <summary>Encapsulates SMAPI's JSON file parsing.</summary>
+        /// <summary>Encapsulates SoGMAPI's JSON file parsing.</summary>
         private readonly JsonHelper JsonHelper;
 
         /// <summary>A callback to invoke the first time *any* game content manager loads an asset.</summary>
@@ -54,6 +58,9 @@ namespace SoGModdingAPI.Framework
 
         /// <summary>A cache of ordered tilesheet IDs used by vanilla maps.</summary>
         private readonly IDictionary<string, TilesheetReference[]> VanillaTilesheets = new Dictionary<string, TilesheetReference[]>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>An unmodified content manager which doesn't intercept assets, used to compare asset data.</summary>
+        private readonly LocalizedContentManager VanillaContentManager;
 
 
         /*********
@@ -84,7 +91,7 @@ namespace SoGModdingAPI.Framework
         /// <param name="currentCulture">The current culture for which to localize content.</param>
         /// <param name="monitor">Encapsulates monitoring and logging.</param>
         /// <param name="reflection">Simplifies access to private code.</param>
-        /// <param name="jsonHelper">Encapsulates SMAPI's JSON file parsing.</param>
+        /// <param name="jsonHelper">Encapsulates SoGMAPI's JSON file parsing.</param>
         /// <param name="onLoadingFirstAsset">A callback to invoke the first time *any* game content manager loads an asset.</param>
         /// <param name="aggressiveMemoryOptimizations">Whether to enable more aggressive memory optimizations.</param>
         public ContentCoordinator(IServiceProvider serviceProvider, string rootDirectory, CultureInfo currentCulture, IMonitor monitor, Reflector reflection, JsonHelper jsonHelper, Action onLoadingFirstAsset, bool aggressiveMemoryOptimizations)
@@ -122,6 +129,8 @@ namespace SoGModdingAPI.Framework
                 aggressiveMemoryOptimizations: aggressiveMemoryOptimizations
             );
             this.ContentManagers.Add(contentManagerForAssetPropagation);
+            this.VanillaContentManager = new LocalizedContentManager(serviceProvider, rootDirectory);
+            this.CoreAssets = new CoreAssetPropagator(this.MainContentManager, contentManagerForAssetPropagation, this.Monitor, reflection, aggressiveMemoryOptimizations);
         }
 
         /// <summary>Get a new content manager which handles reading files from the game content folder with support for interception.</summary>
@@ -132,9 +141,9 @@ namespace SoGModdingAPI.Framework
             {
                 GameContentManager manager = new GameContentManager(
                     name: name,
-                    serviceProvider: null,
-                    rootDirectory: null,
-                    currentCulture: null,
+                    serviceProvider: this.MainContentManager.ServiceProvider,
+                    rootDirectory: this.MainContentManager.RootDirectory,
+                    currentCulture: this.MainContentManager.CurrentCulture,
                     coordinator: this,
                     monitor: this.Monitor,
                     reflection: this.Reflection,
@@ -147,7 +156,7 @@ namespace SoGModdingAPI.Framework
             });
         }
 
-        /// <summary>Get a new content manager which handles reading files from a SMAPI mod folder with support for unpacked files.</summary>
+        /// <summary>Get a new content manager which handles reading files from a SoGMAPI mod folder with support for unpacked files.</summary>
         /// <param name="name">A name for the mod manager. Not guaranteed to be unique.</param>
         /// <param name="modName">The mod display name to show in errors.</param>
         /// <param name="rootDirectory">The root directory to search for content (or <c>null</c> for the default).</param>
@@ -156,7 +165,20 @@ namespace SoGModdingAPI.Framework
         {
             return this.ContentManagerLock.InWriteLock(() =>
             {
-                ModContentManager manager = new ModContentManager();
+                ModContentManager manager = new ModContentManager(
+                    name: name,
+                    gameContentManager: gameContentManager,
+                    serviceProvider: this.MainContentManager.ServiceProvider,
+                    rootDirectory: rootDirectory,
+                    modName: modName,
+                    currentCulture: this.MainContentManager.CurrentCulture,
+                    coordinator: this,
+                    monitor: this.Monitor,
+                    reflection: this.Reflection,
+                    jsonHelper: this.JsonHelper,
+                    onDisposing: this.OnDisposing,
+                    aggressiveMemoryOptimizations: this.AggressiveMemoryOptimizations
+                );
                 this.ContentManagers.Add(manager);
                 return manager;
             });
@@ -171,7 +193,13 @@ namespace SoGModdingAPI.Framework
         /// <summary>Perform any cleanup needed when the locale changes.</summary>
         public void OnLocaleChanged()
         {
-            // @todo
+            this.ContentManagerLock.InReadLock(() =>
+            {
+                foreach (IContentManager contentManager in this.ContentManagers)
+                    contentManager.OnLocaleChanged();
+
+                this.VanillaContentManager.Unload();
+            });
         }
 
         /// <summary>Clean up when the player is returning to the title screen.</summary>
@@ -179,13 +207,13 @@ namespace SoGModdingAPI.Framework
         public void OnReturningToTitleScreen()
         {
             // The game clears LocalizedContentManager.localizedAssetNames after returning to the title screen. That
-            // causes an inconsistency in the SMAPI asset cache, which leads to an edge case where assets already
+            // causes an inconsistency in the SoGMAPI asset cache, which leads to an edge case where assets already
             // provided by mods via IAssetLoader when playing in non-English are ignored.
             //
             // For example, let's say a mod provides the 'Data\mail' asset through IAssetLoader when playing in
             // Portuguese. Here's the normal load process after it's loaded:
             //   1. The game requests Data\mail.
-            //   2. SMAPI sees that it's already cached, and calls LoadRaw to bypass asset interception.
+            //   2. SoGMAPI sees that it's already cached, and calls LoadRaw to bypass asset interception.
             //   3. LoadRaw sees that there's a localized key mapping, and gets the mapped key.
             //   4. In this case "Data\mail" is mapped to "Data\mail" since it was loaded by a mod, so it loads that
             //      asset.
@@ -211,7 +239,7 @@ namespace SoGModdingAPI.Framework
             return key.StartsWith(this.ManagedPrefix);
         }
 
-        /// <summary>Parse a managed SMAPI asset key which maps to a mod folder.</summary>
+        /// <summary>Parse a managed SoGMAPI asset key which maps to a mod folder.</summary>
         /// <param name="key">The asset key.</param>
         /// <param name="contentManagerID">The unique name for the content manager which should load this asset.</param>
         /// <param name="relativePath">The relative path within the mod folder.</param>
@@ -244,11 +272,18 @@ namespace SoGModdingAPI.Framework
         /// <summary>Get a copy of an asset from a mod folder.</summary>
         /// <typeparam name="T">The asset type.</typeparam>
         /// <param name="contentManagerID">The unique name for the content manager which should load this asset.</param>
-        /// <param name="relativePath">The internal SMAPI asset key.</param>
+        /// <param name="relativePath">The internal SoGMAPI asset key.</param>
         public T LoadManagedAsset<T>(string contentManagerID, string relativePath)
         {
-            // @todo
-            return default(T);
+            // get content manager
+            IContentManager contentManager = this.ContentManagerLock.InReadLock(() =>
+                this.ContentManagers.FirstOrDefault(p => p.IsNamespaced && p.Name == contentManagerID)
+            );
+            if (contentManager == null)
+                throw new InvalidOperationException($"The '{contentManagerID}' prefix isn't handled by any mod.");
+
+            // get fresh asset
+            return contentManager.Load<T>(relativePath, this.DefaultLanguage, useCache: false);
         }
 
         /// <summary>Purge matched assets from the cache.</summary>
@@ -271,8 +306,71 @@ namespace SoGModdingAPI.Framework
         /// <returns>Returns the invalidated asset names.</returns>
         public IEnumerable<string> InvalidateCache(Func<IContentManager, string, Type, bool> predicate, bool dispose = false)
         {
-            // @todo
-            return new string[] { };
+            // invalidate cache & track removed assets
+            IDictionary<string, Type> removedAssets = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+            this.ContentManagerLock.InReadLock(() =>
+            {
+                // cached assets
+                foreach (IContentManager contentManager in this.ContentManagers)
+                {
+                    foreach (var entry in contentManager.InvalidateCache((key, type) => predicate(contentManager, key, type), dispose))
+                    {
+                        if (!removedAssets.ContainsKey(entry.Key))
+                            removedAssets[entry.Key] = entry.Value.GetType();
+                    }
+                }
+            });
+
+            // reload core game assets
+            if (removedAssets.Any())
+            {
+                // propagate changes to the game
+                this.CoreAssets.Propagate(
+                    assets: removedAssets.ToDictionary(p => p.Key, p => p.Value),
+                    ignoreWorld: Context.IsWorldFullyUnloaded,
+                    out IDictionary<string, bool> propagated,
+                    out bool updatedNpcWarps
+                );
+
+                // log summary
+                StringBuilder report = new StringBuilder();
+                {
+                    string[] invalidatedKeys = removedAssets.Keys.ToArray();
+                    string[] propagatedKeys = propagated.Where(p => p.Value).Select(p => p.Key).ToArray();
+
+                    string FormatKeyList(IEnumerable<string> keys) => string.Join(", ", keys.OrderBy(p => p, StringComparer.OrdinalIgnoreCase));
+
+                    report.AppendLine($"Invalidated {invalidatedKeys.Length} asset names ({FormatKeyList(invalidatedKeys)}).");
+                    report.AppendLine(propagated.Count > 0
+                        ? $"Propagated {propagatedKeys.Length} core assets ({FormatKeyList(propagatedKeys)})."
+                        : "Propagated 0 core assets."
+                    );
+                    if (updatedNpcWarps)
+                        report.AppendLine("Updated NPC pathfinding cache.");
+                }
+                this.Monitor.Log(report.ToString().TrimEnd());
+            }
+            else
+                this.Monitor.Log("Invalidated 0 cache entries.");
+
+            return removedAssets.Keys;
+        }
+
+        /// <summary>Get all loaded instances of an asset name.</summary>
+        /// <param name="assetName">The asset name.</param>
+        [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "This method is provided for Content Patcher.")]
+        public IEnumerable<object> GetLoadedValues(string assetName)
+        {
+            return this.ContentManagerLock.InReadLock(() =>
+            {
+                List<object> values = new List<object>();
+                foreach (IContentManager content in this.ContentManagers.Where(p => !p.IsNamespaced && p.IsLoaded(assetName, p.Language)))
+                {
+                    object value = content.Load<object>(assetName, this.Language, useCache: true);
+                    values.Add(value);
+                }
+                return values;
+            });
         }
 
         /// <summary>Dispose held resources.</summary>
@@ -305,6 +403,24 @@ namespace SoGModdingAPI.Framework
             this.ContentManagerLock.InWriteLock(() =>
                 this.ContentManagers.Remove(contentManager)
             );
+        }
+
+        /// <summary>Get a vanilla asset without interception.</summary>
+        /// <typeparam name="T">The type of asset to load.</typeparam>
+        /// <param name="assetName">The asset path relative to the loader root directory, not including the <c>.xnb</c> extension.</param>
+        /// <param name="asset">The loaded asset data.</param>
+        private bool TryLoadVanillaAsset<T>(string assetName, out T asset)
+        {
+            try
+            {
+                asset = this.VanillaContentManager.Load<T>(assetName);
+                return true;
+            }
+            catch
+            {
+                asset = default;
+                return false;
+            }
         }
     }
 }

@@ -39,6 +39,9 @@ using SoGModdingAPI.Framework.Serialization;
 using SoGModdingAPI.Framework.Networking;
 using SoGModdingAPI.Framework.Patching;
 using SoGModdingAPI.Patches;
+using SoGModdingAPI.Framework.ContentManagers;
+using SoGModdingAPI.Framework.StateTracking.Comparers;
+using static SoGModdingAPI.Framework.Input.InputState;
 
 namespace SoGModdingAPI.Framework
 {
@@ -257,7 +260,7 @@ namespace SoGModdingAPI.Framework
 
                 // override game
                 this.Multiplayer = new SMultiplayer(this.Monitor, this.EventManager, this.Toolkit.JsonHelper, this.ModRegistry, this.Reflection, this.OnModMessageReceived, this.Settings.LogNetworkTraffic);
-                // @todo SGame.CreateContentManagerImpl = this.CreateContentManager; // must be static since the game accesses it before the SGame constructor is called
+                SGame.CreateContentManagerImpl = this.CreateContentManager; // must be static since the game accesses it before the SGame constructor is called
                 this.Game = new SGame();
 
                 // must be checked here
@@ -273,8 +276,10 @@ namespace SoGModdingAPI.Framework
                     modHooks: new SModHooks(),
                     multiplayer: this.Multiplayer,
                     exitGameImmediately: this.ExitGameImmediately,
-                    onInitialized: this.OnGameInitialized,
-                    onUpdating: this.OnGameUpdating
+                    onInitialized: () => { },
+                    onContentLoaded: this.OnGameContentLoaded,
+                    onUpdating: this.OnGameUpdating,
+                    onPlayerInstanceUpdating: this.OnPlayerInstanceUpdating
                 );
 
                 // Assign Game1 instance to SoG.Program
@@ -444,15 +449,126 @@ namespace SoGModdingAPI.Framework
         /// <summary>Raised after the game finishes loading its initial content.</summary>
         private void OnGameContentLoaded()
         {
-            // @todo
+            InitializeBeforeFirstAssetLoaded();
         }
 
         /// <summary>Raised when the game is updating its state (roughly 60 times per second).</summary>
         /// <param name="gameTime">A snapshot of the game timing state.</param>
         /// <param name="runGameUpdate">Invoke the game's update logic.</param>
-        private void OnGameUpdating(GameTime gameTime, Action runGameUpdate)
+        private void OnGameUpdating(SGame instance, GameTime gameTime, Action runGameUpdate)
         {
-            // @todo
+            try
+            {
+                /*********
+                ** Safe queued work
+                *********/
+                // print warnings/alerts
+                SCore.DeprecationManager.PrintQueued();
+
+                /*********
+                ** First-tick initialization
+                *********/
+                if (!this.IsInitialized)
+                {
+                    this.IsInitialized = true;
+                    this.OnGameInitialized();
+                }
+
+                /*********
+                ** Special cases
+                *********/
+                // Abort if SoGMAPI is exiting.
+                if (this.CancellationToken.IsCancellationRequested)
+                {
+                    this.Monitor.Log("SoGMAPI shutting down: aborting update.");
+                    return;
+                }
+
+                /*********
+                ** Reload assets when interceptors are added/removed
+                *********/
+                if (this.ReloadAssetInterceptorsQueue.Any())
+                {
+                    // get unique interceptors
+                    AssetInterceptorChange[] interceptors = this.ReloadAssetInterceptorsQueue
+                        .GroupBy(p => p.Instance, new ObjectReferenceComparer<object>())
+                        .Select(p => p.First())
+                        .ToArray();
+                    this.ReloadAssetInterceptorsQueue.Clear();
+
+                    // log summary
+                    this.Monitor.Log("Invalidating cached assets for new editors & loaders...");
+                    this.Monitor.Log(
+                        "   changed: "
+                        + string.Join(", ",
+                            interceptors
+                                .GroupBy(p => p.Mod)
+                                .OrderBy(p => p.Key.DisplayName)
+                                .Select(modGroup =>
+                                    $"{modGroup.Key.DisplayName} ("
+                                    + string.Join(", ", modGroup.GroupBy(p => p.WasAdded).ToDictionary(p => p.Key, p => p.Count()).Select(p => $"{(p.Key ? "added" : "removed")} {p.Value}"))
+                                    + ")"
+                                )
+                        )
+                        + "."
+                    );
+
+                    // reload affected assets
+                    this.ContentCore.InvalidateCache(asset => interceptors.Any(p => p.CanIntercept(asset)));
+                }
+
+                /*********
+                ** Parse commands
+                *********/
+                while (this.RawCommandQueue.TryDequeue(out string rawInput))
+                {
+                    // parse command
+                    string name;
+                    string[] args;
+                    Command command;
+                    int screenId;
+                    try
+                    {
+                        if (!this.CommandManager.TryParse(rawInput, out name, out args, out command, out screenId))
+                        {
+                            this.Monitor.Log("Unknown command; type 'help' for a list of available commands.", LogLevel.Error);
+                            continue;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Monitor.Log($"Failed parsing that command:\n{ex.GetLogSummary()}", LogLevel.Error);
+                        continue;
+                    }
+
+                    // queue command for screen
+                    this.ScreenCommandQueue.GetValueForScreen(screenId).Add(Tuple.Create(command, name, args));
+                }
+
+
+                /*********
+                ** Run game update
+                *********/
+                runGameUpdate();
+
+                /*********
+                ** Reset crash timer
+                *********/
+                this.UpdateCrashTimer.Reset();
+            }
+            catch (Exception ex)
+            {
+                // log error
+                this.Monitor.Log($"An error occured in the overridden update loop: {ex.GetLogSummary()}", LogLevel.Error);
+
+                // exit if irrecoverable
+                if (!this.UpdateCrashTimer.Decrement())
+                    this.ExitGameImmediately("The game crashed when updating, and SoGMAPI was unable to recover the game.");
+            }
+            finally
+            {
+                SCore.TicksElapsed++;
+            }
         }
 
         /// <summary>Raised when the game instance for a local player is updating (once per <see cref="OnGameUpdating"/> per player).</summary>
@@ -461,7 +577,126 @@ namespace SoGModdingAPI.Framework
         /// <param name="runUpdate">Invoke the game's update logic.</param>
         private void OnPlayerInstanceUpdating(SGame instance, GameTime gameTime, Action runUpdate)
         {
-            // @todo
+            var events = this.EventManager;
+
+            try
+            {
+                /*********
+                ** Reapply overrides
+                *********/
+                if (this.JustReturnedToTitle)
+                {
+                    // @todo
+
+                    this.JustReturnedToTitle = false;
+                }
+
+                /*********
+                ** Execute commands
+                *********/
+                {
+                    var commandQueue = this.ScreenCommandQueue.Value;
+                    foreach (var entry in commandQueue)
+                    {
+                        Command command = entry.Item1;
+                        string name = entry.Item2;
+                        string[] args = entry.Item3;
+
+                        try
+                        {
+                            command.Callback.Invoke(name, args);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (command.Mod != null)
+                                command.Mod.LogAsMod($"Mod failed handling that command:\n{ex.GetLogSummary()}", LogLevel.Error);
+                            else
+                                this.Monitor.Log($"Failed handling that command:\n{ex.GetLogSummary()}", LogLevel.Error);
+                        }
+                    }
+                    commandQueue.Clear();
+                }
+
+
+                /*********
+                ** Update input
+                *********/
+                // This should *always* run, even when suppressing mod events, since the game uses
+                // this too. For example, doing this after mod event suppression would prevent the
+                // user from doing anything on the overnight shipping screen.
+                SInputState inputState = instance.Input;
+                if (this.Game.IsActive)
+                {
+                    // @todo
+                }
+
+                // @todo
+
+                /*********
+                ** Update context
+                *********/
+                // @todo
+
+                /*********
+                ** Update watchers
+                **   (Watchers need to be updated, checked, and reset in one go so we can detect any changes mods make in event handlers.)
+                *********/
+                // @todo
+
+                /*********
+                ** Pre-update events
+                *********/
+                {
+                    /*********
+                    ** Game update
+                    *********/
+                    // game launched (not raised for secondary players in split-screen mode)
+                    if (instance.IsFirstTick && !Context.IsGameLaunched)
+                    {
+                        Context.IsGameLaunched = true;
+                        events.GameLaunched.Raise(new GameLaunchedEventArgs());
+                    }
+                }
+
+                /*********
+                ** Game update tick
+                *********/
+                {
+                    bool isOneSecond = SCore.TicksElapsed % 60 == 0;
+                    events.UnvalidatedUpdateTicking.RaiseEmpty();
+                    events.UpdateTicking.RaiseEmpty();
+                    if (isOneSecond)
+                        events.OneSecondUpdateTicking.RaiseEmpty();
+                    try
+                    {
+                        // @todo instance.Input.ApplyOverrides(); // if mods added any new overrides since the update, process them now
+                        runUpdate();
+                    }
+                    catch (Exception ex)
+                    {
+                        this.LogManager.MonitorForGame.Log($"An error occurred in the base update loop: {ex.GetLogSummary()}", LogLevel.Error);
+                    }
+
+                    events.UnvalidatedUpdateTicked.RaiseEmpty();
+                    events.UpdateTicked.RaiseEmpty();
+                    if (isOneSecond)
+                        events.OneSecondUpdateTicked.RaiseEmpty();
+                }
+
+                /*********
+                ** Update events
+                *********/
+                this.UpdateCrashTimer.Reset();
+            }
+            catch (Exception ex)
+            {
+                // log error
+                this.Monitor.Log($"An error occurred in the overridden update loop: {ex.GetLogSummary()}", LogLevel.Error);
+
+                // exit if irrecoverable
+                if (!this.UpdateCrashTimer.Decrement())
+                    this.ExitGameImmediately("The game crashed when updating, and SMAPI was unable to recover the game.");
+            }
         }
 
         /// <summary>Handle the game changing locale.</summary>
@@ -547,7 +782,7 @@ namespace SoGModdingAPI.Framework
         /// <summary>Constructor a content manager to read game content files.</summary>
         /// <param name="serviceProvider">The service provider to use to locate services.</param>
         /// <param name="rootDirectory">The root directory to search for content.</param>
-        private LocalizedContentManager CreateContentManager(IServiceProvider serviceProvider, string rootDirectory)
+        private GameContentManager CreateContentManager(IServiceProvider serviceProvider, string rootDirectory)
         {
             // Game1._temporaryContent initializing from SGame constructor
             if (this.ContentCore == null)

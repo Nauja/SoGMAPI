@@ -158,10 +158,15 @@ namespace SoGModdingAPI
         internal static string ModsPath { get; set; }
 
         /// <summary>The game's current semantic version.</summary>
-        internal static ISemanticVersion GameVersion
+        public static ISemanticVersion GameVersion
         {
             get;
-            set;
+            private set;
+        }
+
+        internal static void SetGameVersion(ISemanticVersion version)
+        {
+            GameVersion = version;
         }
 
         /// <summary>The target game platform as a SMAPI toolkit constant.</summary>

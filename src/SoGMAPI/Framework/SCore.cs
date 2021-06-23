@@ -200,7 +200,7 @@ namespace SoGModdingAPI.Framework
             // Fill patch notes to generate version number
             MethodInfo m = typeof(Game1).GetMethod("_Menu_FillPatchNotes", BindingFlags.NonPublic | BindingFlags.Instance);
             m.Invoke(this.Game, new object[] { });
-            Constants.GameVersion = new SemanticVersion(GlobalData.MainMenu.PatchNoteMenu.lxNotes[0].sPatchName);
+            Constants.SetGameVersion(new SemanticVersion(GlobalData.MainMenu.PatchNoteMenu.lxNotes[0].sPatchName));
             GlobalData.MainMenu.PatchNoteMenu.lxNotes.Clear();
 
             // min version
@@ -380,7 +380,7 @@ namespace SoGModdingAPI.Framework
         {
             if (this.CancellationToken.IsCancellationRequested)
             {
-                this.Monitor.Log("SMAPI shutting down: aborting initialization.", LogLevel.Warn);
+                this.Monitor.Log("SoGMAPI shutting down: aborting initialization.", LogLevel.Warn);
                 return;
             }
 

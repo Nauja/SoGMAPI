@@ -8,7 +8,7 @@ using SoG;
 #pragma warning disable 809 // obsolete override of non-obsolete method (this is deliberate)
 namespace SoGModdingAPI.Framework.Input
 {
-    internal class InputState
+    public class InputState
     {
         public virtual void Update() { }
         public virtual GamePadState GetGamePadState()
@@ -29,7 +29,7 @@ namespace SoGModdingAPI.Framework.Input
         }
 
         /// <summary>Manages the game's input state.</summary>
-        internal sealed class SInputState : InputState
+        public sealed class SInputState : InputState
         {
             /*********
             ** Accessors

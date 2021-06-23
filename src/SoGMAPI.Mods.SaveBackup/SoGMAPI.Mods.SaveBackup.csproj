@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SaveBackup</AssemblyName>
+    <RootNamespace>SoGModdingAPI.Mods.SaveBackup</RootNamespace>
+    <TargetFramework>net45</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <Import Project="..\..\build\common.targets" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\SoGMAPI\SoGMAPI.csproj" Private="False" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="$(GameExecutableName)" HintPath="$(GamePath)\$(GameExecutableName).exe" Private="False" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Import Project="..\SoGMAPI.Internal\SoGMAPI.Internal.projitems" Label="Shared" />
+</Project>

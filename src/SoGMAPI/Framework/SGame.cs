@@ -27,7 +27,7 @@ namespace SoGModdingAPI.Framework
     }
 
     /// <summary>SMAPI's extension of the game's core <see cref="Game1"/>, used to inject events.</summary>
-    internal class SGame : Game1
+    public class SGame : Game1
     {
         public static SGame Instance
         {
@@ -111,7 +111,7 @@ namespace SoGModdingAPI.Framework
         /// <param name="multiplayer">The core multiplayer logic.</param>
         /// <param name="exitGameImmediately">Immediately exit the game without saving. This should only be invoked when an irrecoverable fatal error happens that risks save corruption or game-breaking bugs.</param>
         /// <param name="onUpdating">Raised when the instance is updating its state (roughly 60 times per second).</param>
-        public void PreInitialize(PlayerIndex playerIndex, int instanceIndex, Monitor monitor, Reflector reflection, EventManager eventManager, SInputState input, SModHooks modHooks, SMultiplayer multiplayer, Action<string> exitGameImmediately, Action onInitialized, Action<GameTime, Action> onUpdating)
+        internal void PreInitialize(PlayerIndex playerIndex, int instanceIndex, Monitor monitor, Reflector reflection, EventManager eventManager, SInputState input, SModHooks modHooks, SMultiplayer multiplayer, Action<string> exitGameImmediately, Action onInitialized, Action<GameTime, Action> onUpdating)
         {
             this.OnInitialized = onInitialized;
         }

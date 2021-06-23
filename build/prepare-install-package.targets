@@ -47,7 +47,6 @@
     <Copy SourceFiles="$(SogmapiBin)\0Harmony.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy SourceFiles="$(SogmapiBin)\Mono.Cecil.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy SourceFiles="$(SogmapiBin)\Newtonsoft.Json.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
-    <Copy SourceFiles="$(SogmapiBin)\TMXTile.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy SourceFiles="$(SogmapiBin)\SoGMAPI.config.json" DestinationFiles="$(PackagePath)\bundle\sogmapi-internal\config.json" />
     <Copy SourceFiles="$(SogmapiBin)\SoGMAPI.metadata.json" DestinationFiles="$(PackagePath)\bundle\sogmapi-internal\metadata.json" />
     <Copy SourceFiles="$(ToolkitBin)\SoGMAPI.Toolkit.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />

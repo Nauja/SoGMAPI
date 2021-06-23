@@ -1,0 +1,9 @@
+{
+    "Name": "Console Commands",
+    "Author": "SoGMAPI",
+    "Version": "1.0.0",
+    "Description": "Adds SoGMAPI console commands that let you manipulate the game.",
+    "UniqueID": "SoGMAPI.ConsoleCommands",
+    "EntryDll": "ConsoleCommands.dll",
+    "MinimumApiVersion": "0.1.0"
+}

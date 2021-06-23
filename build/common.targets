@@ -44,7 +44,7 @@
     <Copy SourceFiles="@(TranslationFiles)" DestinationFolder="$(GamePath)\sogmapi-internal\i18n" />
   </Target>
 
-  <Target Name="CopyDefaultMods" Condition="'$(MSBuildProjectName)' == 'SoGMAPI.Mods.ConsoleCommands' OR '$(MSBuildProjectName)' == 'SoGMAPI.Mods.ErrorHandler' OR '$(MSBuildProjectName)' == 'SoGMAPI.Mods.SaveBackup'">
+  <Target Name="CopyDefaultMods" Condition="'$(MSBuildProjectName)' == 'SoGMAPI.Mods.ConsoleCommands' OR '$(MSBuildProjectName)' == 'SoGMAPI.Mods.SaveBackup'">
     <ItemGroup>
       <TranslationFiles Include="$(TargetDir)\i18n\*.json" />
     </ItemGroup>

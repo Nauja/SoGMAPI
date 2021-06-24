@@ -32,11 +32,11 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
                 case "player":
                     if (!string.IsNullOrWhiteSpace(name))
                     {
-                        player.sNetworkNickname = args[1];
-                        monitor.Log($"OK, your name is now {player.sNetworkNickname}.", LogLevel.Info);
+                        player.sSaveableName = args[1];
+                        monitor.Log($"OK, your name is now {player.sSaveableName}.", LogLevel.Info);
                     }
                     else
-                        monitor.Log($"Your name is currently '{player.sNetworkNickname}'. Type 'help player_setname' for usage.", LogLevel.Info);
+                        monitor.Log($"Your name is currently '{player.sSaveableName}'. Type 'help player_setname' for usage.", LogLevel.Info);
                     break;
 
             }

@@ -62,7 +62,7 @@ namespace SoGModdingAPI
         internal static int? LogScreenId { get; set; }
 
         /// <summary>SMAPI's current raw semantic version.</summary>
-        internal static string RawApiVersion = "0.1.1";
+        internal static string RawApiVersion = "0.1.2";
     }
 
     /// <summary>Contains SMAPI's constants and assumptions.</summary>

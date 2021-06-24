@@ -130,7 +130,7 @@ namespace SoGModdingAPI.Framework
         private readonly ConcurrentQueue<string> RawCommandQueue = new ConcurrentQueue<string>();
 
         /// <summary>A list of commands to execute on each screen.</summary>
-        private readonly PerScreen<List<Tuple<Command, string, string[]>>> ScreenCommandQueue = new PerScreen<List<Tuple<Command, string, string[]>>>(() => new List<Tuple<Command, string, string[]>>());
+        private readonly PerScreen<List<Tuple<Command, string, string, string[]>>> ScreenCommandQueue = new PerScreen<List<Tuple<Command, string, string, string[]>>>(() => new List<Tuple<Command, string, string, string[]>>());
 
 
         /*********
@@ -295,7 +295,7 @@ namespace SoGModdingAPI.Framework
 
                 // apply game patches
                 new GamePatcher(this.Monitor).Apply(
-                    new LoadContextPatch(this.Reflection, this.OnLoadStageChanged)
+                    new ChatPatch(this.Reflection)
                 );
 
                 // add exit handler
@@ -522,27 +522,7 @@ namespace SoGModdingAPI.Framework
                 *********/
                 while (this.RawCommandQueue.TryDequeue(out string rawInput))
                 {
-                    // parse command
-                    string name;
-                    string[] args;
-                    Command command;
-                    int screenId;
-                    try
-                    {
-                        if (!this.CommandManager.TryParse(rawInput, out name, out args, out command, out screenId))
-                        {
-                            this.Monitor.Log("Unknown command; type 'help' for a list of available commands.", LogLevel.Error);
-                            continue;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        this.Monitor.Log($"Failed parsing that command:\n{ex.GetLogSummary()}", LogLevel.Error);
-                        continue;
-                    }
-
-                    // queue command for screen
-                    this.ScreenCommandQueue.GetValueForScreen(screenId).Add(Tuple.Create(command, name, args));
+                    HandleCommand(rawInput);
                 }
 
 
@@ -569,6 +549,32 @@ namespace SoGModdingAPI.Framework
             {
                 SCore.TicksElapsed++;
             }
+        }
+
+        public bool HandleCommand(string rawInput)
+        {
+            // parse command
+            string name;
+            string[] args;
+            Command command;
+            int screenId;
+            try
+            {
+                if (!this.CommandManager.TryParse(rawInput, out name, out args, out command, out screenId))
+                {
+                    this.Monitor.Log("Unknown command; type 'help' for a list of available commands.", LogLevel.Error);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Monitor.Log($"Failed parsing that command:\n{ex.GetLogSummary()}", LogLevel.Error);
+                return false;
+            }
+
+            // queue command for screen
+            this.ScreenCommandQueue.GetValueForScreen(screenId).Add(Tuple.Create(command, rawInput, name, args));
+            return true;
         }
 
         /// <summary>Raised when the game instance for a local player is updating (once per <see cref="OnGameUpdating"/> per player).</summary>
@@ -599,8 +605,12 @@ namespace SoGModdingAPI.Framework
                     foreach (var entry in commandQueue)
                     {
                         Command command = entry.Item1;
-                        string name = entry.Item2;
-                        string[] args = entry.Item3;
+                        string rawInput = entry.Item2;
+                        string name = entry.Item3;
+                        string[] args = entry.Item4;
+
+                        // Add command to chat
+                        CAS.AddChatMessage($"/{rawInput}");
 
                         try
                         {

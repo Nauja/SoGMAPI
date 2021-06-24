@@ -5,5 +5,5 @@
     "Description": "Adds SoGMAPI console commands that let you manipulate the game.",
     "UniqueID": "SoGMAPI.ConsoleCommands",
     "EntryDll": "ConsoleCommands.dll",
-    "MinimumApiVersion": "0.1.1"
+    "MinimumApiVersion": "0.1.2"
 }

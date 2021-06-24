@@ -37,9 +37,5 @@
     <None Update="manifest.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Framework\Commands\World\" />
-  </ItemGroup>
-
   <Import Project="..\SoGMAPI.Internal\SoGMAPI.Internal.projitems" Label="Shared" />
 </Project>

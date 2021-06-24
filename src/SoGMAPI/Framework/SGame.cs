@@ -18,9 +18,27 @@ using SoGModdingAPI.Framework.ContentManagers;
 using Microsoft.Xna.Framework.Content;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SoGModdingAPI.Framework
 {
+    public static class MyExtensions
+    {
+        public static IEntity FindEntityByTag(this EntityMaster entityMaster, string tag)
+        {
+            return entityMaster.lxActiveEnemies.First(e => e.sTag == tag);
+        }
+
+        public static ChatbubbleRendercomponent AddBubble(this Game1 game, TransformComponent transform, string content, int popupTimer = 180)
+        {
+            ChatbubbleRendercomponent chatbubbleRendercomponent = new ChatbubbleRendercomponent(ChatbubbleRendercomponent.ChatTileSet.Regular, transform, content);
+            game.xRenderMaster.RegisterGUIRenderComponent(chatbubbleRendercomponent, true);
+            chatbubbleRendercomponent.xBubble.iPopupTimer = popupTimer;
+            chatbubbleRendercomponent.RefreshBubble();
+            return chatbubbleRendercomponent;
+        }
+    }
+
     internal class LocalizedContentManager : ContentManager
     {
         public static IDictionary<string, string> localizedAssetNames => new Dictionary<string, string>();

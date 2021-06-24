@@ -5,5 +5,5 @@
     "Description": "Automatically backs up all your saves once per day into its folder.",
     "UniqueID": "SoGMAPI.SaveBackup",
     "EntryDll": "SaveBackup.dll",
-    "MinimumApiVersion": "0.1.1"
+    "MinimumApiVersion": "0.1.2"
 }

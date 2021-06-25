@@ -39,8 +39,8 @@ Have questions? You can ask me on GitHub or send me an email.
 
 ### For modders
 * [Modding documentation (SMAPI)](https://smapi.io/docs)
-* [Mod build configuration (SMAPI)](technical/mod-package.md)
+* [Mod build configuration](technical/mod-package.md)
 * [Release notes](release-notes.md)
 
 ### For SoGMAPI developers
-* [Technical docs (SMAPI)](technical/sogmapi.md)
+* [Technical docs](technical/sogmapi.md)

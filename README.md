@@ -13,41 +13,46 @@ This means that you should not use it in a real game and that you should always 
 
 I will not be responsible if you lose your saves.
 
-## Latest release
+**SMAPI** is an open-source modding framework and API for [Stardew Valley](https://stardewvalley.net/)
+that lets you play the game with mods. It's safely installed alongside the game's executable, and
+doesn't change any of your game files. It serves seven main purposes:
 
-The badge above indicates the latest version of this repository.
+## Features
 
-Here are the latest versions of:
-* [Launcher: 0.1a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.675a/Launcher/Launcher.zip)
-* [ModLoader: 0.675a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.675a/ModLoader/ModLoader.zip)
-* [Modding API: 0.675a](https://github.com/Nauja/SoGModLoader/tree/master/Releases/0.675a/API/)
+1. **Load mods into the game.**  
+   _SoGMAPI loads mods when the game is starting up so they can interact with it. (Code mods aren't
+   possible without SoGMAPI to load them.)_
 
-## How it works
+2. **Provide APIs and events for mods.**  
+   _SoGMAPI provides APIs and events which let mods interact with the game in ways they otherwise
+   couldn't._
 
-The official game executable **Secrets Of Grindea.exe** is modified to include the ModLoader. The ModLoader is a bridge between the game source code and the modding API. It takes care of loading and initialiazing mods installed in the **Mods** subfolder when the game starts.
+3. **Provide update checks.**  
+   _SoGMAPI automatically checks for new versions of your installed mods, and notifies you when any
+   are available._
 
-For each [official version of the game](http://secretsofgrindea.com/forum/index.php?forums/patch-notes.10/) I will upload here a modified version of the game executable with the injected ModLoader. You can manually replace your game executable by the modified one, but it is recommended to use the launcher as it will automatically install the correct version and keep you up to date.
+4. **Provide compatibility checks.**  
+   _SoGMAPI automatically detects outdated or broken code in mods, and safely disables them before
+   they cause problems._
 
-This repository contains:
-* The modified game executable: containing the ModLoader.
-* A launcher: allowing to install the ModLoader and manage installed mods.
-* A modding API: provide an interface to mod the game.
-* Samples: show how to use the modding API to create mods.
+5. **Back up your save files.**  
+   _SoGMAPI automatically creates a daily backup of your saves and keeps ten backups (via the bundled
+   Save Backup mod), in case something goes wrong._
 
-This repository won't contain:
-* The game source code.
-* The ModLoader source code.
+## Documentation
 
-Please note that the modified game executable is not and will never be a cracked version of the game. To play it you still have to buy the game on steam.
+Most of the documentation available for [SMAPI](https://github.com/Pathoschild/SMAPI) should also work for
+SoGMAPI as this is a fork with the same structure, same installer and same modding API.
 
-## Guides
-
-List of most useful guides available on the wiki.
+Have questions? You can ask me on GitHub or send me an email. 
 
 ### For players
-
-* [Using the launcher]()
+* [Player guide (SMAPI)](https://stardewvalleywiki.com/Modding:Player_Guide)
 
 ### For modders
+* [Modding documentation (SMAPI)](https://smapi.io/docs)
+* [Mod build configuration (SMAPI)](https://github.com/Pathoschild/SMAPI/blob/develop/docs/technical/mod-package.md)
+* [Release notes](release-notes.md)
 
-* [Creating your first mod]()
+### For SoGMAPI developers
+* [Technical docs (SMAPI)](docs/technical/sogmapi.md)

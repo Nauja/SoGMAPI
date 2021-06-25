@@ -365,10 +365,3 @@ The NuGet package is generated automatically in `SoGModdingAPI.ModBuildConfig`'s
 when you compile it.
 
 ## Release notes
-### 0.1.1
-Released 23 June 2021.
-
-* Initial release.
-* Forked from SMAPI
-* Can launch game
-* Can do simple console commands

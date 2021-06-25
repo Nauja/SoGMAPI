@@ -5,18 +5,6 @@
 
 SoGMAPI is an open-source modding framework and API for [Secret of Grindea](http://store.steampowered.com/app/269770/), forked from [SMAPI](https://github.com/Pathoschild/SMAPI), that lets you play the game with mods. It's safely installed alongside the game's executable, and doesn't change any of your game files.
 
-## Disclaimer
-
-**Everything here is in alpha and should be treated as such.**
-
-This means that you should not use it in a real game and that you should always make a backup of your saves as they may become corrupted or incompatible with the game at any time. Plus, at the moment it may be very unstable and break some features or the game.
-
-I will not be responsible if you lose your saves.
-
-**SMAPI** is an open-source modding framework and API for [Stardew Valley](https://stardewvalley.net/)
-that lets you play the game with mods. It's safely installed alongside the game's executable, and
-doesn't change any of your game files. It serves seven main purposes:
-
 ## Features
 
 1. **Load mods into the game.**  

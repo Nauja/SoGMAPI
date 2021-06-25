@@ -1,8 +1,5 @@
 # Secrets of Grindea Modding API
 
-[![Release](https://img.shields.io/badge/release-v0.1a-blue.svg)]()
-[![Status](https://img.shields.io/badge/status-alpha-red.svg)]()
-
 SoGMAPI is an open-source modding framework and API for [Secret of Grindea](http://store.steampowered.com/app/269770/), forked from [SMAPI](https://github.com/Pathoschild/SMAPI), that lets you play the game with mods. It's safely installed alongside the game's executable, and doesn't change any of your game files.
 
 ## Features

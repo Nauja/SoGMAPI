@@ -15,8 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SoGMAPI.Mods.ConsoleCommand
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SoGMAPI.Mods.SaveBackup", "SoGMAPI.Mods.SaveBackup\SoGMAPI.Mods.SaveBackup.csproj", "{1A0A85E1-AC70-41FF-843D-622AB98274A6}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SoGMAPI.Installer", "SoGMAPI.Installer\SoGMAPI.Installer.csproj", "{0707BB7E-F0EE-4B97-8058-027A085FE61A}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		SoGMAPI.Internal\SoGMAPI.Internal.projitems*{0707bb7e-f0ee-4b97-8058-027a085fe61a}*SharedItemsImports = 5
 		SoGMAPI.Internal\SoGMAPI.Internal.projitems*{1a0a85e1-ac70-41ff-843d-622ab98274a6}*SharedItemsImports = 5
 		SoGMAPI.Internal\SoGMAPI.Internal.projitems*{5200cac6-a4c0-4742-9c61-403ed83df98e}*SharedItemsImports = 5
 		SoGMAPI.Internal\SoGMAPI.Internal.projitems*{85208f8d-6fd1-4531-be05-7142490f59fe}*SharedItemsImports = 13
@@ -91,6 +94,18 @@ Global
 		{1A0A85E1-AC70-41FF-843D-622AB98274A6}.Release|x64.Build.0 = Release|Any CPU
 		{1A0A85E1-AC70-41FF-843D-622AB98274A6}.Release|x86.ActiveCfg = Release|Any CPU
 		{1A0A85E1-AC70-41FF-843D-622AB98274A6}.Release|x86.Build.0 = Release|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Debug|x64.Build.0 = Debug|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Debug|x86.Build.0 = Debug|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Release|x64.ActiveCfg = Release|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Release|x64.Build.0 = Release|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Release|x86.ActiveCfg = Release|Any CPU
+		{0707BB7E-F0EE-4B97-8058-027A085FE61A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>SoGModdingAPI.Installer</RootNamespace>
+    <Description>The SoGMAPI installer for players.</Description>
+    <TargetFramework>net45</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SoGMAPI.Toolkit\SoGMAPI.Toolkit.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="assets\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Import Project="..\SoGMAPI.Internal\SoGMAPI.Internal.projitems" Label="Shared" />
+  <Import Project="..\..\build\common.targets" />
+  <Import Project="..\..\build\prepare-install-package.targets" />
+</Project>

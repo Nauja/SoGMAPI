@@ -40,9 +40,9 @@
     <Copy Condition="$(PlatformName) == 'windows'" SourceFiles="$(TargetDir)\assets\windows-exe-config.xml" DestinationFiles="$(PackagePath)\internal\$(PlatformName)-install.exe.config" />
 
     <!--copy bundle files-->
-    <Copy SourceFiles="$(SogmapiBin)\SecretsOfGrindeaModdingAPI.exe" DestinationFolder="$(PackagePath)\bundle" />
-    <Copy SourceFiles="$(SogmapiBin)\SecretsOfGrindeaModdingAPI.pdb" DestinationFolder="$(PackagePath)\bundle" />
-    <Copy SourceFiles="$(SogmapiBin)\SecretsOfGrindeaModdingAPI.xml" DestinationFolder="$(PackagePath)\bundle" />
+    <Copy SourceFiles="$(SogmapiBin)\SoGModdingAPI.exe" DestinationFolder="$(PackagePath)\bundle" />
+    <Copy SourceFiles="$(SogmapiBin)\SoGModdingAPI.pdb" DestinationFolder="$(PackagePath)\bundle" />
+    <Copy SourceFiles="$(SogmapiBin)\SoGModdingAPI.xml" DestinationFolder="$(PackagePath)\bundle" />
     <Copy SourceFiles="$(SogmapiBin)\steam_appid.txt" DestinationFolder="$(PackagePath)\bundle" />
     <Copy SourceFiles="$(SogmapiBin)\0Harmony.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy SourceFiles="$(SogmapiBin)\Mono.Cecil.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
@@ -56,19 +56,15 @@
     <Copy SourceFiles="$(ToolkitBin)\SoGMAPI.Toolkit.CoreInterfaces.pdb" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy SourceFiles="$(ToolkitBin)\SoGMAPI.Toolkit.CoreInterfaces.xml" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy SourceFiles="@(TranslationFiles)" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal\i18n" />
-    <Copy Condition="$(PlatformName) == 'unix'" SourceFiles="$(TargetDir)\assets\unix-launcher.sh" DestinationFiles="$(PackagePath)\bundle\SecretsOfGrindeaModdingAPI" />
+    <Copy Condition="$(PlatformName) == 'unix'" SourceFiles="$(TargetDir)\assets\unix-launcher.sh" DestinationFiles="$(PackagePath)\bundle\SoGModdingAPI" />
     <Copy Condition="$(PlatformName) == 'unix'" SourceFiles="$(SogmapiBin)\System.Numerics.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
     <Copy Condition="$(PlatformName) == 'unix'" SourceFiles="$(SogmapiBin)\System.Runtime.Caching.dll" DestinationFolder="$(PackagePath)\bundle\sogmapi-internal" />
-    <Copy Condition="$(PlatformName) == 'windows'" SourceFiles="$(TargetDir)\assets\windows-exe-config.xml" DestinationFiles="$(PackagePath)\bundle\SecretsOfGrindeaModdingAPI.exe.config" />
+    <Copy Condition="$(PlatformName) == 'windows'" SourceFiles="$(TargetDir)\assets\windows-exe-config.xml" DestinationFiles="$(PackagePath)\bundle\SoGModdingAPI.exe.config" />
 
     <!--copy bundled mods-->
     <Copy SourceFiles="$(ConsoleCommandsBin)\ConsoleCommands.dll" DestinationFolder="$(PackagePath)\bundle\Mods\ConsoleCommands" />
     <Copy SourceFiles="$(ConsoleCommandsBin)\ConsoleCommands.pdb" DestinationFolder="$(PackagePath)\bundle\Mods\ConsoleCommands" />
     <Copy SourceFiles="$(ConsoleCommandsBin)\manifest.json" DestinationFolder="$(PackagePath)\bundle\Mods\ConsoleCommands" />
-    <Copy SourceFiles="$(ErrorHandlerBin)\ErrorHandler.dll" DestinationFolder="$(PackagePath)\bundle\Mods\ErrorHandler" />
-    <Copy SourceFiles="$(ErrorHandlerBin)\ErrorHandler.pdb" DestinationFolder="$(PackagePath)\bundle\Mods\ErrorHandler" />
-    <Copy SourceFiles="$(ErrorHandlerBin)\manifest.json" DestinationFolder="$(PackagePath)\bundle\Mods\ErrorHandler" />
-    <Copy SourceFiles="@(ErrorHandlerTranslationFiles)" DestinationFolder="$(PackagePath)\bundle\Mods\ErrorHandler\i18n" />
     <Copy SourceFiles="$(SaveBackupBin)\SaveBackup.dll" DestinationFolder="$(PackagePath)\bundle\Mods\SaveBackup" />
     <Copy SourceFiles="$(SaveBackupBin)\SaveBackup.pdb" DestinationFolder="$(PackagePath)\bundle\Mods\SaveBackup" />
     <Copy SourceFiles="$(SaveBackupBin)\manifest.json" DestinationFolder="$(PackagePath)\bundle\Mods\SaveBackup" />

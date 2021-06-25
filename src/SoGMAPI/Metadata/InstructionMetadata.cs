@@ -16,7 +16,7 @@ namespace SoGModdingAPI.Metadata
         *********/
         /// <summary>The assembly names to which to heuristically detect broken references.</summary>
         /// <remarks>The current implementation only works correctly with assemblies that should always be present.</remarks>
-        private readonly string[] ValidateReferencesToAssemblies = { "SecretsOfGrindeaModdingAPI", "Secrets Of Grindea", "SecretsOfGrindea" };
+        private readonly string[] ValidateReferencesToAssemblies = { "SoGModdingAPI", "SoG", "Secrets Of Grindea", "SecretsOfGrindea" };
 
 
         /*********

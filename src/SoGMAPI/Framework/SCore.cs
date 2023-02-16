@@ -116,6 +116,9 @@ namespace SoGModdingAPI.Framework
         /// <summary>Whether post-game-startup initialization has been performed.</summary>
         private bool IsInitialized;
 
+        /// <summary>Whether InitializeBeforeFirstAssetLoaded has been called already.</summary>
+        private bool IsFirstAssetLoaded;
+
         /// <summary>Whether the player just returned to the title screen.</summary>
         public bool JustReturnedToTitle { get; set; }
 
@@ -388,6 +391,13 @@ namespace SoGModdingAPI.Framework
                 this.Monitor.Log("SoGMAPI shutting down: aborting initialization.", LogLevel.Warn);
                 return;
             }
+
+            if (this.IsFirstAssetLoaded)
+            {
+                return;
+            }
+
+            IsFirstAssetLoaded = true;
 
             // load mod data
             ModToolkit toolkit = new ModToolkit();

@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Xna.Framework.Graphics;
+using SoG;
 
 namespace SoGModdingAPI.Events
 {
@@ -10,6 +11,6 @@ namespace SoGModdingAPI.Events
         ** Accessors
         *********/
         /// <summary>The sprite batch being drawn. Add anything you want to appear on-screen to this sprite batch.</summary>
-        public SpriteBatch SpriteBatch => null;
+        public SpriteBatch SpriteBatch => Game1.spriteBatch;
     }
 }

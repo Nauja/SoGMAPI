@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands
@@ -52,7 +53,7 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands
         /// <param name="value">The parsed value.</param>
         /// <param name="required">Whether to show an error if the argument is missing.</param>
         /// <param name="oneOf">Require that the argument match one of the given values (case-insensitive).</param>
-        public bool TryGet(int index, string name, out string value, bool required = true, string[] oneOf = null)
+        public bool TryGet(int index, string name, [NotNullWhen(true)] out string? value, bool required = true, string[]? oneOf = null)
         {
             value = null;
 
@@ -86,7 +87,7 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands
             value = 0;
 
             // get argument
-            if (!this.TryGet(index, name, out string raw, required))
+            if (!this.TryGet(index, name, out string? raw, required))
                 return false;
 
             // parse

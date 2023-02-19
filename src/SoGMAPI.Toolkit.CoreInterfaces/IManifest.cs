@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace SoGModdingAPI
 {
-    /// <summary>A manifest which describes a mod for SMAPI.</summary>
+    /// <summary>A manifest which describes a mod for SoGMAPI.</summary>
     public interface IManifest
     {
         /*********
@@ -20,17 +20,17 @@ namespace SoGModdingAPI
         /// <summary>The mod version.</summary>
         ISemanticVersion Version { get; }
 
-        /// <summary>The minimum SMAPI version required by this mod, if any.</summary>
-        ISemanticVersion MinimumApiVersion { get; }
+        /// <summary>The minimum SoGMAPI version required by this mod, if any.</summary>
+        ISemanticVersion? MinimumApiVersion { get; }
 
         /// <summary>The unique mod ID.</summary>
         string UniqueID { get; }
 
         /// <summary>The name of the DLL in the directory that has the <c>Entry</c> method. Mutually exclusive with <see cref="ContentPackFor"/>.</summary>
-        string EntryDll { get; }
+        string? EntryDll { get; }
 
         /// <summary>The mod which will read this as a content pack. Mutually exclusive with <see cref="EntryDll"/>.</summary>
-        IManifestContentPackFor ContentPackFor { get; }
+        IManifestContentPackFor? ContentPackFor { get; }
 
         /// <summary>The other mods that must be loaded before this mod.</summary>
         IManifestDependency[] Dependencies { get; }

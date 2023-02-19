@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>ErrorHandler</AssemblyName>
+    <RootNamespace>SoGModdingAPI.Mods.ErrorHandler</RootNamespace>
+    <TargetFramework>net5.0</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <Import Project="..\..\build\common.targets" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\SoGMAPI\SoGMAPI.csproj" Private="False" />
+    <Reference Include="..\..\build\0Harmony.dll" Private="False" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="..\..\build\MonoGame.Framework.dll" Private="False" />
+    <Reference Include="SoG" HintPath="$(GamePath)\Secrets Of Grindea.exe" Private="False" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="i18n\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="manifest.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

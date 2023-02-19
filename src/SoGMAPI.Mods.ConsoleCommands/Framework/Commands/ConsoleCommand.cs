@@ -100,7 +100,7 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands
             List<string[]> lines = new List<string[]>(rows.Length + 2)
             {
                 header,
-                header.Select((value, i) => "".PadRight(widths[i], '-')).ToArray()
+                header.Select((_, i) => "".PadRight(widths[i], '-')).ToArray()
             };
             lines.AddRange(rows);
 

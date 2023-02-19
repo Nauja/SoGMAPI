@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using SoG;
 
 namespace SoGModdingAPI
 {
@@ -8,11 +9,11 @@ namespace SoGModdingAPI
         /*********
         ** Accessors
         *********/
-        /// <summary>The current locale.</summary>
+        /// <summary>The current locale code like <c>fr-FR</c>, or an empty string for English.</summary>
         string Locale { get; }
 
         /// <summary>The game's current language code.</summary>
-        // @todo LocalizedContentManager.LanguageCode LocaleEnum { get; }
+        LocalizedContentManager.LanguageCode LocaleEnum { get; }
 
 
         /*********
@@ -28,6 +29,11 @@ namespace SoGModdingAPI
         /// <summary>Get a translation for the current locale.</summary>
         /// <param name="key">The translation key.</param>
         /// <param name="tokens">An object containing token key/value pairs. This can be an anonymous object (like <c>new { value = 42, name = "Cranberries" }</c>), a dictionary, or a class instance.</param>
-        Translation Get(string key, object tokens);
+        Translation Get(string key, object? tokens);
+
+        /// <summary>Get a translation in every locale for which it's defined.</summary>
+        /// <param name="key">The translation key.</param>
+        /// <param name="withFallback">Whether to add duplicate translations for locale fallback. For example, if a translation is defined in <c>default.json</c> but not <c>fr.json</c>, setting this to true will add a <c>fr</c> entry which duplicates the default text.</param>
+        IDictionary<string, Translation> GetInAllLocales(string key, bool withFallback = false);
     }
 }

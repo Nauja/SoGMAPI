@@ -45,8 +45,10 @@ namespace SoGModdingAPI.Events
         /// <summary>Read the message data into the given model type.</summary>
         /// <typeparam name="TModel">The message model type.</typeparam>
         public TModel ReadAs<TModel>()
+            where TModel : notnull
         {
-            return this.Message.Data.ToObject<TModel>(this.JsonHelper.GetSerializer());
+            return this.Message.Data.ToObject<TModel>(this.JsonHelper.GetSerializer())
+                ?? throw new InvalidOperationException($"Can't read empty mod message data as a {typeof(TModel).FullName} value.");
         }
     }
 }

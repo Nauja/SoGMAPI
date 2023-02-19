@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using SoGModdingAPI.Events;
+using SoGModdingAPI.Internal;
 
 namespace SoGModdingAPI.Framework.Events
 {
@@ -17,26 +18,29 @@ namespace SoGModdingAPI.Framework.Events
         protected readonly ModRegistry ModRegistry;
 
         /// <summary>The underlying event handlers.</summary>
-        private readonly List<ManagedEventHandler<TEventArgs>> Handlers = new List<ManagedEventHandler<TEventArgs>>();
+        private readonly List<ManagedEventHandler<TEventArgs>> Handlers = new();
 
-        /// <summary>A cached snapshot of <see cref="Handlers"/>, or <c>null</c> to rebuild it next raise.</summary>
-        private ManagedEventHandler<TEventArgs>[] CachedHandlers = new ManagedEventHandler<TEventArgs>[0];
+        /// <summary>A cached snapshot of the <see cref="Handlers"/> sorted by event priority, or <c>null</c> to rebuild it next raise.</summary>
+        private ManagedEventHandler<TEventArgs>[]? CachedHandlers = Array.Empty<ManagedEventHandler<TEventArgs>>();
 
         /// <summary>The total number of event handlers registered for this events, regardless of whether they're still registered.</summary>
         private int RegistrationIndex;
 
-        /// <summary>Whether new handlers were added since the last raise.</summary>
-        private bool HasNewHandlers;
+        /// <summary>Whether handlers were removed since the last raise.</summary>
+        private bool HasRemovedHandlers;
+
+        /// <summary>Whether any of the handlers have a custom priority.</summary>
+        private bool HasPriorities;
 
 
         /*********
         ** Accessors
         *********/
-        /// <summary>A human-readable name for the event.</summary>
+        /// <inheritdoc />
         public string EventName { get; }
 
-        /// <summary>Whether the event is typically called at least once per second.</summary>
-        public bool IsPerformanceCritical { get; }
+        /// <inheritdoc />
+        public bool HasListeners { get; private set; }
 
 
         /*********
@@ -45,18 +49,10 @@ namespace SoGModdingAPI.Framework.Events
         /// <summary>Construct an instance.</summary>
         /// <param name="eventName">A human-readable name for the event.</param>
         /// <param name="modRegistry">The mod registry with which to identify mods.</param>
-        /// <param name="isPerformanceCritical">Whether the event is typically called at least once per second.</param>
-        public ManagedEvent(string eventName, ModRegistry modRegistry, bool isPerformanceCritical = false)
+        public ManagedEvent(string eventName, ModRegistry modRegistry)
         {
             this.EventName = eventName;
             this.ModRegistry = modRegistry;
-            this.IsPerformanceCritical = isPerformanceCritical;
-        }
-
-        /// <summary>Get whether anything is listening to the event.</summary>
-        public bool HasListeners()
-        {
-            return this.Handlers.Count > 0;
         }
 
         /// <summary>Add an event handler.</summary>
@@ -71,7 +67,8 @@ namespace SoGModdingAPI.Framework.Events
 
                 this.Handlers.Add(managedHandler);
                 this.CachedHandlers = null;
-                this.HasNewHandlers = true;
+                this.HasListeners = true;
+                this.HasPriorities |= priority != EventPriority.Normal;
             }
         }
 
@@ -89,6 +86,8 @@ namespace SoGModdingAPI.Framework.Events
 
                     this.Handlers.RemoveAt(i);
                     this.CachedHandlers = null;
+                    this.HasListeners = this.Handlers.Count != 0;
+                    this.HasRemovedHandlers = true;
                     break;
                 }
             }
@@ -96,42 +95,56 @@ namespace SoGModdingAPI.Framework.Events
 
         /// <summary>Raise the event and notify all handlers.</summary>
         /// <param name="args">The event arguments to pass.</param>
-        /// <param name="match">A lambda which returns true if the event should be raised for the given mod.</param>
-        public void Raise(TEventArgs args, Func<IModMetadata, bool> match = null)
+        public void Raise(TEventArgs args)
         {
             // skip if no handlers
             if (this.Handlers.Count == 0)
                 return;
 
-            // update cached data
-            // (This is debounced here to avoid repeatedly sorting when handlers are added/removed,
-            // and keeping a separate cached list allows changes during enumeration.)
-            var handlers = this.CachedHandlers; // iterate local copy in case a mod adds/removes a handler while handling the event, which will set this field to null
-            if (handlers == null)
-            {
-                lock (this.Handlers)
-                {
-                    if (this.HasNewHandlers && this.Handlers.Any(p => p.Priority != EventPriority.Normal))
-                        this.Handlers.Sort();
-
-                    this.CachedHandlers = handlers = this.Handlers.ToArray();
-                    this.HasNewHandlers = false;
-                }
-            }
-
             // raise event
-            foreach (ManagedEventHandler<TEventArgs> handler in handlers)
+            foreach (ManagedEventHandler<TEventArgs> handler in this.GetHandlers())
             {
-                if (match != null && !match(handler.SourceMod))
-                    continue;
+                Context.HeuristicModsRunningCode.Push(handler.SourceMod);
 
                 try
                 {
-                    handler.Handler.Invoke(null, args);
+                    handler.Handler(null, args);
                 }
                 catch (Exception ex)
                 {
                     this.LogError(handler, ex);
+                }
+                finally
+                {
+                    Context.HeuristicModsRunningCode.TryPop(out _);
+                }
+            }
+        }
+
+        /// <summary>Raise the event and notify all handlers.</summary>
+        /// <param name="invoke">Invoke an event handler. This receives the mod which registered the handler, and should invoke the callback with the event arguments to pass it.</param>
+        public void Raise(Action<IModMetadata, Action<TEventArgs>> invoke)
+        {
+            // skip if no handlers
+            if (this.Handlers.Count == 0)
+                return;
+
+            // raise event
+            foreach (ManagedEventHandler<TEventArgs> handler in this.GetHandlers())
+            {
+                Context.HeuristicModsRunningCode.Push(handler.SourceMod);
+
+                try
+                {
+                    invoke(handler.SourceMod, args => handler.Handler(null, args));
+                }
+                catch (Exception ex)
+                {
+                    this.LogError(handler, ex);
+                }
+                finally
+                {
+                    Context.HeuristicModsRunningCode.TryPop(out _);
                 }
             }
         }
@@ -143,9 +156,36 @@ namespace SoGModdingAPI.Framework.Events
         /// <summary>Log an exception from an event handler.</summary>
         /// <param name="handler">The event handler instance.</param>
         /// <param name="ex">The exception that was raised.</param>
-        protected void LogError(ManagedEventHandler<TEventArgs> handler, Exception ex)
+        private void LogError(ManagedEventHandler<TEventArgs> handler, Exception ex)
         {
             handler.SourceMod.LogAsMod($"This mod failed in the {this.EventName} event. Technical details: \n{ex.GetLogSummary()}", LogLevel.Error);
+        }
+
+        /// <summary>Get cached copy of the sorted handlers to invoke.</summary>
+        /// <remarks>This returns the handlers sorted by priority, and allows iterating the list even if a mod adds/removes handlers while handling it. This is debounced when requested to avoid repeatedly sorting when handlers are added/removed.</remarks>
+        private ManagedEventHandler<TEventArgs>[] GetHandlers()
+        {
+            ManagedEventHandler<TEventArgs>[]? handlers = this.CachedHandlers;
+
+            if (handlers == null)
+            {
+                lock (this.Handlers)
+                {
+                    // recheck priorities
+                    if (this.HasRemovedHandlers)
+                        this.HasPriorities = this.Handlers.Any(p => p.Priority != EventPriority.Normal);
+
+                    // sort by priority if needed
+                    if (this.HasPriorities)
+                        this.Handlers.Sort();
+
+                    // update cache
+                    this.CachedHandlers = handlers = this.Handlers.ToArray();
+                    this.HasRemovedHandlers = false;
+                }
+            }
+
+            return handlers;
         }
     }
 }

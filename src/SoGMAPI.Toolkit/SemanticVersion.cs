@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using SoGModdingAPI.Toolkit.Framework;
 
@@ -11,7 +12,7 @@ namespace SoGModdingAPI.Toolkit
     /// - hyphens are synonymous with dots in prerelease tags and build metadata (like "-unofficial.3-pathoschild");
     /// - and "-unofficial" in prerelease tags is always lower-precedence (e.g. "1.0-beta" is newer than "1.0-unofficial").
     ///
-    /// This optionally also supports four-part versions, a non-standard extension used by Secrets Of Grindea on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.
+    /// This optionally also supports four-part versions, a non-standard extension used by Stardew Valley on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.
     /// </remarks>
     public class SemanticVersion : ISemanticVersion
     {
@@ -34,14 +35,14 @@ namespace SoGModdingAPI.Toolkit
         /// <inheritdoc />
         public int PatchVersion { get; }
 
-        /// <summary>The platform release. This is a non-standard semver extension used by Secrets Of Grindea on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.</summary>
+        /// <summary>The platform release. This is a non-standard semver extension used by Stardew Valley on ported platforms to represent platform-specific patches to a ported version, represented as a fourth number in the version string.</summary>
         public int PlatformRelease { get; }
 
         /// <inheritdoc />
-        public string PrereleaseTag { get; }
+        public string? PrereleaseTag { get; }
 
         /// <inheritdoc />
-        public string BuildMetadata { get; }
+        public string? BuildMetadata { get; }
 
 
         /*********
@@ -54,7 +55,7 @@ namespace SoGModdingAPI.Toolkit
         /// <param name="platformRelease">The platform-specific version (if applicable).</param>
         /// <param name="prereleaseTag">An optional prerelease tag.</param>
         /// <param name="buildMetadata">Optional build metadata. This is ignored when determining version precedence.</param>
-        public SemanticVersion(int major, int minor, int patch, int platformRelease = 0, string prereleaseTag = null, string buildMetadata = null)
+        public SemanticVersion(int major, int minor, int patch, int platformRelease = 0, string? prereleaseTag = null, string? buildMetadata = null)
         {
             this.MajorVersion = major;
             this.MinorVersion = minor;
@@ -90,7 +91,7 @@ namespace SoGModdingAPI.Toolkit
         {
             if (version == null)
                 throw new ArgumentNullException(nameof(version), "The input version string can't be null.");
-            if (!SemanticVersionReader.TryParse(version, allowNonStandard, out int major, out int minor, out int patch, out int platformRelease, out string prereleaseTag, out string buildMetadata) || (!allowNonStandard && platformRelease != 0))
+            if (!SemanticVersionReader.TryParse(version, allowNonStandard, out int major, out int minor, out int patch, out int platformRelease, out string? prereleaseTag, out string? buildMetadata) || (!allowNonStandard && platformRelease != 0))
                 throw new FormatException($"The input '{version}' isn't a valid semantic version.");
 
             this.MajorVersion = major;
@@ -104,59 +105,77 @@ namespace SoGModdingAPI.Toolkit
         }
 
         /// <inheritdoc />
-        public int CompareTo(ISemanticVersion other)
+        public int CompareTo(ISemanticVersion? other)
         {
-            if (other == null)
-                throw new ArgumentNullException(nameof(other));
-            return this.CompareTo(other.MajorVersion, other.MinorVersion, other.PatchVersion, (other as SemanticVersion)?.PlatformRelease ?? 0, other.PrereleaseTag);
+            return other == null
+                ? 1
+                : this.CompareTo(other.MajorVersion, other.MinorVersion, other.PatchVersion, (other as SemanticVersion)?.PlatformRelease ?? 0, other.PrereleaseTag);
         }
 
         /// <inheritdoc />
-        public bool Equals(ISemanticVersion other)
+        public bool Equals(ISemanticVersion? other)
         {
             return other != null && this.CompareTo(other) == 0;
         }
 
         /// <inheritdoc />
+#if NET5_0_OR_GREATER
+        [MemberNotNullWhen(true, nameof(SemanticVersion.PrereleaseTag))]
+#endif
         public bool IsPrerelease()
         {
             return !string.IsNullOrWhiteSpace(this.PrereleaseTag);
         }
 
         /// <inheritdoc />
-        public bool IsOlderThan(ISemanticVersion other)
+        public bool IsOlderThan(ISemanticVersion? other)
         {
             return this.CompareTo(other) < 0;
         }
 
         /// <inheritdoc />
-        public bool IsOlderThan(string other)
+        public bool IsOlderThan(string? other)
         {
-            return this.IsOlderThan(new SemanticVersion(other, allowNonStandard: true));
+            ISemanticVersion? otherVersion = other != null
+                ? new SemanticVersion(other, allowNonStandard: true)
+                : null;
+
+            return this.IsOlderThan(otherVersion);
         }
 
         /// <inheritdoc />
-        public bool IsNewerThan(ISemanticVersion other)
+        public bool IsNewerThan(ISemanticVersion? other)
         {
             return this.CompareTo(other) > 0;
         }
 
         /// <inheritdoc />
-        public bool IsNewerThan(string other)
+        public bool IsNewerThan(string? other)
         {
-            return this.IsNewerThan(new SemanticVersion(other, allowNonStandard: true));
+            ISemanticVersion? otherVersion = other != null
+                ? new SemanticVersion(other, allowNonStandard: true)
+                : null;
+
+            return this.IsNewerThan(otherVersion);
         }
 
         /// <inheritdoc />
-        public bool IsBetween(ISemanticVersion min, ISemanticVersion max)
+        public bool IsBetween(ISemanticVersion? min, ISemanticVersion? max)
         {
             return this.CompareTo(min) >= 0 && this.CompareTo(max) <= 0;
         }
 
         /// <inheritdoc />
-        public bool IsBetween(string min, string max)
+        public bool IsBetween(string? min, string? max)
         {
-            return this.IsBetween(new SemanticVersion(min, allowNonStandard: true), new SemanticVersion(max, allowNonStandard: true));
+            ISemanticVersion? minVersion = min != null
+                ? new SemanticVersion(min, allowNonStandard: true)
+                : null;
+            ISemanticVersion? maxVersion = max != null
+                ? new SemanticVersion(max, allowNonStandard: true)
+                : null;
+
+            return this.IsBetween(minVersion, maxVersion);
         }
 
         /// <inheritdoc cref="ISemanticVersion.ToString" />
@@ -182,7 +201,12 @@ namespace SoGModdingAPI.Toolkit
         /// <param name="version">The version string.</param>
         /// <param name="parsed">The parsed representation.</param>
         /// <returns>Returns whether parsing the version succeeded.</returns>
-        public static bool TryParse(string version, out ISemanticVersion parsed)
+        public static bool TryParse(string? version,
+#if NET5_0_OR_GREATER
+            [NotNullWhen(true)]
+#endif
+            out ISemanticVersion? parsed
+        )
         {
             return SemanticVersion.TryParse(version, allowNonStandard: false, out parsed);
         }
@@ -192,8 +216,19 @@ namespace SoGModdingAPI.Toolkit
         /// <param name="allowNonStandard">Whether to allow non-standard extensions to semantic versioning.</param>
         /// <param name="parsed">The parsed representation.</param>
         /// <returns>Returns whether parsing the version succeeded.</returns>
-        public static bool TryParse(string version, bool allowNonStandard, out ISemanticVersion parsed)
+        public static bool TryParse(string? version, bool allowNonStandard,
+#if NET5_0_OR_GREATER
+            [NotNullWhen(true)]
+#endif
+            out ISemanticVersion? parsed
+        )
         {
+            if (version == null)
+            {
+                parsed = null;
+                return false;
+            }
+
             try
             {
                 parsed = new SemanticVersion(version, allowNonStandard);
@@ -212,7 +247,7 @@ namespace SoGModdingAPI.Toolkit
         *********/
         /// <summary>Get a normalized prerelease or build tag.</summary>
         /// <param name="tag">The tag to normalize.</param>
-        private string GetNormalizedTag(string tag)
+        private string? GetNormalizedTag(string? tag)
         {
             tag = tag?.Trim();
             return !string.IsNullOrWhiteSpace(tag) ? tag : null;
@@ -224,7 +259,7 @@ namespace SoGModdingAPI.Toolkit
         /// <param name="otherPatch">The patch version to compare with this instance.</param>
         /// <param name="otherPlatformRelease">The non-standard platform release to compare with this instance.</param>
         /// <param name="otherTag">The prerelease tag to compare with this instance.</param>
-        private int CompareTo(int otherMajor, int otherMinor, int otherPatch, int otherPlatformRelease, string otherTag)
+        private int CompareTo(int otherMajor, int otherMinor, int otherPatch, int otherPlatformRelease, string? otherTag)
         {
             const int same = 0;
             const int curNewer = 1;
@@ -253,8 +288,8 @@ namespace SoGModdingAPI.Toolkit
                     return curOlder;
 
                 // compare two prerelease tag values
-                string[] curParts = this.PrereleaseTag.Split('.', '-');
-                string[] otherParts = otherTag.Split('.', '-');
+                string[] curParts = this.PrereleaseTag?.Split('.', '-') ?? Array.Empty<string>();
+                string[] otherParts = otherTag?.Split('.', '-') ?? Array.Empty<string>();
                 int length = Math.Max(curParts.Length, otherParts.Length);
                 for (int i = 0; i < length; i++)
                 {

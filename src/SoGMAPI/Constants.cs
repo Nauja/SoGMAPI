@@ -1,15 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using SoG;
+using Mono.Cecil;
 using SoGModdingAPI.Enums;
 using SoGModdingAPI.Framework;
+#if SOGMAPI_DEPRECATED
+using SoGModdingAPI.Framework.Deprecations;
+#endif
 using SoGModdingAPI.Framework.ModLoading;
-using SoGModdingAPI.Toolkit;
 using SoGModdingAPI.Toolkit.Framework;
 using SoGModdingAPI.Toolkit.Utilities;
+using SoG;
 
 namespace SoGModdingAPI
 {
@@ -19,53 +22,40 @@ namespace SoGModdingAPI
     {
         //
         // Note: this class *must not* depend on any external DLL beyond .NET Framework itself.
-        // That includes the game or SMAPI toolkit, since it's accessed before those are loaded.
+        // That includes the game or SoGMAPI toolkit, since it's accessed before those are loaded.
         //
-        // Adding an external dependency may seem to work in some cases, but will prevent SMAPI
+        // Adding an external dependency may seem to work in some cases, but will prevent SoGMAPI
         // from showing a human-readable error if the game isn't available. To test this, just
         // rename "Secrets Of Grindea.exe" in the game folder; you should see an error like "Oops!
-        // SMAPI can't find the game", not a technical exception.
+        // SoGMAPI can't find the game", not a technical exception.
         //
 
         /*********
         ** Accessors
         *********/
         /// <summary>The path to the game folder.</summary>
-        public static string ExecutionPath { get; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static string GamePath { get; } = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
 
-        /// <summary>The absolute path to the folder containing SMAPI's internal files.</summary>
-        public static readonly string InternalFilesPath = Path.Combine(EarlyConstants.ExecutionPath, "sogmapi-internal");
+        /// <summary>The absolute path to the folder containing SoGMAPI's internal files.</summary>
+        public static readonly string InternalFilesPath = Path.Combine(EarlyConstants.GamePath, "sogmapi-internal");
 
         /// <summary>The target game platform.</summary>
-        internal static GamePlatform Platform { get; } = GamePlatform.Windows; // @todo (GamePlatform)Enum.Parse(typeof(GamePlatform), LowLevelEnvironmentUtility.DetectPlatform());
-
-        /// <summary>Whether SMAPI is being compiled for Windows with a 64-bit Linux version of the game. This is highly specialized and shouldn't be used in most cases.</summary>
-        internal static bool IsWindows64BitHack { get; } =
-#if SOGMAPI_FOR_WINDOWS_64BIT_HACK
-            true;
-#else
-            false;
-#endif
+        internal static GamePlatform Platform { get; } = (GamePlatform)Enum.Parse(typeof(GamePlatform), LowLevelEnvironmentUtility.DetectPlatform());
 
         /// <summary>The game framework running the game.</summary>
-        internal static GameFramework GameFramework { get; } =
-#if SOGMAPI_FOR_XNA
-            GameFramework.Xna;
-#else
-            GameFramework.MonoGame;
-#endif
+        internal static GameFramework GameFramework { get; } = GameFramework.MonoGame;
 
         /// <summary>The game's assembly name.</summary>
-        internal static string GameAssemblyName => EarlyConstants.Platform == GamePlatform.Windows && !EarlyConstants.IsWindows64BitHack ? "Secrets of Grindea" : "SecretsOfGrindea";
+        internal static string GameAssemblyName { get; } = "SoG";
 
-        /// <summary>The <see cref="Context.ScreenId"/> value which should appear in the SMAPI log, if any.</summary>
+        /// <summary>The <see cref="Context.ScreenId"/> value which should appear in the SoGMAPI log, if any.</summary>
         internal static int? LogScreenId { get; set; }
 
-        /// <summary>SMAPI's current raw semantic version.</summary>
-        internal static string RawApiVersion = "0.1.2";
+        /// <summary>SoGMAPI's current raw semantic version.</summary>
+        internal static string RawApiVersion = "3.18.2";
     }
 
-    /// <summary>Contains SMAPI's constants and assumptions.</summary>
+    /// <summary>Contains SoGMAPI's constants and assumptions.</summary>
     public static class Constants
     {
         /*********
@@ -74,14 +64,14 @@ namespace SoGModdingAPI
         /****
         ** Public
         ****/
-        /// <summary>SMAPI's current semantic version.</summary>
+        /// <summary>SoGMAPI's current semantic version.</summary>
         public static ISemanticVersion ApiVersion { get; } = new Toolkit.SemanticVersion(EarlyConstants.RawApiVersion);
 
-        /// <summary>The minimum supported version of Secrets Of Grindea.</summary>
-        public static ISemanticVersion MinimumGameVersion { get; } = new GameVersion("0.9.0");
+        /// <summary>The minimum supported version of Stardew Valley.</summary>
+        public static ISemanticVersion MinimumGameVersion { get; } = new GameVersion("1.5.6");
 
-        /// <summary>The maximum supported version of Secrets Of Grindea.</summary>
-        public static ISemanticVersion MaximumGameVersion { get; } = null;
+        /// <summary>The maximum supported version of Stardew Valley, if any.</summary>
+        public static ISemanticVersion? MaximumGameVersion { get; } = new GameVersion("1.5.6");
 
         /// <summary>The target game platform.</summary>
         public static GamePlatform TargetPlatform { get; } = EarlyConstants.Platform;
@@ -89,11 +79,33 @@ namespace SoGModdingAPI
         /// <summary>The game framework running the game.</summary>
         public static GameFramework GameFramework { get; } = EarlyConstants.GameFramework;
 
+#if SOGMAPI_DEPRECATED
         /// <summary>The path to the game folder.</summary>
-        public static string ExecutionPath { get; } = EarlyConstants.ExecutionPath;
+        [Obsolete($"Use {nameof(Constants)}.{nameof(GamePath)} instead. This property will be removed in SoGMAPI 4.0.0.")]
+        public static string ExecutionPath
+        {
+            get
+            {
+                SCore.DeprecationManager.Warn(
+                    source: null,
+                    nounPhrase: $"{nameof(Constants)}.{nameof(Constants.ExecutionPath)}",
+                    version: "3.14.0",
+                    severity: DeprecationLevel.PendingRemoval
+                );
 
-        /// <summary>The directory path containing Secrets Of Grindea's app data.</summary>
-        public static string DataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Secrets of Grindea");
+                return Constants.GamePath;
+            }
+        }
+#endif
+
+        /// <summary>The path to the game folder.</summary>
+        public static string GamePath { get; } = EarlyConstants.GamePath;
+
+        /// <summary>The path to the game's <c>Content</c> folder.</summary>
+        public static string ContentPath { get; } = Constants.GetContentFolderPath();
+
+        /// <summary>The directory path containing Stardew Valley's app data.</summary>
+        public static string DataPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StardewValley");
 
         /// <summary>The directory path in which error logs should be stored.</summary>
         public static string LogDir { get; } = Path.Combine(Constants.DataPath, "ErrorLogs");
@@ -102,15 +114,15 @@ namespace SoGModdingAPI
         public static string SavesPath { get; } = Path.Combine(Constants.DataPath, "Saves");
 
         /// <summary>The name of the current save folder (if save info is available, regardless of whether the save file exists yet).</summary>
-        public static string SaveFolderName => Constants.GetSaveFolderName();
+        public static string? SaveFolderName => Constants.GetSaveFolderName();
 
         /// <summary>The absolute path to the current save folder (if save info is available and the save file exists).</summary>
-        public static string CurrentSavePath => Constants.GetSaveFolderPathIfExists();
+        public static string? CurrentSavePath => Constants.GetSaveFolderPathIfExists();
 
         /****
         ** Internal
         ****/
-        /// <summary>Whether SMAPI was compiled in debug mode.</summary>
+        /// <summary>Whether SoGMAPI was compiled in debug mode.</summary>
         internal const bool IsDebugBuild =
 #if DEBUG
             true;
@@ -118,28 +130,28 @@ namespace SoGModdingAPI
             false;
 #endif
 
-        /// <summary>The URL of the SMAPI home page.</summary>
+        /// <summary>The URL of the SoGMAPI home page.</summary>
         internal const string HomePageUrl = "https://smapi.io";
 
-        /// <summary>The absolute path to the folder containing SMAPI's internal files.</summary>
+        /// <summary>The absolute path to the folder containing SoGMAPI's internal files.</summary>
         internal static readonly string InternalFilesPath = EarlyConstants.InternalFilesPath;
 
-        /// <summary>The file path for the SMAPI configuration file.</summary>
+        /// <summary>The file path for the SoGMAPI configuration file.</summary>
         internal static string ApiConfigPath => Path.Combine(Constants.InternalFilesPath, "config.json");
 
         /// <summary>The file path for the overrides file for <see cref="ApiConfigPath"/>, which is applied over it.</summary>
         internal static string ApiUserConfigPath => Path.Combine(Constants.InternalFilesPath, "config.user.json");
 
-        /// <summary>The file path for the SMAPI metadata file.</summary>
+        /// <summary>The file path for the SoGMAPI metadata file.</summary>
         internal static string ApiMetadataPath => Path.Combine(Constants.InternalFilesPath, "metadata.json");
 
-        /// <summary>The filename prefix used for all SMAPI logs.</summary>
+        /// <summary>The filename prefix used for all SoGMAPI logs.</summary>
         internal static string LogNamePrefix { get; } = "SoGMAPI-";
 
-        /// <summary>The filename for SMAPI's main log, excluding the <see cref="LogExtension"/>.</summary>
+        /// <summary>The filename for SoGMAPI's main log, excluding the <see cref="LogExtension"/>.</summary>
         internal static string LogFilename { get; } = $"{Constants.LogNamePrefix}latest";
 
-        /// <summary>The filename extension for SMAPI log files.</summary>
+        /// <summary>The filename extension for SoGMAPI log files.</summary>
         internal static string LogExtension { get; } = "txt";
 
         /// <summary>The file path for the log containing the previous fatal crash, if any.</summary>
@@ -152,40 +164,28 @@ namespace SoGModdingAPI
         internal static string UpdateMarker => Path.Combine(Constants.InternalFilesPath, "SoGModdingAPI.update.marker");
 
         /// <summary>The default full path to search for mods.</summary>
-        internal static string DefaultModsPath { get; } = Path.Combine(Constants.ExecutionPath, "Mods");
+        internal static string DefaultModsPath { get; } = Path.Combine(Constants.GamePath, "Mods");
 
         /// <summary>The actual full path to search for mods.</summary>
-        internal static string ModsPath { get; set; }
+        internal static string ModsPath { get; set; } = null!; // initialized early during SoGMAPI startup
 
         /// <summary>The game's current semantic version.</summary>
-        public static ISemanticVersion GameVersion
-        {
-            get;
-            private set;
-        }
+        internal static ISemanticVersion GameVersion { get; } = new GameVersion(Game1.version);
 
-        internal static void SetGameVersion(ISemanticVersion version)
-        {
-            GameVersion = version;
-        }
-
-        /// <summary>The target game platform as a SMAPI toolkit constant.</summary>
+        /// <summary>The target game platform as a SoGMAPI toolkit constant.</summary>
         internal static Platform Platform { get; } = (Platform)Constants.TargetPlatform;
-
-        /// <summary>The language code for non-translated mod assets.</summary>
-        internal static LocalizedContentManager.LanguageCode DefaultLanguage { get; } = LocalizedContentManager.LanguageCode.en;
 
 
         /*********
         ** Internal methods
         *********/
-        /// <summary>Get the SMAPI version to recommend for an older game version, if any.</summary>
+        /// <summary>Get the SoGMAPI version to recommend for an older game version, if any.</summary>
         /// <param name="version">The game version to search.</param>
-        /// <returns>Returns the compatible SMAPI version, or <c>null</c> if none was found.</returns>
-        internal static ISemanticVersion GetCompatibleApiVersion(ISemanticVersion version)
+        /// <returns>Returns the compatible SoGMAPI version, or <c>null</c> if none was found.</returns>
+        internal static ISemanticVersion? GetCompatibleApiVersion(ISemanticVersion version)
         {
             // This covers all officially supported public game updates. It might seem like version
-            // ranges would be better, but the given SMAPI versions may not be compatible with
+            // ranges would be better, but the given SoGMAPI versions may not be compatible with
             // intermediate unlisted versions (e.g. private beta updates).
             // 
             // Nonstandard versions are normalized by GameVersion (e.g. 1.07 => 1.0.7).
@@ -239,116 +239,124 @@ namespace SoGModdingAPI
             }
         }
 
+        /// <summary>Configure the Mono.Cecil assembly resolver.</summary>
+        /// <param name="resolver">The assembly resolver.</param>
+        internal static void ConfigureAssemblyResolver(AssemblyDefinitionResolver resolver)
+        {
+            // add search paths
+            resolver.TryAddSearchDirectory(Constants.GamePath);
+            resolver.TryAddSearchDirectory(Constants.InternalFilesPath);
+
+            // add SoGMAPI explicitly
+            // Normally this would be handled automatically by the search paths, but for some reason there's a specific
+            // case involving unofficial 64-bit Stardew Valley when launched through Steam (for some players only)
+            // where Mono.Cecil can't resolve references to SoGMAPI.
+            resolver.Add(AssemblyDefinition.ReadAssembly(typeof(SGame).Assembly.Location));
+
+            // make sure game assembly names can be resolved
+            // The game assembly can have one of three names depending how the mod was compiled:
+            //   - 'StardewValley': assembly name on Linux/macOS;
+            //   - 'Stardew Valley': assembly name on Windows;
+            //   - 'Netcode': an assembly that was separate on Windows only before Stardew Valley 1.5.5.
+            resolver.AddWithExplicitNames(AssemblyDefinition.ReadAssembly(typeof(Game1).Assembly.Location), "SoG");
+        }
+
         /// <summary>Get metadata for mapping assemblies to the current platform.</summary>
         /// <param name="targetPlatform">The target game platform.</param>
-        /// <param name="framework">The game framework running the game.</param>
-        internal static PlatformAssemblyMap GetAssemblyMap(Platform targetPlatform, GameFramework framework)
+        internal static PlatformAssemblyMap GetAssemblyMap(Platform targetPlatform)
         {
             var removeAssemblyReferences = new List<string>();
             var targetAssemblies = new List<Assembly>();
 
-            // get assembly renamed in SMAPI 3.0
+            // get assembly renamed in SoGMAPI 3.0
             removeAssemblyReferences.Add("SoGModdingAPI.Toolkit.CoreInterfaces");
             targetAssemblies.Add(typeof(SoGModdingAPI.IManifest).Assembly);
 
-            // get changes for platform
-            if (Constants.Platform != Platform.Windows || EarlyConstants.IsWindows64BitHack)
+            // XNA Framework before Stardew Valley 1.5.5
+            removeAssemblyReferences.AddRange(new[]
             {
-                removeAssemblyReferences.AddRange(new[]
-                {
-                    // @todo "Netcode",
-                    "Secrets Of Grindea"
-                });
-                targetAssemblies.Add(
-                    typeof(SoG.Game1).Assembly // note: includes Netcode types on Linux/macOS
-                );
-            }
-            else
-            {
-                removeAssemblyReferences.Add(
-                    "SecretsOfGrindea"
-                );
-                targetAssemblies.AddRange(new[]
-                {
-                    // @todo typeof(Netcode.NetBool).Assembly,
-                    typeof(SoG.Game1).Assembly
-                });
-            }
+                "Microsoft.Xna.Framework",
+                "Microsoft.Xna.Framework.Game",
+                "Microsoft.Xna.Framework.Graphics",
+                "Microsoft.Xna.Framework.Xact"
+            });
+            targetAssemblies.Add(
+                typeof(Microsoft.Xna.Framework.Vector2).Assembly
+            );
 
-            // get changes for game framework
-            switch (framework)
-            {
-                case GameFramework.MonoGame:
-                    removeAssemblyReferences.AddRange(new[]
-                    {
-                        "Microsoft.Xna.Framework",
-                        "Microsoft.Xna.Framework.Game",
-                        "Microsoft.Xna.Framework.Graphics",
-                        "Microsoft.Xna.Framework.Xact"
-                    });
-                    targetAssemblies.Add(
-                        typeof(Microsoft.Xna.Framework.Vector2).Assembly
-                    );
-                    break;
+            // `Netcode.dll` merged into the game assembly in Stardew Valley 1.5.5
+            removeAssemblyReferences.Add(
+                "Netcode"
+            );
 
-                case GameFramework.Xna:
-                    removeAssemblyReferences.Add(
-                        "MonoGame.Framework"
-                    );
-                    targetAssemblies.AddRange(new[]
-                    {
-                        typeof(Microsoft.Xna.Framework.Vector2).Assembly,
-                        typeof(Microsoft.Xna.Framework.Game).Assembly,
-                        typeof(Microsoft.Xna.Framework.Graphics.SpriteBatch).Assembly
-                    });
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Unknown game framework '{framework}'.");
-            }
+            // Stardew Valley reference
+            removeAssemblyReferences.Add("StardewValley");
+            targetAssemblies.Add(typeof(SoG.Game1).Assembly);
 
             return new PlatformAssemblyMap(targetPlatform, removeAssemblyReferences.ToArray(), targetAssemblies.ToArray());
-        }
-
-        /// <summary>Get whether the game assembly was patched by SecretsOfGrindea64Installer.</summary>
-        /// <param name="version">The version of SecretsOfGrindea64Installer which was applied to the game assembly, if any.</param>
-        internal static bool IsPatchedBySecretsOfGrindea64Installer(out ISemanticVersion version)
-        {
-            PropertyInfo property = typeof(Game1).GetProperty("SecretsOfGrindea64InstallerVersion");
-            if (property == null)
-            {
-                version = null;
-                return false;
-            }
-
-            version = new SemanticVersion((string)property.GetValue(null));
-            return true;
         }
 
 
         /*********
         ** Private methods
         *********/
+        /// <summary>Get the absolute path to the game's <c>Content</c> folder.</summary>
+        private static string GetContentFolderPath()
+        {
+            //
+            // We can't use Path.Combine(Constants.GamePath, Game1.content.RootDirectory) here,
+            // since Game1.content isn't initialized until later in the game startup.
+            //
+
+            string gamePath = EarlyConstants.GamePath;
+
+            // most platforms
+            if (EarlyConstants.Platform != GamePlatform.Mac)
+                return Path.Combine(gamePath, "Content");
+
+            // macOS
+            string[] paths = new[]
+                {
+                    // GOG
+                    // - game:    Stardew Valley.app/Contents/MacOS
+                    // - content: Stardew Valley.app/Resources/Content
+                    "../../Resources/Content",
+
+                    // Steam
+                    // - game:    StardewValley/Contents/MacOS
+                    // - content: StardewValley/Contents/Resources/Content
+                    "../Resources/Content"
+                }
+                .Select(path => Path.GetFullPath(Path.Combine(gamePath, path)))
+                .ToArray();
+
+            foreach (string path in paths)
+            {
+                if (Directory.Exists(path))
+                    return path;
+            }
+
+            return paths.Last();
+        }
+
         /// <summary>Get the name of the save folder, if any.</summary>
-        private static string GetSaveFolderName()
+        private static string? GetSaveFolderName()
         {
             return Constants.GetSaveFolder()?.Name;
         }
 
-        /// <summary>Get the path to the current save folder, if any.</summary>
-        private static string GetSaveFolderPathIfExists()
+        /// <summary>Get the absolute path to the current save folder, if any.</summary>
+        private static string? GetSaveFolderPathIfExists()
         {
-            DirectoryInfo saveFolder = Constants.GetSaveFolder();
+            DirectoryInfo? saveFolder = Constants.GetSaveFolder();
             return saveFolder?.Exists == true
                 ? saveFolder.FullName
                 : null;
         }
 
         /// <summary>Get the current save folder, if any.</summary>
-        private static DirectoryInfo GetSaveFolder()
+        private static DirectoryInfo? GetSaveFolder()
         {
-            return null;
-            /* @todo
             // save not available
             if (Context.LoadStage == LoadStage.None)
                 return null;
@@ -360,16 +368,34 @@ namespace SoGModdingAPI
                 : Game1.uniqueIDForThisGame;
 
             // get best match (accounting for rare case where folder name isn't sanitized)
-            DirectoryInfo folder = null;
+            DirectoryInfo? folder = null;
             foreach (string saveName in new[] { rawSaveName, new string(rawSaveName.Where(char.IsLetterOrDigit).ToArray()) })
             {
-                folder = new DirectoryInfo(Path.Combine(Constants.SavesPath, $"{saveName}_{saveID}"));
-                if (folder.Exists)
-                    return folder;
+                try
+                {
+                    folder = new DirectoryInfo(Path.Combine(Constants.SavesPath, $"{saveName}_{saveID}"));
+                    if (folder.Exists)
+                        return folder;
+                }
+                catch (ArgumentException)
+                {
+                    // ignore invalid path
+                }
             }
 
             // if save doesn't exist yet, return the default one we expect to be created
-            return folder;*/
+            return folder;
+        }
+
+        /// <summary>Get a display label for the game's build number.</summary>
+        internal static string GetBuildVersionLabel()
+        {
+            string version = typeof(Game1).Assembly.GetName().Version?.ToString() ?? "unknown";
+
+            if (version.StartsWith($"{Game1.version}."))
+                version = version.Substring(Game1.version.Length + 1);
+
+            return version;
         }
     }
 }

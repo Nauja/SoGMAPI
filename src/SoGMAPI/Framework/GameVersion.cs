@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SoGModdingAPI.Framework
 {
-    /// <summary>An extension of <see cref="ISemanticVersion"/> that correctly handles non-semantic versions used by Secrets Of Grindea.</summary>
+    /// <summary>An extension of <see cref="ISemanticVersion"/> that correctly handles non-semantic versions used by Stardew Valley.</summary>
     internal class GameVersion : Toolkit.SemanticVersion
     {
         /*********
@@ -53,7 +53,7 @@ namespace SoGModdingAPI.Framework
         private static string GetSemanticVersionString(string gameVersion)
         {
             // mapped version
-            return GameVersion.VersionMap.TryGetValue(gameVersion, out string semanticVersion)
+            return GameVersion.VersionMap.TryGetValue(gameVersion, out string? semanticVersion)
                 ? semanticVersion
                 : gameVersion;
         }
@@ -62,10 +62,10 @@ namespace SoGModdingAPI.Framework
         /// <param name="semanticVersion">The semantic version string.</param>
         private static string GetGameVersionString(string semanticVersion)
         {
-            foreach (var mapping in GameVersion.VersionMap)
+            foreach ((string gameVersion, string equivalentSemanticVersion) in GameVersion.VersionMap)
             {
-                if (mapping.Value.Equals(semanticVersion, StringComparison.OrdinalIgnoreCase))
-                    return mapping.Key;
+                if (equivalentSemanticVersion.Equals(semanticVersion, StringComparison.OrdinalIgnoreCase))
+                    return gameVersion;
             }
 
             return semanticVersion;

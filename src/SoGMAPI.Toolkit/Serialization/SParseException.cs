@@ -3,7 +3,7 @@ using System;
 namespace SoGModdingAPI.Toolkit.Serialization
 {
     /// <summary>A format exception which provides a user-facing error message.</summary>
-    public class SParseException : FormatException
+    internal class SParseException : FormatException
     {
         /*********
         ** Public methods
@@ -11,7 +11,7 @@ namespace SoGModdingAPI.Toolkit.Serialization
         /// <summary>Construct an instance.</summary>
         /// <param name="message">The error message.</param>
         /// <param name="ex">The underlying exception, if any.</param>
-        public SParseException(string message, Exception ex = null)
+        public SParseException(string message, Exception? ex = null)
             : base(message, ex) { }
     }
 }

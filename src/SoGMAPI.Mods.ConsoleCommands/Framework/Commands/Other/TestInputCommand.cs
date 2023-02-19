@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Other
 {
     /// <summary>A command which logs the keys being pressed for 30 seconds once enabled.</summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Loaded using reflection")]
     internal class TestInputCommand : ConsoleCommand
     {
         /*********
@@ -37,9 +39,7 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Other
         public override void OnUpdated(IMonitor monitor)
         {
             // handle expiry
-            if (this.ExpiryTicks == null)
-                return;
-            if (this.ExpiryTicks <= DateTime.UtcNow.Ticks)
+            if (this.ExpiryTicks != null && this.ExpiryTicks <= DateTime.UtcNow.Ticks)
             {
                 monitor.Log("No longer logging input.", LogLevel.Info);
                 this.ExpiryTicks = null;

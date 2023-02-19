@@ -2,7 +2,7 @@
   <PropertyGroup>
     <RootNamespace>SoGModdingAPI.Installer</RootNamespace>
     <Description>The SoGMAPI installer for players.</Description>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
@@ -17,5 +17,4 @@
 
   <Import Project="..\SoGMAPI.Internal\SoGMAPI.Internal.projitems" Label="Shared" />
   <Import Project="..\..\build\common.targets" />
-  <Import Project="..\..\build\prepare-install-package.targets" />
 </Project>

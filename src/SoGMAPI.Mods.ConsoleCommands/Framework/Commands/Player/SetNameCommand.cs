@@ -1,9 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using SoG;
-using SoGModdingAPI.Framework;
 
 namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
 {
     /// <summary>A command which edits the player's name.</summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Loaded using reflection")]
     internal class SetNameCommand : ConsoleCommand
     {
         /*********
@@ -19,12 +20,10 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
         /// <param name="args">The command arguments.</param>
         public override void Handle(IMonitor monitor, string command, ArgumentParser args)
         {
-            PlayerView player = SGame.Instance.xLocalPlayer;
-
             // parse arguments
-            if (!args.TryGet(0, "target", out string target, oneOf: new[] { "player", "farm" }))
+            if (!args.TryGet(0, "target", out string? target, oneOf: new[] { "player", "farm" }))
                 return;
-            args.TryGet(1, "name", out string name, required: false);
+            args.TryGet(1, "name", out string? name, required: false);
 
             // handle
             switch (target)
@@ -32,13 +31,22 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
                 case "player":
                     if (!string.IsNullOrWhiteSpace(name))
                     {
-                        player.sSaveableName = args[1];
-                        monitor.Log($"OK, your name is now {player.sSaveableName}.", LogLevel.Info);
+                        Game1.player.Name = args[1];
+                        monitor.Log($"OK, your name is now {Game1.player.Name}.", LogLevel.Info);
                     }
                     else
-                        monitor.Log($"Your name is currently '{player.sSaveableName}'. Type 'help player_setname' for usage.", LogLevel.Info);
+                        monitor.Log($"Your name is currently '{Game1.player.Name}'. Type 'help player_setname' for usage.", LogLevel.Info);
                     break;
 
+                case "farm":
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        Game1.player.farmName.Value = args[1];
+                        monitor.Log($"OK, your farm's name is now {Game1.player.farmName}.", LogLevel.Info);
+                    }
+                    else
+                        monitor.Log($"Your farm's name is currently '{Game1.player.farmName}'. Type 'help player_setname' for usage.", LogLevel.Info);
+                    break;
             }
         }
     }

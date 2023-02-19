@@ -1,3 +1,9 @@
+<!--
+
+This MSBuild file detects the Stardew Valley install path if possible, and sets the 'GamePath'
+property.
+
+-->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- import developer's custom path (if any) -->
   <Import Condition="$(OS) != 'Windows_NT' AND Exists('$(HOME)\secretsofgrindea.targets')" Project="$(HOME)\secretsofgrindea.targets" />
@@ -5,19 +11,6 @@
 
   <!-- find game path -->
   <Choose>
-    <When Condition="$(OS) == 'Unix' OR $(OS) == 'OSX'">
-      <PropertyGroup>
-        <!-- Linux -->
-        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/GOG Games/Secrets Of Grindea/game</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/.steam/steam/steamapps/common/Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/.local/share/Steam/steamapps/common/Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/.var/app/com.valvesoftware.Steam/data/Steam/steamapps/common/Secrets Of Grindea</GamePath>
-
-        <!-- macOS (may be 'Unix' or 'OSX') -->
-        <GamePath Condition="!Exists('$(GamePath)')">/Applications/Secrets Of Grindea.app/Contents/MacOS</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">$(HOME)/Library/Application Support/Steam/steamapps/common/Secrets Of Grindea/Contents/MacOS</GamePath>
-      </PropertyGroup>
-    </When>
     <When Condition="$(OS) == 'Windows_NT'">
       <PropertyGroup>
         <!-- registry paths -->
@@ -26,29 +19,35 @@
 
         <!-- derive from Steam library path -->
         <_SteamLibraryPath>$([MSBuild]::GetRegistryValueFromView('HKEY_CURRENT_USER\SOFTWARE\Valve\Steam', 'SteamPath', null, RegistryView.Registry32))</_SteamLibraryPath>
-        <GamePath Condition="!Exists('$(GamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\Secrets Of Grindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\SecretsOfGrindea</GamePath>
 
-        <!-- default paths -->
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\GalaxyClient\Games\Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\GOG Galaxy\Games\Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\GOG Games\Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\Steam\steamapps\common\Secrets Of Grindea</GamePath>
+        <!-- GOG paths -->
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\GalaxyClient\Games\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\GOG Galaxy\Games\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\GOG Games\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\GalaxyClient\Games\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\GOG Galaxy\Games\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\GOG Games\SecretsOfGrindea</GamePath>
 
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\GalaxyClient\Games\Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\GOG Galaxy\Games\Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\GOG Games\Secrets Of Grindea</GamePath>
-        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\Secrets Of Grindea</GamePath>
+        <!-- Xbox app paths -->
+        <!--
+        The Xbox app saves the install path to the registry, but we can't use it here since it
+        saves the internal readonly path (like C:\Program Files\WindowsApps\Mutable\<package ID>)
+        instead of the mods-enabled path (like C:\Program Files\ModifiableWindowsApps\SecretsOfGrindea).
+        Fortunately we can cheat a bit: players can customize the install drive, but they can't
+        change the install path on the drive.
+        -->
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\ModifiableWindowsApps\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">D:\Program Files\ModifiableWindowsApps\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">E:\Program Files\ModifiableWindowsApps\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">F:\Program Files\ModifiableWindowsApps\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">G:\Program Files\ModifiableWindowsApps\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">H:\Program Files\ModifiableWindowsApps\SecretsOfGrindea</GamePath>
+
+        <!-- Steam paths -->
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files\Steam\steamapps\common\SecretsOfGrindea</GamePath>
+        <GamePath Condition="!Exists('$(GamePath)')">C:\Program Files (x86)\Steam\steamapps\common\SecretsOfGrindea</GamePath>
       </PropertyGroup>
     </When>
   </Choose>
-
-  <!-- set game metadata -->
-  <PropertyGroup>
-    <!--standard executable name-->
-    <GameExecutableName>Secrets Of Grindea</GameExecutableName>
-    <GameExecutableName Condition="$(OS) != 'Windows_NT'">SecretsOfGrindea</GameExecutableName>
-
-    <!--Linux install on Windows (for 64-bit hack)-->
-    <GameExecutableName Condition="$(OS) == 'Windows_NT' AND !Exists('$(GamePath)\$(GameExecutableName).exe') AND Exists('$(GamePath)\SecretsOfGrindea.exe')">SecretsOfGrindea</GameExecutableName>
-  </PropertyGroup>
 </Project>

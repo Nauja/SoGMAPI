@@ -1,0 +1,81 @@
+<!--
+
+This MSBuild file copies SoGMAPI and the bundled mods into the local Stardew Valley folder on build
+to simplify testing. This just avoids needing to run the SoGMAPI installer each time.
+
+This assumes `find-game-folder.targets` has already been imported and validated.
+
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="CopySmapiFiles" AfterTargets="AfterBuild">
+    <CallTarget Targets="CopySoGMAPI;CopyDefaultMods" />
+  </Target>
+  <Target Name="CopySoGMAPI" Condition="'$(MSBuildProjectName)' == 'SoGMAPI'">
+    <!-- SoGMAPI -->
+    <ItemGroup>
+      <TranslationFiles Include="$(TargetDir)\i18n\*.json" />
+    </ItemGroup>
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).dll" DestinationFolder="$(GamePath)" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).exe" DestinationFolder="$(GamePath)" Condition="$(OS) == 'Windows_NT'" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName)" DestinationFolder="$(GamePath)" Condition="$(OS) != 'Windows_NT'" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).pdb" DestinationFolder="$(GamePath)" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).xml" DestinationFolder="$(GamePath)" />
+    <Copy SourceFiles="$(TargetDir)\SoGMAPI.config.json" DestinationFiles="$(GamePath)\sogmapi-internal\config.json" />
+    <Copy SourceFiles="$(TargetDir)\SoGMAPI.metadata.json" DestinationFiles="$(GamePath)\sogmapi-internal\metadata.json" />
+    <Copy SourceFiles="$(TargetDir)\Newtonsoft.Json.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\TMXTile.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\Pintail.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="@(TranslationFiles)" DestinationFolder="$(GamePath)\sogmapi-internal\i18n" />
+
+    <!-- Harmony + dependencies -->
+    <Copy SourceFiles="$(TargetDir)\0Harmony.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\0Harmony.xml" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\Mono.Cecil.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\Mono.Cecil.Mdb.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\Mono.Cecil.Pdb.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\MonoMod.Common.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+
+    <!-- FluentHttpClient + dependencies -->
+    <Copy SourceFiles="$(TargetDir)\Pathoschild.Http.Client.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\System.Net.Http.Formatting.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+
+    <!-- .NET dependencies -->
+    <Copy SourceFiles="$(TargetDir)\System.Management.dll" DestinationFolder="$(GamePath)\sogmapi-internal" Condition="$(OS) == 'Windows_NT'" />
+
+    <!-- Legacy .NET dependencies (remove in SoGMAPI 4.0.0) -->
+    <Copy SourceFiles="$(TargetDir)\System.Configuration.ConfigurationManager.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\System.Runtime.Caching.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\System.Security.Permissions.dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+  </Target>
+
+  <!-- .NET metadata files -->
+  <Target Name="CopyNetMetadata" Condition="'$(MSBuildProjectName)' == 'SoGMAPI.Installer'" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetDir)\assets\runtimeconfig.json" DestinationFiles="$(GamePath)\SoGModdingAPI.runtimeconfig.json" />
+    <Copy SourceFiles="$(TargetDir)\assets\windows-exe-config.xml" DestinationFiles="$(GamePath)\SoGModdingAPI.exe.config" Condition="$(OS) == 'Windows_NT'" />
+    
+  </Target>
+
+  <!-- bundled mods -->
+  <Target Name="CopyDefaultMods" Condition="'$(MSBuildProjectName)' == 'SoGMAPI.Mods.ConsoleCommands' OR '$(MSBuildProjectName)' == 'SoGMAPI.Mods.ErrorHandler' OR '$(MSBuildProjectName)' == 'SoGMAPI.Mods.SaveBackup'">
+    <ItemGroup>
+      <TranslationFiles Include="$(TargetDir)\i18n\*.json" />
+    </ItemGroup>
+
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).dll" DestinationFolder="$(GamePath)\Mods\$(AssemblyName)" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).pdb" DestinationFolder="$(GamePath)\Mods\$(AssemblyName)" Condition="Exists('$(TargetDir)\$(TargetName).pdb')" />
+    <Copy SourceFiles="$(TargetDir)\manifest.json" DestinationFolder="$(GamePath)\Mods\$(AssemblyName)" />
+    <Copy SourceFiles="@(TranslationFiles)" DestinationFolder="$(GamePath)\Mods\$(AssemblyName)\i18n" />
+  </Target>
+
+  <!-- toolkit -->
+  <Target Name="CopyToolkit" Condition="'$(MSBuildProjectName)' == 'SoGMAPI.Toolkit'" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).pdb" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).xml" DestinationFolder="$(GamePath)\sogmapi-internal" />
+  </Target>
+  <Target Name="CopyToolkitCoreInterfaces" Condition="'$(MSBuildProjectName)' == 'SoGMAPI.Toolkit.CoreInterfaces'" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).dll" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).pdb" DestinationFolder="$(GamePath)\sogmapi-internal" />
+    <Copy SourceFiles="$(TargetDir)\$(TargetName).xml" DestinationFolder="$(GamePath)\sogmapi-internal" />
+  </Target>
+</Project>

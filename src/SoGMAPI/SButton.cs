@@ -6,7 +6,7 @@ using SoG;
 namespace SoGModdingAPI
 {
     /// <summary>A unified button constant which includes all controller, keyboard, and mouse buttons.</summary>
-    /// <remarks>Derived from <see cref="Keys"/>, <see cref="Buttons"/>, and <see cref="System.Windows.Forms.MouseButtons"/>.</remarks>
+    /// <remarks>Derived from <see cref="Keys"/>, <see cref="Buttons"/>, and <c>System.Windows.Forms.MouseButtons</c>.</remarks>
     public enum SButton
     {
         /// <summary>No valid key.</summary>
@@ -617,13 +617,13 @@ namespace SoGModdingAPI
         }
 
         /// <summary>Get the <see cref="SButton"/> equivalent for the given button.</summary>
-        /// <param name="input">The Secrets Of Grindea button to convert.</param>
-        public static SButton ToSButton(this LocalInputHelper.KeyOrMouse input)
+        /// <param name="input">The Stardew Valley button to convert.</param>
+        public static SButton ToSButton(this Buttons input)
         {
-            // derived from InputButton constructors
-            if (input.mouse == LocalInputHelper.MouseButton.Left_Mouse)
+            // derived from Buttons constructors
+            if (input.mouseLeft)
                 return SButton.MouseLeft;
-            if (input.mouse == LocalInputHelper.MouseButton.Right_Mouse)
+            if (input.mouseRight)
                 return SButton.MouseRight;
             return input.key.ToSButton();
         }
@@ -660,30 +660,23 @@ namespace SoGModdingAPI
             return false;
         }
 
-        /// <summary>Get the <see cref="InputButton"/> equivalent for the given button.</summary>
+        /// <summary>Get the <see cref="Buttons"/> equivalent for the given button.</summary>
         /// <param name="input">The button to convert.</param>
-        /// <param name="button">The Secrets Of Grindea input button equivalent.</param>
+        /// <param name="button">The Stardew Valley input button equivalent.</param>
         /// <returns>Returns whether the value was converted successfully.</returns>
-        public static bool TryGetSoGInput(this SButton input, out LocalInputHelper.KeyOrMouse button)
+        public static bool TryGetStardewInput(this SButton input, out Buttons button)
         {
             // keyboard
             if (input.TryGetKeyboard(out Keys key))
             {
-                button = new LocalInputHelper.KeyOrMouse(key);
+                button = new Buttons(key);
                 return true;
             }
 
             // mouse
-            if (input == SButton.MouseLeft)
+            if (input is SButton.MouseLeft or SButton.MouseRight)
             {
-                button = new LocalInputHelper.KeyOrMouse(LocalInputHelper.MouseButton.Left_Mouse);
-                return true;
-            }
-
-            // mouse
-            if (input == SButton.MouseRight)
-            {
-                button = new LocalInputHelper.KeyOrMouse(LocalInputHelper.MouseButton.Right_Mouse);
+                button = new Buttons(mouseLeft: input == SButton.MouseLeft);
                 return true;
             }
 
@@ -694,16 +687,16 @@ namespace SoGModdingAPI
 
         /// <summary>Get whether the given button is equivalent to <see cref="Options.useToolButton"/>.</summary>
         /// <param name="input">The button.</param>
-        /* @todo public static bool IsUseToolButton(this SButton input)
+        public static bool IsUseToolButton(this SButton input)
         {
             return input == SButton.ControllerX || Game1.options.useToolButton.Any(p => p.ToSButton() == input);
-        }*/
+        }
 
         /// <summary>Get whether the given button is equivalent to <see cref="Options.actionButton"/>.</summary>
         /// <param name="input">The button.</param>
-        /* @todo public static bool IsActionButton(this SButton input)
+        public static bool IsActionButton(this SButton input)
         {
             return input == SButton.ControllerA || Game1.options.actionButton.Any(p => p.ToSButton() == input);
-        }*/
+        }
     }
 }

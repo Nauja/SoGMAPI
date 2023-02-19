@@ -1,7 +1,7 @@
-﻿namespace SoGModdingAPI.Framework.Utilities
+namespace SoGModdingAPI.Framework.Utilities
 {
     /// <summary>Counts down from a baseline value.</summary>
-    public class Countdown
+    internal class Countdown
     {
         /*********
         ** Accessors

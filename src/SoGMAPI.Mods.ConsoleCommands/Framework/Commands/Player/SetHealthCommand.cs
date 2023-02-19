@@ -1,10 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using SoGModdingAPI.Framework;
 using SoG;
 
 namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
 {
     /// <summary>A command which edits the player's current health.</summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Loaded using reflection")]
     internal class SetHealthCommand : ConsoleCommand
     {
         /*********
@@ -20,12 +21,10 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
         /// <param name="args">The command arguments.</param>
         public override void Handle(IMonitor monitor, string command, ArgumentParser args)
         {
-            BaseStats stats = SGame.Instance.xLocalPlayer.xEntity.xBaseStats;
-
             // no-argument mode
             if (!args.Any())
             {
-                monitor.Log($"You currently have {stats.iHP} health. Specify a value to change it.", LogLevel.Info);
+                monitor.Log($"You currently have {Game1.player.health} health. Specify a value to change it.", LogLevel.Info);
                 return;
             }
 
@@ -33,8 +32,8 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
             string amountStr = args[0];
             if (int.TryParse(amountStr, out int amount))
             {
-                stats.iHP = amount;
-                monitor.Log($"OK, you now have {stats.iHP} health.", LogLevel.Info);
+                Game1.player.health = amount;
+                monitor.Log($"OK, you now have {Game1.player.health} health.", LogLevel.Info);
             }
             else
                 this.LogArgumentNotInt(monitor);

@@ -1,4 +1,4 @@
-﻿namespace SoGModdingAPI
+namespace SoGModdingAPI
 {
     /// <summary>Indicates which mod can read the content pack represented by the containing manifest.</summary>
     public interface IManifestContentPackFor
@@ -7,6 +7,6 @@
         string UniqueID { get; }
 
         /// <summary>The minimum required version (if any).</summary>
-        ISemanticVersion MinimumVersion { get; }
+        ISemanticVersion? MinimumVersion { get; }
     }
 }

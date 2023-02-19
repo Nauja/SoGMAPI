@@ -1,6 +1,6 @@
 namespace SoGModdingAPI.Framework.Events
 {
-    /// <summary>Metadata for an event raised by SMAPI.</summary>
+    /// <summary>Metadata for an event raised by SoGMAPI.</summary>
     internal interface IManagedEvent
     {
         /*********
@@ -9,7 +9,7 @@ namespace SoGModdingAPI.Framework.Events
         /// <summary>A human-readable name for the event.</summary>
         string EventName { get; }
 
-        /// <summary>Whether the event is typically called at least once per second.</summary>
-        bool IsPerformanceCritical { get; }
+        /// <summary>Whether any handlers are listening to the event.</summary>
+        bool HasListeners { get; }
     }
 }

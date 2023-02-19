@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SoGModdingAPI.Toolkit.Framework
 {
@@ -18,21 +18,7 @@ namespace SoGModdingAPI.Toolkit.Framework
         /// <param name="prereleaseTag">An optional prerelease tag.</param>
         /// <param name="buildMetadata">Optional build metadata. This is ignored when determining version precedence.</param>
         /// <returns>Returns whether the version was successfully parsed.</returns>
-        public static bool TryParse(string versionStr, bool allowNonStandard, out int major, out int minor, out int patch, out int platformRelease, out string prereleaseTag, out string buildMetadata)
-        {
-            if (TryParseSemantic(versionStr, allowNonStandard, out major, out minor, out patch, out platformRelease, out prereleaseTag, out buildMetadata))
-            {
-                return true;
-            }
-
-            return TryParseSoG(versionStr, allowNonStandard, out major, out minor, out patch, out platformRelease, out prereleaseTag, out buildMetadata);
-        }
-
-
-        /*********
-        ** Private methods
-        *********/
-        private static bool TryParseSemantic(string versionStr, bool allowNonStandard, out int major, out int minor, out int patch, out int platformRelease, out string prereleaseTag, out string buildMetadata)
+        public static bool TryParse(string? versionStr, bool allowNonStandard, out int major, out int minor, out int patch, out int platformRelease, out string? prereleaseTag, out string? buildMetadata)
         {
             // init
             major = 0;
@@ -73,35 +59,10 @@ namespace SoGModdingAPI.Toolkit.Framework
             return i == versionStr.Length; // valid if we're at the end
         }
 
-        private static bool TryParseSoG(string versionStr, bool allowNonStandard, out int major, out int minor, out int patch, out int platformRelease, out string prereleaseTag, out string buildMetadata)
-        {
-            // init
-            major = 0;
-            minor = 0;
-            patch = 0;
-            platformRelease = 0;
-            prereleaseTag = null;
-            buildMetadata = null;
 
-            // normalize
-            versionStr = versionStr?.Trim();
-            if (string.IsNullOrWhiteSpace(versionStr))
-                return false;
-
-            Regex rx = new Regex(@"^(?<major>\d+)\.(?<minor>\d)(?<patch>\d\d)(?<tag>\w+)?$");
-            Match m = rx.Match(versionStr);
-            if (m == null)
-            {
-                return false;
-            }
-
-            major = int.Parse(m.Groups["major"].Value);
-            minor = int.Parse(m.Groups["minor"].Value);
-            patch = int.Parse(m.Groups["patch"].Value);
-            prereleaseTag = m.Groups["tag"] == null ? "" : m.Groups["tag"].Value;
-            return true;
-        }
-
+        /*********
+        ** Private methods
+        *********/
         /// <summary>Try to parse the next characters in a queue as a numeric part.</summary>
         /// <param name="raw">The raw characters to parse.</param>
         /// <param name="index">The index of the next character to read.</param>
@@ -144,7 +105,12 @@ namespace SoGModdingAPI.Toolkit.Framework
         /// <param name="raw">The raw characters to parse.</param>
         /// <param name="index">The index of the next character to read.</param>
         /// <param name="tag">The parsed tag.</param>
-        private static bool TryParseTag(char[] raw, ref int index, out string tag)
+        private static bool TryParseTag(char[] raw, ref int index,
+#if NET5_0_OR_GREATER
+            [NotNullWhen(true)]
+#endif
+            out string? tag
+        )
         {
             // read tag length
             int length = 0;

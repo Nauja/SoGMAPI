@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SoGModdingAPI.Toolkit.Framework.ModData
 {
-    /// <summary>The parsed mod metadata from SMAPI's internal mod list.</summary>
+    /// <summary>The parsed mod metadata from SoGMAPI's internal mod list.</summary>
     public class ModDataRecord
     {
         /*********
@@ -20,7 +20,7 @@ namespace SoGModdingAPI.Toolkit.Framework.ModData
         public string[] FormerIDs { get; }
 
         /// <summary>The mod warnings to suppress, even if they'd normally be shown.</summary>
-        public ModWarning SuppressWarnings { get; set; }
+        public ModWarning SuppressWarnings { get; }
 
         /// <summary>The versioned field data.</summary>
         public ModDataField[] Fields { get; }
@@ -70,9 +70,9 @@ namespace SoGModdingAPI.Toolkit.Framework.ModData
         }
 
         /// <summary>Get the default update key for this mod, if any.</summary>
-        public string GetDefaultUpdateKey()
+        public string? GetDefaultUpdateKey()
         {
-            string updateKey = this.Fields.FirstOrDefault(p => p.Key == ModDataFieldKey.UpdateKey && p.IsDefault)?.Value;
+            string? updateKey = this.Fields.FirstOrDefault(p => p.Key == ModDataFieldKey.UpdateKey && p.IsDefault)?.Value;
             return !string.IsNullOrWhiteSpace(updateKey)
                 ? updateKey
                 : null;
@@ -80,9 +80,9 @@ namespace SoGModdingAPI.Toolkit.Framework.ModData
 
         /// <summary>Get a parsed representation of the <see cref="ModDataRecord.Fields"/> which match a given manifest.</summary>
         /// <param name="manifest">The manifest to match.</param>
-        public ModDataRecordVersionedFields GetVersionedFields(IManifest manifest)
+        public ModDataRecordVersionedFields GetVersionedFields(IManifest? manifest)
         {
-            ModDataRecordVersionedFields parsed = new ModDataRecordVersionedFields { DisplayName = this.DisplayName, DataRecord = this };
+            ModDataRecordVersionedFields parsed = new(this);
             foreach (ModDataField field in this.Fields.Where(field => field.IsMatch(manifest)))
             {
                 switch (field.Key)

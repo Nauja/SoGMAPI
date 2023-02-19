@@ -1,122 +1,164 @@
 #!/usr/bin/env bash
-# MonoKickstart Shell Script
-# Written by Ethan "flibitijibibo" Lee
-# Modified for SoGMAPI by various contributors
 
-# Move to script's directory
+##########
+## Initial setup
+##########
+# move to script's directory
 cd "$(dirname "$0")" || exit $?
 
-# Get the system architecture
-UNAME=$(uname)
-ARCH=$(uname -m)
+# Whether to avoid opening a separate terminal window, and avoid logging anything to the console.
+# This isn't recommended since you won't see errors, warnings, and update alerts.
+SKIP_TERMINAL=false
 
-# MonoKickstart picks the right libfolder, so just execute the right binary.
-if [ "$UNAME" == "Darwin" ]; then
-    # ... Except on OSX.
-    export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:./osx/
+# Whether to avoid opening a separate terminal, but still send the usual log output to the console.
+USE_CURRENT_SHELL=false
 
-    # El Capitan is a total idiot and wipes this variable out, making the
-    # Steam overlay disappear. This sidesteps "System Integrity Protection"
-    # and resets the variable with Valve's own variable (they provided this
-    # fix by the way, thanks Valve!). Note that you will need to update your
-    # launch configuration to the script location, NOT just the app location
-    # (i.e. Kick.app/Contents/MacOS/Kick, not just Kick.app).
-    # -flibit
-    if [ "$STEAM_DYLD_INSERT_LIBRARIES" != "" ] && [ "$DYLD_INSERT_LIBRARIES" == "" ]; then
-        export DYLD_INSERT_LIBRARIES="$STEAM_DYLD_INSERT_LIBRARIES"
+
+##########
+## Read environment variables
+##########
+if [ "$SOGMAPI_NO_TERMINAL" == "true" ]; then
+    SKIP_TERMINAL=true
+fi
+if [ "$SOGMAPI_USE_CURRENT_SHELL" == "true" ]; then
+    USE_CURRENT_SHELL=true
+fi
+
+
+##########
+## Read command-line arguments
+##########
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --skip-terminal ) SKIP_TERMINAL=true; shift ;;
+        --use-current-shell ) USE_CURRENT_SHELL=true; shift ;;
+        -- ) shift; break ;;
+        * ) shift ;;
+    esac
+done
+
+if [ "$SKIP_TERMINAL" == "true" ]; then
+    USE_CURRENT_SHELL=true
+fi
+
+
+##########
+## Open terminal if needed
+##########
+# on macOS, make sure we're running in a Terminal
+# Besides letting the player see errors/warnings/alerts in the console, this is also needed because
+# Steam messes with the PATH.
+if [ "$(uname)" == "Darwin" ]; then
+    if [ ! -t 1 ]; then # not open in Terminal (https://stackoverflow.com/q/911168/262123)
+        # reopen in Terminal if needed
+        # https://stackoverflow.com/a/29511052/262123
+        if [ "$USE_CURRENT_SHELL" == "false" ]; then
+            echo "Reopening in the Terminal app..."
+            echo '#!/bin/sh' > /tmp/open-sogmapi-terminal.command
+            echo "\"$0\" $@ --use-current-shell" >> /tmp/open-sogmapi-terminal.command
+            chmod +x /tmp/open-sogmapi-terminal.command
+            cat /tmp/open-sogmapi-terminal.command
+            open -W /tmp/open-sogmapi-terminal.command
+            rm /tmp/open-sogmapi-terminal.command
+            exit 0
+        fi
     fi
+fi
 
-    # this was here before
-    ln -sf mcs.bin.osx mcs
 
-    # fix "DllNotFoundException: libgdiplus.dylib" errors when loading images in SoGMAPI
-    if [ -f libgdiplus.dylib ]; then
-        rm libgdiplus.dylib
-    fi
-    if [ -f /Library/Frameworks/Mono.framework/Versions/Current/lib/libgdiplus.dylib ]; then
-        ln -s /Library/Frameworks/Mono.framework/Versions/Current/lib/libgdiplus.dylib libgdiplus.dylib
-    fi
+##########
+## Validate assumptions
+##########
+# script must be run from the game folder
+if [ ! -f "Stardew Valley.dll" ]; then
+    printf "Oops! SoGMAPI must be placed in the Stardew Valley game folder.\nSee instructions: https://stardewvalleywiki.com/Modding:Player_Guide";
+    read -r
+    exit 1
+fi
 
-    # create bin file
-    # Note: don't overwrite if it's identical, to avoid resetting permission flags
-    if [ ! -x SoGModdingAPI.bin.osx ] || ! cmp SecretsOfGrindea.bin.osx SoGModdingAPI.bin.osx >/dev/null 2>&1; then
-        cp -p SecretsOfGrindea.bin.osx SoGModdingAPI.bin.osx
-    fi
 
-    # launch SoGMAPI
-    open -a Terminal ./SoGModdingAPI.bin.osx "$@"
+##########
+## Launch SoGMAPI
+##########
+# macOS
+if [ "$(uname)" == "Darwin" ]; then
+    ./SoGModdingAPI "$@"
+
+# Linux
 else
     # choose binary file to launch
-    LAUNCH_FILE=""
-    if [ "$ARCH" == "x86_64" ]; then
-        ln -sf mcs.bin.x86_64 mcs
-        cp SecretsOfGrindea.bin.x86_64 SoGModdingAPI.bin.x86_64
-        LAUNCH_FILE="./SoGModdingAPI.bin.x86_64"
-    else
-        ln -sf mcs.bin.x86 mcs
-        cp SecretsOfGrindea.bin.x86 SoGModdingAPI.bin.x86
-        LAUNCH_FILE="./SoGModdingAPI.bin.x86"
-    fi
+    LAUNCH_FILE="./SoGModdingAPI"
     export LAUNCH_FILE
 
-    # select terminal (prefer xterm for best compatibility, then known supported terminals)
-    for terminal in xterm gnome-terminal kitty terminator xfce4-terminal konsole terminal termite alacritty mate-terminal x-terminal-emulator; do
-        if command -v "$terminal" 2>/dev/null; then
-            export TERMINAL_NAME=$terminal
-            break;
+    # run in terminal
+    if [ "$USE_CURRENT_SHELL" == "false" ]; then
+        # select terminal (prefer xterm for best compatibility, then known supported terminals)
+        for terminal in xterm gnome-terminal kitty terminator xfce4-terminal konsole terminal termite alacritty mate-terminal x-terminal-emulator; do
+            if command -v "$terminal" 2>/dev/null; then
+                export TERMINAL_NAME=$terminal
+                break;
+            fi
+        done
+
+        # find the true shell behind x-terminal-emulator
+        if [ "$TERMINAL_NAME" = "x-terminal-emulator" ]; then
+            TERMINAL_NAME="$(basename "$(readlink -f "$(command -v x-terminal-emulator)")")"
+            export TERMINAL_NAME
         fi
-    done
 
-    # find the true shell behind x-terminal-emulator
-    if [ "$TERMINAL_NAME" = "x-terminal-emulator" ]; then
-        export TERMINAL_NAME="$(basename "$(readlink -f $(command -v x-terminal-emulator))")"
-    fi
+        # run in selected terminal and account for quirks
+        TERMINAL_PATH="$(command -v "$TERMINAL_NAME")"
+        export TERMINAL_PATH
+        if [ -x "$TERMINAL_PATH" ]; then
+            case $TERMINAL_NAME in
+                terminal|termite)
+                    # consumes only one argument after -e
+                    # options containing space characters are unsupported
+                    exec "$TERMINAL_NAME" -e "env TERM=xterm $LAUNCH_FILE $@"
+                    ;;
 
-    # run in selected terminal and account for quirks
-    export TERMINAL_PATH="$(command -v $TERMINAL_NAME)"
-    if [ -x $TERMINAL_PATH ]; then
-        case $TERMINAL_NAME in
-            terminal|termite)
-                # consumes only one argument after -e
-                # options containing space characters are unsupported
-                exec $TERMINAL_NAME -e "env TERM=xterm $LAUNCH_FILE $@"
-                ;;
+                xterm|konsole|alacritty)
+                    # consumes all arguments after -e
+                    exec "$TERMINAL_NAME" -e env TERM=xterm $LAUNCH_FILE "$@"
+                    ;;
 
-            xterm|konsole|alacritty)
-                # consumes all arguments after -e
-                exec $TERMINAL_NAME -e env TERM=xterm $LAUNCH_FILE "$@"
-                ;;
+                terminator|xfce4-terminal|mate-terminal)
+                    # consumes all arguments after -x
+                    exec "$TERMINAL_NAME" -x env TERM=xterm $LAUNCH_FILE "$@"
+                    ;;
 
-            terminator|xfce4-terminal|mate-terminal)
-                # consumes all arguments after -x
-                exec $TERMINAL_NAME -x env TERM=xterm $LAUNCH_FILE "$@"
-                ;;
+                gnome-terminal)
+                    # consumes all arguments after --
+                    exec "$TERMINAL_NAME" -- env TERM=xterm $LAUNCH_FILE "$@"
+                    ;;
 
-            gnome-terminal)
-                # consumes all arguments after --
-                exec $TERMINAL_NAME -- env TERM=xterm $LAUNCH_FILE "$@"
-                ;;
+                kitty)
+                    # consumes all trailing arguments
+                    exec "$TERMINAL_NAME" env TERM=xterm $LAUNCH_FILE "$@"
+                    ;;
 
-            kitty)
-                # consumes all trailing arguments
-                exec $TERMINAL_NAME env TERM=xterm $LAUNCH_FILE "$@"
-                ;;
+                *)
+                    # If we don't know the terminal, just try to run it in the current shell.
+                    # If THAT fails, launch with no output.
+                    env TERM=xterm $LAUNCH_FILE "$@"
+                    if [ $? -eq 127 ]; then
+                        exec $LAUNCH_FILE --no-terminal "$@"
+                    fi
+            esac
 
-            *)
-                # If we don't know the terminal, just try to run it in the current shell.
-                # If THAT fails, launch with no output.
-                env TERM=xterm $LAUNCH_FILE "$@"
-                if [ $? -eq 127 ]; then
-                    exec $LAUNCH_FILE --no-terminal "$@"
-                fi
-        esac
+        ## terminal isn't executable; fallback to current shell or no terminal
+        else
+            echo "The '$TERMINAL_NAME' terminal isn't executable. SoGMAPI might be running in a sandbox or the system might be misconfigured? Falling back to current shell."
+            env TERM=xterm $LAUNCH_FILE "$@"
+            if [ $? -eq 127 ]; then
+                exec $LAUNCH_FILE --no-terminal "$@"
+            fi
+        fi
 
-    ## terminal isn't executable; fallback to current shell or no terminal
+    # explicitly run without terminal
+    elif [ "$SKIP_TERMINAL" == "true" ]; then
+        exec $LAUNCH_FILE --no-terminal "$@"
     else
-        echo "The '$TERMINAL_NAME' terminal isn't executable. SoGMAPI might be running in a sandbox or the system might be misconfigured? Falling back to current shell."
-        env TERM=xterm $LAUNCH_FILE "$@"
-        if [ $? -eq 127 ]; then
-            exec $LAUNCH_FILE --no-terminal "$@"
-        fi
+        exec $LAUNCH_FILE "$@"
     fi
 fi

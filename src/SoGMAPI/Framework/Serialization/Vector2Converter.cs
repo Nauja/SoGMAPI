@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json.Linq;
 using SoGModdingAPI.Toolkit.Serialization;

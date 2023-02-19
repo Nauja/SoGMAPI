@@ -1,115 +1,175 @@
 &larr; [README](../README.md)
 
-This file provides more technical documentation about SoGMAPI. If you only want to use or create
+This file provides more technical documentation about SMAPI. If you only want to use or create
 mods, this section isn't relevant to you; see the main README to use or create mods.
 
-This document is about SoGMAPI itself; see also [mod build package](mod-package.md).
+This document is about SMAPI itself; see also [mod build package](mod-package.md) and
+[web services](web.md).
 
 # Contents
 * [Customisation](#customisation)
   * [Configuration file](#configuration-file)
   * [Command-line arguments](#command-line-arguments)
   * [Compile flags](#compile-flags)
-* [For SoGMAPI developers](#for-smapi-developers)
-  * [Compiling from source](#compiling-from-source)
-  * [Debugging a local build](#debugging-a-local-build)
-  * [Preparing a release](#preparing-a-release)
-  * [Using a custom Harmony build](#using-a-custom-harmony-build)
+* [Compile from source code](#compile-from-source-code)
+  * [Main project](#main-project)
+  * [Custom Harmony build](#custom-harmony-build)
+* [Prepare a release](#prepare-a-release)
+  * [On any platform](#on-any-platform)
+  * [On Windows](#on-windows)
 * [Release notes](#release-notes)
 
 ## Customisation
 ### Configuration file
-You can customise some SoGMAPI behaviour by editing the `sogmapi-internal/config.json` file in your
+You can customise some SMAPI behaviour by editing the `smapi-internal/config.json` file in your
 game folder. See documentation in the file for more info.
 
 ### Command-line arguments
-The SoGMAPI installer recognises three command-line arguments:
+The SMAPI installer recognises three command-line arguments:
 
 argument | purpose
 -------- | -------
 `--install` | Preselects the install action, skipping the prompt asking what the user wants to do.
 `--uninstall` | Preselects the uninstall action, skipping the prompt asking what the user wants to do.
-`--game-path "path"` | Specifies the full path to the folder containing the Secrets of Grindea executable, skipping automatic detection and any prompt to choose a path. If the path is not valid, the installer displays an error.
+`--game-path "path"` | Specifies the full path to the folder containing the Stardew Valley executable, skipping automatic detection and any prompt to choose a path. If the path is not valid, the installer displays an error.
 
-SoGMAPI itself recognises two arguments **on Windows only**, but these are intended for internal use
-or testing and may change without warning. On Linux/macOS, see _environment variables_ below.
+SMAPI itself recognises five arguments, but these are meant for internal use or testing, and might
+change without warning. **On Linux/macOS**, command-line arguments won't work; see _environment
+variables_ below instead.
 
 argument | purpose
 -------- | -------
-`--no-terminal` | SoGMAPI won't write anything to the console window. (Messages will still be written to the log file.)
+`--developer-mode`<br />`--developer-mode-off` | Enable or disable features intended for mod developers. Currently this only makes `TRACE`-level messages appear in the console.
+`--no-terminal` | SMAPI won't log anything to the console. On Linux/macOS only, this will also prevent the launch script from trying to open a terminal window. (Messages will still be written to the log file.)
+`--use-current-shell` | On Linux/macOS only, the launch script won't try to open a terminal window. All console output will be sent to the shell running the launch script.
 `--mods-path` | The path to search for mods, if not the standard `Mods` folder. This can be a path relative to the game folder (like `--mods-path "Mods (test)"`) or an absolute path.
 
 ### Environment variables
-The above SoGMAPI arguments don't work on Linux/macOS due to the way the game launcher works. You can
-set temporary environment variables instead. For example:
-> SOGMAPI_MODS_PATH="Mods (multiplayer)" /path/to/SecretsOfGrindea
+The above SMAPI arguments may not work on Linux/macOS due to the way the game launcher works. You
+can set temporary environment variables instead. For example:
+> SMAPI_MODS_PATH="Mods (multiplayer)" /path/to/StardewValley
 
 environment variable | purpose
 -------------------- | -------
-`SOGMAPI_NO_TERMINAL` | Equivalent to `--no-terminal` above.
-`SOGMAPI_MODS_PATH` | Equivalent to `--mods-path` above.
+`SMAPI_DEVELOPER_MODE` | Equivalent to `--developer-mode` and `--developer-mode-off` above. The value must be `true` or `false`.
+`SMAPI_MODS_PATH` | Equivalent to `--mods-path` above.
+`SMAPI_NO_TERMINAL` | Equivalent to `--no-terminal` above.
+`SMAPI_USE_CURRENT_SHELL` | Equivalent to `--use-current-shell` above.
 
 ### Compile flags
-SoGMAPI uses a small number of conditional compilation constants, which you can set by editing the
-`<DefineConstants>` element in `SoGMAPI.csproj`. Supported constants:
+SMAPI uses a small number of conditional compilation constants, which you can set by editing the
+`<DefineConstants>` element in `SMAPI.csproj`. Supported constants:
 
 flag | purpose
 ---- | -------
-`SOGMAPI_FOR_WINDOWS` | Whether SoGMAPI is being compiled for Windows; if not set, the code assumes Linux/macOS. Set automatically in `common.targets`.
-`SOGMAPI_FOR_WINDOWS_64BIT_HACK` | Whether SoGMAPI is being [compiled for Windows with a 64-bit Linux version of the game](https://github.com/Pathoschild/SMAPI/issues/767). This is highly specialized and shouldn't be used in most cases. False by default.
-`SOGMAPI_FOR_XNA` | Whether SoGMAPI is being compiled for XNA Framework; if not set, the code assumes MonoGame. Set automatically in `common.targets` with the same value as `SOGMAPI_FOR_WINDOWS` (unless `SOGMAPI_FOR_WINDOWS_64BIT_HACK` is set).
-`HARMONY_2` | Whether to enable experimental Harmony 2.0 support and rewrite existing Harmony 1._x_ mods for compatibility. Note that you need to replace `build/0Harmony.dll` with a Harmony 2.0 build (or switch to a package reference) to use this flag.
+`SMAPI_FOR_WINDOWS` | Whether SMAPI is being compiled for Windows; if not set, the code assumes Linux/macOS. Set automatically in `common.targets`.
+`SMAPI_DEPRECATED`  | Whether to include deprecated code in the build.
 
-## For SoGMAPI developers
-### Compiling from source
-Using an official SoGMAPI release is recommended for most users, but you can compile from source
-directly if needed. There are no special steps (just open the project and compile), but SoGMAPI often
-uses the latest C# syntax. You may need the latest version of your IDE to compile it.
+## Compile from source code
+### Main project
+Using an official SMAPI release is recommended for most users, but you can compile from source
+directly if needed. Just open the project in an IDE like [Visual
+Studio](https://visualstudio.microsoft.com/vs/community/) or [Rider](https://www.jetbrains.com/rider/),
+and build the `SMAPI` project. The project will automatically adjust the build settings for your
+current OS and Stardew Valley install path.
 
-SoGMAPI uses build configuration derived from the [crossplatform mod config](https://smapi.io/package/readme)
-to detect your current OS automatically and load the correct references. Compile output will be
-placed in a `bin` folder at the root of the Git repository.
+Rebuilding the solution in debug mode will copy the SMAPI files into your game folder. Starting
+the `SMAPI` project with debugging from Visual Studio or Rider should launch SMAPI with the
+debugger attached, so you can intercept errors and step through the code being executed.
 
-### Debugging a local build
-Rebuilding the solution in debug mode will copy the SoGMAPI files into your game folder. Starting
-the `SoGMAPI` project with debugging from Visual Studio (on macOS or Windows) will launch SoGMAPI with
-the debugger attached, so you can intercept errors and step through the code being executed. That
-doesn't work in MonoDevelop on Linux, unfortunately.
+### Custom Harmony build
+SMAPI uses [a custom build of Harmony 2.2.2](https://github.com/Pathoschild/Harmony#readme), which
+is included in the `build` folder. To use a different build, just replace `0Harmony.dll` in that
+folder before compiling.
 
-### Preparing a release
-To prepare a crossplatform SoGMAPI release, you'll need to compile it on two platforms. See
-[crossplatforming info](https://stardewvalleywiki.com/Modding:Modder_Guide/Test_and_Troubleshoot#Testing_on_all_platforms)
-on the wiki for the first-time setup.
+## Prepare a release
+### On any platform
+**⚠ Ideally we'd have one set of instructions for all platforms. The instructions in this section
+will produce a fully functional release for all supported platforms, _except_ that the application
+icon for SMAPI on Windows will disappear due to [.NET runtime bug
+3828](https://github.com/dotnet/runtime/issues/3828). Until that's fixed, see the _[on
+Windows](#on-windows)_ section below to create a build that retains the icon.**
 
-1. [Install a separate 64-bit version of Secrets of Grindea](https://github.com/Steviegt6/Stardew64Installer#readme)
-   on Windows.
-2. Update the version numbers in `build/common.targets`, `Constants`, and the `manifest.json` for
-   bundled mods. Make sure you use a [semantic version](https://semver.org). Recommended format:
+#### First-time setup
+1. On Windows only:
+   1. [Install Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install).
+   2. Run `sudo apt update` in WSL to update the package list.
+   3. The rest of the instructions below should be run in WSL.
+2. Install the required software:
+   1. Install the [.NET 5 SDK](https://docs.microsoft.com/en-us/dotnet/core/install/linux-ubuntu).  
+      _For Ubuntu-based systems, you can run `lsb_release -a` to get the Ubuntu version number._
+   2. [Install Steam](https://linuxconfig.org/how-to-install-steam-on-ubuntu-20-04-focal-fossa-linux).
+   3. Launch `steam` and install the game like usual.
+   4. Download and install your preferred IDE. For the [latest standalone Rider
+      version](https://www.jetbrains.com/help/rider/Installation_guide.html#prerequisites):
+      ```sh
+      wget "<download url here>" -O rider-install.tar.gz
+      sudo tar -xzvf rider-install.tar.gz -C /opt
+      ln -s "/opt/JetBrains Rider-<version>/bin/rider.sh"
+      ./rider.sh
+      ```
+3. Clone the SMAPI repo:
+   ```sh
+   git clone https://github.com/Pathoschild/SMAPI.git
+   ```
+
+### Launch the game
+1. Run these commands to start Steam:
+   ```sh
+   export TERM=xterm
+   steam
+   ```
+2. Launch the game through the Steam UI.
+
+### Prepare the release
+1. Run `build/unix/prepare-install-package.sh VERSION_HERE` to create the release package in the
+   root `bin` folder.
+
+   Make sure you use a [semantic version](https://semver.org). Recommended format:
 
    build type | format                   | example
    :--------- | :----------------------- | :------
-   dev build  | `<version>-alpha.<date>` | `3.0.0-alpha.20171230`
-   prerelease | `<version>-beta.<date>`  | `3.0.0-beta.20171230`
-   release    | `<version>`              | `3.0.0`
-3. In Windows:
-   1. Rebuild the solution with the _release_ solution configuration.
-   2. Back up the `bin/SoGMAPI installer` and `bin/SoGMAPI installer for developers` folders.
-   3. Edit `common.targets` and uncomment the Secrets of Grindea 64-bit section at the top.
-   4. Rebuild the solution again.
-   5. Rename the compiled `SoGModdingAPI.exe` file to `SoGModdingAPI-x64.exe`, and copy it
-      into the `windows-install.dat` files from step ii.
-   6. Copy the folders from step ii to Linux/MacOS.
-4. In Linux/macOS:
-   1. Rebuild the solution with the _release_ solution configuration.
-   2. Add the `windows-install.*` files from Windows to the `bin/SoGMAPI installer` and
-      `bin/SoGMAPI installer for developers` folders compiled on Linux.
-   3. Rename the folders to `SoGMAPI <version> installer` and `SoGMAPI <version> installer for developers`.
-   4. Zip the two folders.
+   dev build  | `<version>-alpha.<date>` | `4.0.0-alpha.20251230`
+   prerelease | `<version>-beta.<date>`  | `4.0.0-beta.20251230`
+   release    | `<version>`              | `4.0.0`
 
-### Custom Harmony build
-SoGMAPI uses [a custom build of Harmony](https://github.com/Pathoschild/Harmony#readme), which is
-included in the `build` folder. To use a different build, just replace `0Harmony.dll` in that
-folder before compiling.
+### On Windows
+#### First-time setup
+1. Set up Windows Subsystem for Linux (WSL):
+   1. [Install WSL](https://docs.microsoft.com/en-us/windows/wsl/install).
+   2. Run `sudo apt update` in WSL to update the package list.
+   3. The rest of the instructions below should be run in WSL.
+2. Install the required software:
+   1. Install the [.NET 5 SDK](https://dotnet.microsoft.com/download/dotnet/5.0).
+   2. Install [Stardew Valley](https://www.stardewvalley.net/).
+3. Clone the SMAPI repo:
+   ```sh
+   git clone https://github.com/Pathoschild/SMAPI.git
+   ```
+
+### Prepare the release
+1. Run `build/windows/prepare-install-package.ps1 VERSION_HERE` in PowerShell to create the release
+   package folders in the root `bin` folder.
+
+   Make sure you use a [semantic version](https://semver.org). Recommended format:
+
+   build type | format                   | example
+   :--------- | :----------------------- | :------
+   dev build  | `<version>-alpha.<date>` | `4.0.0-alpha.20251230`
+   prerelease | `<version>-beta.<date>`  | `4.0.0-beta.20251230`
+   release    | `<version>`              | `4.0.0`
+
+2. Launch WSL and run this script:
+   ```bash
+   # edit to match the build created in steps 1
+   # In WSL, `/mnt/c/example` accesses `C:\example` on the Windows filesystem.
+   version="4.0.0"
+   binFolder="/mnt/e/source/_Stardew/SMAPI/bin"
+   build/windows/finalize-install-package.sh "$version" "$binFolder"
+   ```
+
+Note: to prepare a test Windows-only build, you can pass `--windows-only` in the first step and
+skip the second one.
 
 ## Release notes
 See [release notes](../release-notes.md).

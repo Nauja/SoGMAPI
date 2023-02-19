@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 
 namespace SoGModdingAPI.Events
 {
     /// <summary>Events raised for multiplayer messages and connections.</summary>
     public interface IMultiplayerEvents
     {
-        /// <summary>Raised after the mod context for a peer is received. This happens before the game approves the connection (<see cref="PeerConnected"/>), so the player doesn't yet exist in the game. This is the earliest point where messages can be sent to the peer via SMAPI.</summary>
+        /// <summary>Raised after the mod context for a peer is received. This happens before the game approves the connection (<see cref="PeerConnected"/>), so the player doesn't yet exist in the game. This is the earliest point where messages can be sent to the peer via SoGMAPI.</summary>
         event EventHandler<PeerContextReceivedEventArgs> PeerContextReceived;
 
         /// <summary>Raised after a peer connection is approved by the game.</summary>

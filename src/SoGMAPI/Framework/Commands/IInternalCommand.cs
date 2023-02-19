@@ -1,6 +1,6 @@
-﻿namespace SoGModdingAPI.Framework.Commands
+namespace SoGModdingAPI.Framework.Commands
 {
-    /// <summary>A core SMAPI console command.</summary>
+    /// <summary>A core SoGMAPI console command.</summary>
     interface IInternalCommand
     {
         /*********

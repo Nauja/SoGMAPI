@@ -1,6 +1,11 @@
-﻿namespace SoGModdingAPI
+#if SOGMAPI_DEPRECATED
+using System;
+using SoGModdingAPI.Events;
+
+namespace SoGModdingAPI
 {
-    /// <summary>Provides the initial version for matching assets loaded by the game. SMAPI will raise an error if two mods try to load the same asset; in most cases you should use <see cref="IAssetEditor"/> instead.</summary>
+    /// <summary>Provides the initial version for matching assets loaded by the game. SoGMAPI will raise an error if two mods try to load the same asset; in most cases you should use <see cref="IAssetEditor"/> instead.</summary>
+    [Obsolete($"Use {nameof(IMod.Helper)}.{nameof(IModHelper.Events)}.{nameof(IModEvents.Content)} instead. This interface will be removed in SoGMAPI 4.0.0.")]
     public interface IAssetLoader
     {
         /*********
@@ -15,3 +20,4 @@
         T Load<T>(IAssetInfo asset);
     }
 }
+#endif

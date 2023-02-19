@@ -1,4 +1,4 @@
-﻿namespace SoGModdingAPI.Toolkit.Utilities
+namespace SoGModdingAPI.Toolkit.Utilities
 {
     /// <summary>The game's platform version.</summary>
     public enum Platform

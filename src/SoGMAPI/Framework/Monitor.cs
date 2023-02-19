@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SoGModdingAPI.Framework.Logging;
@@ -25,10 +25,13 @@ namespace SoGModdingAPI.Framework
         private readonly LogFileManager LogFile;
 
         /// <summary>The maximum length of the <see cref="LogLevel"/> values.</summary>
-        private static readonly int MaxLevelLength = (from level in Enum.GetValues(typeof(LogLevel)).Cast<LogLevel>() select level.ToString().Length).Max();
+        private static readonly int MaxLevelLength = Enum.GetValues<LogLevel>().Max(level => level.ToString().Length);
+
+        /// <summary>The cached representation for each level when added to a log header.</summary>
+        private static readonly Dictionary<ConsoleLogLevel, string> LogStrings = Enum.GetValues<ConsoleLogLevel>().ToDictionary(level => level, level => level.ToString().ToUpper().PadRight(Monitor.MaxLevelLength));
 
         /// <summary>A cache of messages that should only be logged once.</summary>
-        private readonly HashSet<string> LogOnceCache = new HashSet<string>();
+        private readonly HashSet<LogOnceCacheKey> LogOnceCache = new();
 
         /// <summary>Get the screen ID that should be logged to distinguish between players in split-screen mode, if any.</summary>
         private readonly Func<int?> GetScreenIdForLog;
@@ -57,7 +60,7 @@ namespace SoGModdingAPI.Framework
         /// <param name="source">The name of the module which logs messages using this instance.</param>
         /// <param name="ignoreChar">A character which indicates the message should not be intercepted if it appears as the first character of a string written to the console. The character itself is not logged in that case.</param>
         /// <param name="logFile">The log file to which to write messages.</param>
-        /// <param name="colorConfig">The colors to use for text written to the SMAPI console.</param>
+        /// <param name="colorConfig">The colors to use for text written to the SoGMAPI console.</param>
         /// <param name="isVerbose">Whether verbose logging is enabled. This enables more detailed diagnostic messages than are normally needed.</param>
         /// <param name="getScreenIdForLog">Get the screen ID that should be logged to distinguish between players in split-screen mode, if any.</param>
         public Monitor(string source, char ignoreChar, LogFileManager logFile, ColorSchemeConfig colorConfig, bool isVerbose, Func<int?> getScreenIdForLog)
@@ -84,7 +87,7 @@ namespace SoGModdingAPI.Framework
         /// <inheritdoc />
         public void LogOnce(string message, LogLevel level = LogLevel.Trace)
         {
-            if (this.LogOnceCache.Add($"{message}|{level}"))
+            if (this.LogOnceCache.Add(new LogOnceCacheKey(message, level)))
                 this.LogImpl(this.Source, message, (ConsoleLogLevel)level);
         }
 
@@ -92,7 +95,7 @@ namespace SoGModdingAPI.Framework
         public void VerboseLog(string message)
         {
             if (this.IsVerbose)
-                this.Log(message, LogLevel.Trace);
+                this.Log(message);
         }
 
         /// <summary>Write a newline to the console and log file.</summary>
@@ -147,7 +150,7 @@ namespace SoGModdingAPI.Framework
         /// <param name="level">The log level.</param>
         private string GenerateMessagePrefix(string source, ConsoleLogLevel level)
         {
-            string levelStr = level.ToString().ToUpper().PadRight(Monitor.MaxLevelLength);
+            string levelStr = Monitor.LogStrings[level];
             int? playerIndex = this.GetScreenIdForLog();
 
             return $"[{DateTime.Now:HH:mm:ss} {levelStr}{(playerIndex != null ? $" screen_{playerIndex}" : "")} {source}]";

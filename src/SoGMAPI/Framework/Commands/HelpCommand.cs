@@ -1,8 +1,8 @@
-﻿using System.Linq;
+using System.Linq;
 
 namespace SoGModdingAPI.Framework.Commands
 {
-    /// <summary>The 'help' SMAPI console command.</summary>
+    /// <summary>The 'help' SoGMAPI console command.</summary>
     internal class HelpCommand : IInternalCommand
     {
         /*********
@@ -39,7 +39,7 @@ namespace SoGModdingAPI.Framework.Commands
         {
             if (args.Any())
             {
-                Command result = this.CommandManager.Get(args[0]);
+                Command? result = this.CommandManager.Get(args[0]);
                 if (result == null)
                     monitor.Log("There's no command with that name. Type 'help' by itself for more info.", LogLevel.Error);
                 else
@@ -61,10 +61,10 @@ namespace SoGModdingAPI.Framework.Commands
                     + "--------------\n"
                     + "The following commands are registered. For more info about a command, type 'help command_name'.\n\n";
 
-                IGrouping<string, string>[] groups = (from command in this.CommandManager.GetAll() orderby command.Mod?.DisplayName, command.Name group command.Name by command.Mod?.DisplayName).ToArray();
+                IGrouping<string, string>[] groups = (from command in this.CommandManager.GetAll() orderby command.Mod?.DisplayName, command.Name group command.Name by command.Mod?.DisplayName ?? "SoGMAPI").ToArray();
                 foreach (var group in groups)
                 {
-                    string modName = group.Key ?? "SoGMAPI";
+                    string modName = group.Key;
                     string[] commandNames = group.ToArray();
                     message += $"{modName}:\n  {string.Join("\n  ", commandNames)}\n\n";
                 }

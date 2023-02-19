@@ -3,61 +3,44 @@
     <AssemblyName>SoGModdingAPI</AssemblyName>
     <RootNamespace>SoGModdingAPI</RootNamespace>
     <Description>The modding API for Secrets of Grindea.</Description>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <PlatformTarget>x86</PlatformTarget>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LargeAddressAware Condition="'$(OS)' == 'Windows_NT'">true</LargeAddressAware>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+
+    <!--copy dependency DLLs to bin folder so we can include them in installer bundle -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+    <!-- tiered compilation breaks Harmony -->
+    <TieredCompilation>false</TieredCompilation>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <Import Project="..\..\build\common.targets" />
 
-  <PropertyGroup Condition="$(DefineConstants.Contains(SOGMAPI_FOR_WINDOWS_64BIT_HACK))">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>1701;1702;169;1591;1574;1587;414</NoWarn>
-  </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="LargeAddressAware" Version="1.0.5" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="Platonymous.TMXTile" Version="1.5.8" />
+    <PackageReference Include="LargeAddressAware" Version="1.0.6" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
+    <PackageReference Include="MonoMod.Common" Version="22.3.5.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="Pathoschild.Http.FluentClient" Version="4.2.0" />
+    <PackageReference Include="Pintail" Version="2.2.2" />
+    <PackageReference Include="Platonymous.TMXTile" Version="1.5.9" />
+    <PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+
+    <!-- legacy package; remove in SoGMAPI 4.0.0 -->
+    <PackageReference Include="System.Runtime.Caching" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="..\..\build\0Harmony.dll" Private="True" />
-    <Reference Include="$(GameExecutableName)" HintPath="$(GamePath)\$(GameExecutableName).exe" Private="False" />
-    <Reference Include="System.Numerics" Private="True" />
-    <Reference Include="System.Runtime.Caching" Private="True" />
     <Reference Include="Lidgren.Network" HintPath="$(GamePath)\Lidgren.Network.dll" Private="False" />
+    <Reference Include="SoG" HintPath="$(GamePath)\Secrets Of Grindea.exe" Private="False" />
+    <Reference Include="..\..\build\MonoGame.Framework.dll" Private="False" />
   </ItemGroup>
-
-  <!-- Windows only -->
-  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-
-  <!-- Game framework -->
-  <Choose>
-    <When Condition="$(DefineConstants.Contains(SOGMAPI_FOR_XNA))">
-      <ItemGroup>
-        <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" Private="False" />
-        <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" Private="False" />
-        <Reference Include="Microsoft.Xna.Framework.Graphics, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" Private="False" />
-        <Reference Include="Microsoft.Xna.Framework.Xact, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" Private="False" />
-      </ItemGroup>
-    </When>
-    <Otherwise>
-      <ItemGroup>
-        <Reference Include="MonoGame.Framework" HintPath="$(GamePath)\MonoGame.Framework.dll" Private="False" />
-      </ItemGroup>
-    </Otherwise>
-  </Choose>
 
   <ItemGroup>
     <ProjectReference Include="..\SoGMAPI.Toolkit.CoreInterfaces\SoGMAPI.Toolkit.CoreInterfaces.csproj" />
@@ -66,11 +49,14 @@
 
   <ItemGroup>
     <Content Include="SoGMAPI.config.json" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="SoGMAPI.metadata.json" CopyToOutputDirectory="PreserveNewest" />
+    
 
     <None Update="i18n\*" CopyToOutputDirectory="PreserveNewest" />
     <None Update="steam_appid.txt" CopyToOutputDirectory="PreserveNewest" />
+
+    <Compile Include="..\SoGMAPI.Toolkit\Framework\LowLevelEnvironmentUtility.cs" Link="Framework\Utilities\LowLevelEnvironmentUtility.cs" />
   </ItemGroup>
 
   <Import Project="..\SoGMAPI.Internal\SoGMAPI.Internal.projitems" Label="Shared" />
+  <Import Project="..\SoGMAPI.Internal.Patching\SoGMAPI.Internal.Patching.projitems" Label="Shared" />
 </Project>

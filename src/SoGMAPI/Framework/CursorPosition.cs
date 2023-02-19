@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using SoG;
 
 namespace SoGModdingAPI.Framework
 {
@@ -38,7 +39,7 @@ namespace SoGModdingAPI.Framework
         }
 
         /// <inheritdoc />
-        public bool Equals(ICursorPosition other)
+        public bool Equals(ICursorPosition? other)
         {
             return other != null && this.AbsolutePixels == other.AbsolutePixels;
         }
@@ -46,17 +47,17 @@ namespace SoGModdingAPI.Framework
         /// <inheritdoc />
         public Vector2 GetScaledAbsolutePixels()
         {
-            return new Vector2(0); /* @todo Game1.uiMode
+            return Game1.uiMode
                 ? Utility.ModifyCoordinatesForUIScale(this.AbsolutePixels)
-                : this.AbsolutePixels;*/
+                : this.AbsolutePixels;
         }
 
         /// <inheritdoc />
         public Vector2 GetScaledScreenPixels()
         {
-            return new Vector2(0); /* @todo  Game1.uiMode
+            return Game1.uiMode
                 ? Utility.ModifyCoordinatesForUIScale(this.ScreenPixels)
-                : this.ScreenPixels;*/
+                : this.ScreenPixels;
         }
     }
 }

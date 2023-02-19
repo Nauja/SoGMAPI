@@ -1,4 +1,4 @@
-﻿namespace SoGModdingAPI
+namespace SoGModdingAPI
 {
     /// <summary>Metadata about a mod installed by a connected player.</summary>
     public interface IMultiplayerPeerMod

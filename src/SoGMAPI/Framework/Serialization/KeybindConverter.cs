@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SoGModdingAPI.Toolkit.Serialization;
@@ -36,7 +36,7 @@ namespace SoGModdingAPI.Framework.Serialization
         /// <param name="objectType">The object type.</param>
         /// <param name="existingValue">The object being read.</param>
         /// <param name="serializer">The calling serializer.</param>
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
             string path = reader.Path;
 
@@ -44,22 +44,25 @@ namespace SoGModdingAPI.Framework.Serialization
             {
                 case JsonToken.Null:
                     return objectType == typeof(Keybind)
-                        ? (object)new Keybind()
+                        ? new Keybind()
                         : new KeybindList();
 
                 case JsonToken.String:
                     {
-                        string str = JToken.Load(reader).Value<string>();
+                        string? str = JToken.Load(reader).Value<string>();
+
+                        if (str is null)
+                            return new Keybind(Array.Empty<SButton>());
 
                         if (objectType == typeof(Keybind))
                         {
-                            return Keybind.TryParse(str, out Keybind parsed, out string[] errors)
+                            return Keybind.TryParse(str, out Keybind? parsed, out string[] errors)
                                 ? parsed
                                 : throw new SParseException($"Can't parse {nameof(Keybind)} from invalid value '{str}' (path: {path}).\n{string.Join("\n", errors)}");
                         }
                         else
                         {
-                            return KeybindList.TryParse(str, out KeybindList parsed, out string[] errors)
+                            return KeybindList.TryParse(str, out KeybindList? parsed, out string[] errors)
                                 ? parsed
                                 : throw new SParseException($"Can't parse {nameof(KeybindList)} from invalid value '{str}' (path: {path}).\n{string.Join("\n", errors)}");
                         }
@@ -74,7 +77,7 @@ namespace SoGModdingAPI.Framework.Serialization
         /// <param name="writer">The JSON writer.</param>
         /// <param name="value">The value.</param>
         /// <param name="serializer">The calling serializer.</param>
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
             writer.WriteValue(value?.ToString());
         }

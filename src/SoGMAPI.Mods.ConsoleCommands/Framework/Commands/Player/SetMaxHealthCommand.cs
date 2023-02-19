@@ -1,10 +1,11 @@
-﻿using System.Linq;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using SoG;
-using SoGModdingAPI.Framework;
 
 namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
 {
     /// <summary>A command which edits the player's maximum health.</summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Loaded using reflection")]
     internal class SetMaxHealthCommand : ConsoleCommand
     {
         /*********
@@ -20,20 +21,18 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
         /// <param name="args">The command arguments.</param>
         public override void Handle(IMonitor monitor, string command, ArgumentParser args)
         {
-            BaseStats stats = SGame.Instance.xLocalPlayer.xEntity.xBaseStats;
-
             // validate
             if (!args.Any())
             {
-                monitor.Log($"You currently have {stats.iMaxHP} max health. Specify a value to change it.", LogLevel.Info);
+                monitor.Log($"You currently have {Game1.player.maxHealth} max health. Specify a value to change it.", LogLevel.Info);
                 return;
             }
 
             // handle
             if (args.TryGetInt(0, "amount", out int amount, min: 1))
             {
-                stats.iBaseMaxHP = amount;
-                monitor.Log($"OK, you now have {stats.iMaxHP} max health.", LogLevel.Info);
+                Game1.player.maxHealth = amount;
+                monitor.Log($"OK, you now have {Game1.player.maxHealth} max health.", LogLevel.Info);
             }
         }
     }

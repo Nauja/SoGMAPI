@@ -1,11 +1,17 @@
-﻿using System;
+using System;
 using SoGModdingAPI.Events;
 
 namespace SoGModdingAPI.Framework.Events
 {
-    /// <summary>Events raised when something changes in the world.</summary>
+    /// <inheritdoc cref="IWorldEvents" />
     internal class ModWorldEvents : ModEventsBase, IWorldEvents
     {
+        /*********
+        ** Accessors
+        *********/
+
+
+
         /*********
         ** Public methods
         *********/

@@ -11,11 +11,11 @@ namespace SoGModdingAPI
         /// <summary>Get all content packs loaded for this mod.</summary>
         IEnumerable<IContentPack> GetOwned();
 
-        /// <summary>Create a temporary content pack to read files from a directory, using randomized manifest fields. Temporary content packs will not appear in the SMAPI log and update checks will not be performed.</summary>
+        /// <summary>Create a temporary content pack to read files from a directory, using randomized manifest fields. Temporary content packs will not appear in the SoGMAPI log and update checks will not be performed.</summary>
         /// <param name="directoryPath">The absolute directory path containing the content pack files.</param>
         IContentPack CreateFake(string directoryPath);
 
-        /// <summary>Create a temporary content pack to read files from a directory. Temporary content packs will not appear in the SMAPI log and update checks will not be performed.</summary>
+        /// <summary>Create a temporary content pack to read files from a directory. Temporary content packs will not appear in the SoGMAPI log and update checks will not be performed.</summary>
         /// <param name="directoryPath">The absolute directory path containing the content pack files.</param>
         /// <param name="id">The content pack's unique ID.</param>
         /// <param name="name">The content pack name.</param>

@@ -23,7 +23,7 @@ namespace SoGModdingAPI
         /// <param name="state">The button state.</param>
         public static bool IsDown(this SButtonState state)
         {
-            return state == SButtonState.Held || state == SButtonState.Pressed;
+            return state is SButtonState.Held or SButtonState.Pressed;
         }
     }
 }

@@ -1,0 +1,3 @@
+[submodule "vendor/SMAPI"]
+	path = vendor/SMAPI
+	url = https://github.com/Pathoschild/SMAPI.git

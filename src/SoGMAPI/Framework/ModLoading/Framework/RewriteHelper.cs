@@ -13,7 +13,7 @@ namespace SoGModdingAPI.Framework.ModLoading.Framework
         ** Fields
         *********/
         /// <summary>The comparer which heuristically compares type definitions.</summary>
-        private static readonly TypeReferenceComparer TypeDefinitionComparer = new TypeReferenceComparer();
+        private static readonly TypeReferenceComparer TypeDefinitionComparer = new();
 
 
         /*********
@@ -21,38 +21,16 @@ namespace SoGModdingAPI.Framework.ModLoading.Framework
         *********/
         /// <summary>Get the field reference from an instruction if it matches.</summary>
         /// <param name="instruction">The IL instruction.</param>
-        public static FieldReference AsFieldReference(Instruction instruction)
+        public static FieldReference? AsFieldReference(Instruction instruction)
         {
             return instruction.OpCode == OpCodes.Ldfld || instruction.OpCode == OpCodes.Ldsfld || instruction.OpCode == OpCodes.Stfld || instruction.OpCode == OpCodes.Stsfld
                 ? (FieldReference)instruction.Operand
                 : null;
         }
 
-        /// <summary>Get whether the field is a reference to the expected type and field.</summary>
-        /// <param name="instruction">The IL instruction.</param>
-        /// <param name="fullTypeName">The full type name containing the expected field.</param>
-        /// <param name="fieldName">The name of the expected field.</param>
-        public static bool IsFieldReferenceTo(Instruction instruction, string fullTypeName, string fieldName)
-        {
-            FieldReference fieldRef = RewriteHelper.AsFieldReference(instruction);
-            return RewriteHelper.IsFieldReferenceTo(fieldRef, fullTypeName, fieldName);
-        }
-
-        /// <summary>Get whether the field is a reference to the expected type and field.</summary>
-        /// <param name="fieldRef">The field reference to check.</param>
-        /// <param name="fullTypeName">The full type name containing the expected field.</param>
-        /// <param name="fieldName">The name of the expected field.</param>
-        public static bool IsFieldReferenceTo(FieldReference fieldRef, string fullTypeName, string fieldName)
-        {
-            return
-                fieldRef != null
-                && fieldRef.DeclaringType.FullName == fullTypeName
-                && fieldRef.Name == fieldName;
-        }
-
         /// <summary>Get the method reference from an instruction if it matches.</summary>
         /// <param name="instruction">The IL instruction.</param>
-        public static MethodReference AsMethodReference(Instruction instruction)
+        public static MethodReference? AsMethodReference(Instruction instruction)
         {
             return instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt || instruction.OpCode == OpCodes.Newobj
                 ? (MethodReference)instruction.Operand
@@ -62,7 +40,7 @@ namespace SoGModdingAPI.Framework.ModLoading.Framework
         /// <summary>Get the CIL instruction to load a value onto the stack.</summary>
         /// <param name="rawValue">The constant value to inject.</param>
         /// <returns>Returns the instruction, or <c>null</c> if the value type isn't supported.</returns>
-        public static Instruction GetLoadValueInstruction(object rawValue)
+        public static Instruction? GetLoadValueInstruction(object? rawValue)
         {
             return rawValue switch
             {
@@ -171,7 +149,7 @@ namespace SoGModdingAPI.Framework.ModLoading.Framework
         /// <param name="typeA">The type ID to compare.</param>
         /// <param name="typeB">The other type ID to compare.</param>
         /// <returns>true if the type IDs look like the same type, false if not.</returns>
-        public static bool LooksLikeSameType(TypeReference typeA, TypeReference typeB)
+        public static bool LooksLikeSameType(TypeReference? typeA, TypeReference? typeB)
         {
             return RewriteHelper.TypeDefinitionComparer.Equals(typeA, typeB);
         }

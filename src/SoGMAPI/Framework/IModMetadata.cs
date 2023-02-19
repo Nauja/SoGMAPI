@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SoGModdingAPI.Framework.ModHelpers;
 using SoGModdingAPI.Framework.ModLoading;
@@ -25,8 +26,8 @@ namespace SoGModdingAPI.Framework
         /// <summary>The <see cref="DirectoryPath"/> relative to the <see cref="RootPath"/>.</summary>
         string RelativeDirectoryPath { get; }
 
-        /// <summary>Metadata about the mod from SMAPI's internal data (if any).</summary>
-        ModDataRecordVersionedFields DataRecord { get; }
+        /// <summary>Metadata about the mod from SoGMAPI's internal data (if any).</summary>
+        ModDataRecordVersionedFields? DataRecord { get; }
 
         /// <summary>The metadata resolution status.</summary>
         ModMetadataStatus Status { get; }
@@ -38,31 +39,34 @@ namespace SoGModdingAPI.Framework
         ModWarning Warnings { get; }
 
         /// <summary>The reason the metadata is invalid, if any.</summary>
-        string Error { get; }
+        string? Error { get; }
 
         /// <summary>A detailed technical message for <see cref="Error"/>, if any.</summary>
-        public string ErrorDetails { get; }
+        string? ErrorDetails { get; }
 
         /// <summary>Whether the mod folder should be ignored. This is <c>true</c> if it was found within a folder whose name starts with a dot.</summary>
         bool IsIgnored { get; }
 
         /// <summary>The mod instance (if loaded and <see cref="IModInfo.IsContentPack"/> is false).</summary>
-        IMod Mod { get; }
+        IMod? Mod { get; }
 
         /// <summary>The content pack instance (if loaded and <see cref="IModInfo.IsContentPack"/> is true).</summary>
-        IContentPack ContentPack { get; }
+        IContentPack? ContentPack { get; }
 
         /// <summary>The translations for this mod (if loaded).</summary>
-        TranslationHelper Translations { get; }
+        TranslationHelper? Translations { get; }
 
         /// <summary>Writes messages to the console and log file as this mod.</summary>
-        IMonitor Monitor { get; }
+        IMonitor? Monitor { get; }
 
         /// <summary>The mod-provided API (if any).</summary>
-        object Api { get; }
+        object? Api { get; }
 
         /// <summary>The update-check metadata for this mod (if any).</summary>
-        ModEntryModel UpdateCheckData { get; }
+        ModEntryModel? UpdateCheckData { get; }
+
+        /// <summary>The fake content packs created by this mod, if any.</summary>
+        ISet<WeakReference<ContentPack>> FakeContentPacks { get; }
 
 
         /*********
@@ -78,11 +82,15 @@ namespace SoGModdingAPI.Framework
         /// <param name="error">The reason the metadata is invalid, if any.</param>
         /// <param name="errorDetails">A detailed technical message, if any.</param>
         /// <returns>Return the instance for chaining.</returns>
-        IModMetadata SetStatus(ModMetadataStatus status, ModFailReason reason, string error, string errorDetails = null);
+        IModMetadata SetStatus(ModMetadataStatus status, ModFailReason reason, string? error, string? errorDetails = null);
 
         /// <summary>Set a warning flag for the mod.</summary>
         /// <param name="warning">The warning to set.</param>
         IModMetadata SetWarning(ModWarning warning);
+
+        /// <summary>Remove a warning flag for the mod.</summary>
+        /// <param name="warning">The warning to remove.</param>
+        IModMetadata RemoveWarning(ModWarning warning);
 
         /// <summary>Set the mod instance.</summary>
         /// <param name="mod">The mod instance to set.</param>
@@ -97,7 +105,7 @@ namespace SoGModdingAPI.Framework
 
         /// <summary>Set the mod-provided API instance.</summary>
         /// <param name="api">The mod-provided API.</param>
-        IModMetadata SetApi(object api);
+        IModMetadata SetApi(object? api);
 
         /// <summary>Set the update-check metadata for this mod.</summary>
         /// <param name="data">The update-check metadata.</param>
@@ -111,7 +119,7 @@ namespace SoGModdingAPI.Framework
 
         /// <summary>Whether the mod has the given ID.</summary>
         /// <param name="id">The mod ID to check.</param>
-        bool HasID(string id);
+        bool HasID(string? id);
 
         /// <summary>Get the defined update keys.</summary>
         /// <param name="validOnly">Only return valid update keys.</param>
@@ -135,5 +143,8 @@ namespace SoGModdingAPI.Framework
 
         /// <summary>Get a relative path which includes the root folder name.</summary>
         string GetRelativePathWithRoot();
+
+        /// <summary>Get the currently live fake content packs created by this mod.</summary>
+        IEnumerable<ContentPack> GetFakeContentPacks();
     }
 }

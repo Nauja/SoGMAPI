@@ -1,91 +1,144 @@
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using SoGModdingAPI.Events;
 
 namespace SoGModdingAPI.Framework.Events
 {
-    /// <summary>Manages SMAPI events.</summary>
-    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Private fields are deliberately named to simplify organisation.")]
+    /// <summary>Manages SoGMAPI events.</summary>
     internal class EventManager
     {
         /*********
         ** Events
         *********/
         /****
+        ** Content
+        ****/
+        /// <inheritdoc cref="IContentEvents.AssetRequested" />
+        public readonly ManagedEvent<AssetRequestedEventArgs> AssetRequested;
+
+        /// <inheritdoc cref="IContentEvents.AssetsInvalidated" />
+        public readonly ManagedEvent<AssetsInvalidatedEventArgs> AssetsInvalidated;
+
+        /// <inheritdoc cref="IContentEvents.AssetReady" />
+        public readonly ManagedEvent<AssetReadyEventArgs> AssetReady;
+
+
+
+
+        /****
         ** Display
         ****/
-        /// <summary>Raised before the game draws anything to the screen in a draw tick, as soon as the sprite batch is opened. The sprite batch may be closed and reopened multiple times after this event is called, but it's only raised once per draw tick. This event isn't useful for drawing to the screen, since the game will draw over it.</summary>
+
+
+        /// <inheritdoc cref="IDisplayEvents.Rendering" />
         public readonly ManagedEvent<RenderingEventArgs> Rendering;
 
-        /// <summary>Raised after the game draws to the sprite patch in a draw tick, just before the final sprite batch is rendered to the screen. Since the game may open/close the sprite batch multiple times in a draw tick, the sprite batch may not contain everything being drawn and some things may already be rendered to the screen. Content drawn to the sprite batch at this point will be drawn over all vanilla content (including menus, HUD, and cursor).</summary>
+        /// <inheritdoc cref="IDisplayEvents.Rendered" />
         public readonly ManagedEvent<RenderedEventArgs> Rendered;
 
-        /// <summary>Raised after the game window is resized.</summary>
+        /// <inheritdoc cref="IDisplayEvents.RenderingWorld" />
+        public readonly ManagedEvent<RenderingWorldEventArgs> RenderingWorld;
+
+        /// <inheritdoc cref="IDisplayEvents.RenderedWorld" />
+        public readonly ManagedEvent<RenderedWorldEventArgs> RenderedWorld;
+
+        /// <inheritdoc cref="IDisplayEvents.RenderingActiveMenu" />
+        public readonly ManagedEvent<RenderingActiveMenuEventArgs> RenderingActiveMenu;
+
+        /// <inheritdoc cref="IDisplayEvents.RenderedActiveMenu" />
+        public readonly ManagedEvent<RenderedActiveMenuEventArgs> RenderedActiveMenu;
+
+        /// <inheritdoc cref="IDisplayEvents.RenderingHud" />
+        public readonly ManagedEvent<RenderingHudEventArgs> RenderingHud;
+
+        /// <inheritdoc cref="IDisplayEvents.RenderedHud" />
+        public readonly ManagedEvent<RenderedHudEventArgs> RenderedHud;
+
+        /// <inheritdoc cref="IDisplayEvents.WindowResized" />
         public readonly ManagedEvent<WindowResizedEventArgs> WindowResized;
 
         /****
         ** Game loop
         ****/
-        /// <summary>Raised after the game is launched, right before the first update tick.</summary>
+        /// <inheritdoc cref="IGameLoopEvents.GameLaunched" />
         public readonly ManagedEvent<GameLaunchedEventArgs> GameLaunched;
 
-        /// <summary>Raised before the game performs its overall update tick (≈60 times per second).</summary>
+        /// <inheritdoc cref="IGameLoopEvents.UpdateTicking" />
         public readonly ManagedEvent<UpdateTickingEventArgs> UpdateTicking;
 
-        /// <summary>Raised after the game performs its overall update tick (≈60 times per second).</summary>
+        /// <inheritdoc cref="IGameLoopEvents.UpdateTicked" />
         public readonly ManagedEvent<UpdateTickedEventArgs> UpdateTicked;
 
-        /// <summary>Raised once per second before the game performs its overall update tick.</summary>
+        /// <inheritdoc cref="IGameLoopEvents.OneSecondUpdateTicking" />
         public readonly ManagedEvent<OneSecondUpdateTickingEventArgs> OneSecondUpdateTicking;
 
-        /// <summary>Raised once per second after the game performs its overall update tick.</summary>
+        /// <inheritdoc cref="IGameLoopEvents.OneSecondUpdateTicked" />
         public readonly ManagedEvent<OneSecondUpdateTickedEventArgs> OneSecondUpdateTicked;
 
-        /// <summary>Raised after the game returns to the title screen.</summary>
+        /// <inheritdoc cref="IGameLoopEvents.SaveCreating" />
+        public readonly ManagedEvent<SaveCreatingEventArgs> SaveCreating;
+
+        /// <inheritdoc cref="IGameLoopEvents.SaveCreated" />
+        public readonly ManagedEvent<SaveCreatedEventArgs> SaveCreated;
+
+        /// <inheritdoc cref="IGameLoopEvents.Saving" />
+        public readonly ManagedEvent<SavingEventArgs> Saving;
+
+        /// <inheritdoc cref="IGameLoopEvents.Saved" />
+        public readonly ManagedEvent<SavedEventArgs> Saved;
+
+        /// <inheritdoc cref="IGameLoopEvents.SaveLoaded" />
+        public readonly ManagedEvent<SaveLoadedEventArgs> SaveLoaded;
+
+        /// <inheritdoc cref="IGameLoopEvents.DayStarted" />
+        public readonly ManagedEvent<DayStartedEventArgs> DayStarted;
+
+        /// <inheritdoc cref="IGameLoopEvents.DayEnding" />
+        public readonly ManagedEvent<DayEndingEventArgs> DayEnding;
+
+        /// <inheritdoc cref="IGameLoopEvents.TimeChanged" />
+        public readonly ManagedEvent<TimeChangedEventArgs> TimeChanged;
+
+        /// <inheritdoc cref="IGameLoopEvents.ReturnedToTitle" />
         public readonly ManagedEvent<ReturnedToTitleEventArgs> ReturnedToTitle;
 
         /****
         ** Input
         ****/
-        /// <summary>Raised after the player presses or releases any buttons on the keyboard, controller, or mouse.</summary>
+        /// <inheritdoc cref="IInputEvents.ButtonsChanged" />
         public readonly ManagedEvent<ButtonsChangedEventArgs> ButtonsChanged;
 
-        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
+        /// <inheritdoc cref="IInputEvents.ButtonPressed" />
         public readonly ManagedEvent<ButtonPressedEventArgs> ButtonPressed;
 
-        /// <summary>Raised after the player released a button on the keyboard, controller, or mouse.</summary>
+        /// <inheritdoc cref="IInputEvents.ButtonReleased" />
         public readonly ManagedEvent<ButtonReleasedEventArgs> ButtonReleased;
 
-        /// <summary>Raised after the player moves the in-game cursor.</summary>
+        /// <inheritdoc cref="IInputEvents.CursorMoved" />
         public readonly ManagedEvent<CursorMovedEventArgs> CursorMoved;
 
-        /// <summary>Raised after the player scrolls the mouse wheel.</summary>
+        /// <inheritdoc cref="IInputEvents.MouseWheelScrolled" />
         public readonly ManagedEvent<MouseWheelScrolledEventArgs> MouseWheelScrolled;
 
         /****
         ** Multiplayer
         ****/
-        /// <summary>Raised after the mod context for a peer is received. This happens before the game approves the connection (<see cref="IMultiplayerEvents.PeerConnected"/>), so the player doesn't yet exist in the game. This is the earliest point where messages can be sent to the peer via SMAPI.</summary>
+        /// <inheritdoc cref="IMultiplayerEvents.PeerContextReceived" />
         public readonly ManagedEvent<PeerContextReceivedEventArgs> PeerContextReceived;
 
-        /// <summary>Raised after a peer connection is approved by the game.</summary>
+        /// <inheritdoc cref="IMultiplayerEvents.PeerConnected" />
         public readonly ManagedEvent<PeerConnectedEventArgs> PeerConnected;
 
-        /// <summary>Raised after a mod message is received over the network.</summary>
+        /// <inheritdoc cref="IMultiplayerEvents.ModMessageReceived" />
         public readonly ManagedEvent<ModMessageReceivedEventArgs> ModMessageReceived;
 
-        /// <summary>Raised after the connection with a peer is severed.</summary>
+        /// <inheritdoc cref="IMultiplayerEvents.PeerDisconnected" />
         public readonly ManagedEvent<PeerDisconnectedEventArgs> PeerDisconnected;
 
-        /****
-        ** Specialized
-        ****/
 
-        /// <summary>Raised before the game performs its overall update tick (≈60 times per second). See notes on <see cref="ISpecializedEvents.UnvalidatedUpdateTicking"/>.</summary>
+
+        /// <inheritdoc cref="ISpecializedEvents.UnvalidatedUpdateTicking" />
         public readonly ManagedEvent<UnvalidatedUpdateTickingEventArgs> UnvalidatedUpdateTicking;
 
-        /// <summary>Raised after the game performs its overall update tick (≈60 times per second). See notes on <see cref="ISpecializedEvents.UnvalidatedUpdateTicked"/>.</summary>
+        /// <inheritdoc cref="ISpecializedEvents.UnvalidatedUpdateTicked" />
         public readonly ManagedEvent<UnvalidatedUpdateTickedEventArgs> UnvalidatedUpdateTicked;
 
 
@@ -97,40 +150,55 @@ namespace SoGModdingAPI.Framework.Events
         public EventManager(ModRegistry modRegistry)
         {
             // create shortcut initializers
-            ManagedEvent<TEventArgs> ManageEventOf<TEventArgs>(string typeName, string eventName, bool isPerformanceCritical = false)
+            ManagedEvent<TEventArgs> ManageEventOf<TEventArgs>(string typeName, string eventName)
             {
-                return new ManagedEvent<TEventArgs>($"{typeName}.{eventName}", modRegistry, isPerformanceCritical);
+                return new ManagedEvent<TEventArgs>($"{typeName}.{eventName}", modRegistry);
             }
 
-            // init events (new)
-            this.Rendering = ManageEventOf<RenderingEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.Rendering), isPerformanceCritical: true);
-            this.Rendered = ManageEventOf<RenderedEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.Rendered), isPerformanceCritical: true);
+            // init events
+            this.AssetRequested = ManageEventOf<AssetRequestedEventArgs>(nameof(IModEvents.Content), nameof(IContentEvents.AssetRequested));
+            this.AssetsInvalidated = ManageEventOf<AssetsInvalidatedEventArgs>(nameof(IModEvents.Content), nameof(IContentEvents.AssetsInvalidated));
+            this.AssetReady = ManageEventOf<AssetReadyEventArgs>(nameof(IModEvents.Content), nameof(IContentEvents.AssetReady));
+
+            this.Rendering = ManageEventOf<RenderingEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.Rendering));
+            this.Rendered = ManageEventOf<RenderedEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.Rendered));
+            this.RenderingWorld = ManageEventOf<RenderingWorldEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.RenderingWorld));
+            this.RenderedWorld = ManageEventOf<RenderedWorldEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.RenderedWorld));
+            this.RenderingActiveMenu = ManageEventOf<RenderingActiveMenuEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.RenderingActiveMenu));
+            this.RenderedActiveMenu = ManageEventOf<RenderedActiveMenuEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.RenderedActiveMenu));
+            this.RenderingHud = ManageEventOf<RenderingHudEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.RenderingHud));
+            this.RenderedHud = ManageEventOf<RenderedHudEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.RenderedHud));
             this.WindowResized = ManageEventOf<WindowResizedEventArgs>(nameof(IModEvents.Display), nameof(IDisplayEvents.WindowResized));
 
             this.GameLaunched = ManageEventOf<GameLaunchedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.GameLaunched));
-            this.UpdateTicking = ManageEventOf<UpdateTickingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.UpdateTicking), isPerformanceCritical: true);
-            this.UpdateTicked = ManageEventOf<UpdateTickedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.UpdateTicked), isPerformanceCritical: true);
-            this.OneSecondUpdateTicking = ManageEventOf<OneSecondUpdateTickingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.OneSecondUpdateTicking), isPerformanceCritical: true);
-            this.OneSecondUpdateTicked = ManageEventOf<OneSecondUpdateTickedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.OneSecondUpdateTicked), isPerformanceCritical: true);
+            this.UpdateTicking = ManageEventOf<UpdateTickingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.UpdateTicking));
+            this.UpdateTicked = ManageEventOf<UpdateTickedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.UpdateTicked));
+            this.OneSecondUpdateTicking = ManageEventOf<OneSecondUpdateTickingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.OneSecondUpdateTicking));
+            this.OneSecondUpdateTicked = ManageEventOf<OneSecondUpdateTickedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.OneSecondUpdateTicked));
+            this.SaveCreating = ManageEventOf<SaveCreatingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.SaveCreating));
+            this.SaveCreated = ManageEventOf<SaveCreatedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.SaveCreated));
+            this.Saving = ManageEventOf<SavingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.Saving));
+            this.Saved = ManageEventOf<SavedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.Saved));
+            this.SaveLoaded = ManageEventOf<SaveLoadedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.SaveLoaded));
+            this.DayStarted = ManageEventOf<DayStartedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.DayStarted));
+            this.DayEnding = ManageEventOf<DayEndingEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.DayEnding));
+            this.TimeChanged = ManageEventOf<TimeChangedEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.TimeChanged));
             this.ReturnedToTitle = ManageEventOf<ReturnedToTitleEventArgs>(nameof(IModEvents.GameLoop), nameof(IGameLoopEvents.ReturnedToTitle));
 
             this.ButtonsChanged = ManageEventOf<ButtonsChangedEventArgs>(nameof(IModEvents.Input), nameof(IInputEvents.ButtonsChanged));
             this.ButtonPressed = ManageEventOf<ButtonPressedEventArgs>(nameof(IModEvents.Input), nameof(IInputEvents.ButtonPressed));
             this.ButtonReleased = ManageEventOf<ButtonReleasedEventArgs>(nameof(IModEvents.Input), nameof(IInputEvents.ButtonReleased));
-            this.CursorMoved = ManageEventOf<CursorMovedEventArgs>(nameof(IModEvents.Input), nameof(IInputEvents.CursorMoved), isPerformanceCritical: true);
+            this.CursorMoved = ManageEventOf<CursorMovedEventArgs>(nameof(IModEvents.Input), nameof(IInputEvents.CursorMoved));
             this.MouseWheelScrolled = ManageEventOf<MouseWheelScrolledEventArgs>(nameof(IModEvents.Input), nameof(IInputEvents.MouseWheelScrolled));
 
+            this.PeerContextReceived = ManageEventOf<PeerContextReceivedEventArgs>(nameof(IModEvents.Multiplayer), nameof(IMultiplayerEvents.PeerContextReceived));
+            this.PeerConnected = ManageEventOf<PeerConnectedEventArgs>(nameof(IModEvents.Multiplayer), nameof(IMultiplayerEvents.PeerConnected));
             this.ModMessageReceived = ManageEventOf<ModMessageReceivedEventArgs>(nameof(IModEvents.Multiplayer), nameof(IMultiplayerEvents.ModMessageReceived));
+            this.PeerDisconnected = ManageEventOf<PeerDisconnectedEventArgs>(nameof(IModEvents.Multiplayer), nameof(IMultiplayerEvents.PeerDisconnected));
 
-            this.UnvalidatedUpdateTicking = ManageEventOf<UnvalidatedUpdateTickingEventArgs>(nameof(IModEvents.Specialized), nameof(ISpecializedEvents.UnvalidatedUpdateTicking), isPerformanceCritical: true);
-            this.UnvalidatedUpdateTicked = ManageEventOf<UnvalidatedUpdateTickedEventArgs>(nameof(IModEvents.Specialized), nameof(ISpecializedEvents.UnvalidatedUpdateTicked), isPerformanceCritical: true);
-        }
 
-        /// <summary>Get all managed events.</summary>
-        public IEnumerable<IManagedEvent> GetAllEvents()
-        {
-            foreach (FieldInfo field in this.GetType().GetFields())
-                yield return (IManagedEvent)field.GetValue(this);
+            this.UnvalidatedUpdateTicking = ManageEventOf<UnvalidatedUpdateTickingEventArgs>(nameof(IModEvents.Specialized), nameof(ISpecializedEvents.UnvalidatedUpdateTicking));
+            this.UnvalidatedUpdateTicked = ManageEventOf<UnvalidatedUpdateTickedEventArgs>(nameof(IModEvents.Specialized), nameof(ISpecializedEvents.UnvalidatedUpdateTicked));
         }
     }
 }

@@ -1,11 +1,17 @@
-﻿using System;
+using System;
 using SoGModdingAPI.Events;
 
 namespace SoGModdingAPI.Framework.Events
 {
-    /// <summary>Events raised when the player data changes.</summary>
+    /// <inheritdoc cref="IPlayerEvents" />
     internal class ModPlayerEvents : ModEventsBase, IPlayerEvents
     {
+        /*********
+        ** Accessors
+        *********/
+
+
+
         /*********
         ** Public methods
         *********/

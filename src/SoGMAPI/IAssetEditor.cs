@@ -1,6 +1,11 @@
-﻿namespace SoGModdingAPI
+#if SOGMAPI_DEPRECATED
+using System;
+using SoGModdingAPI.Events;
+
+namespace SoGModdingAPI
 {
     /// <summary>Edits matching content assets.</summary>
+    [Obsolete($"Use {nameof(IMod.Helper)}.{nameof(IModHelper.Events)}.{nameof(IModEvents.Content)} instead. This interface will be removed in SoGMAPI 4.0.0.")]
     public interface IAssetEditor
     {
         /*********
@@ -15,3 +20,4 @@
         void Edit<T>(IAssetData asset);
     }
 }
+#endif

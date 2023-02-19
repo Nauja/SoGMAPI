@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using SoGModdingAPI.Toolkit;
 using SoGModdingAPI.Toolkit.Serialization.Models;
 
 namespace SoGModdingAPI.Framework.ModHelpers
@@ -23,11 +22,11 @@ namespace SoGModdingAPI.Framework.ModHelpers
         ** Public methods
         *********/
         /// <summary>Construct an instance.</summary>
-        /// <param name="modID">The unique ID of the relevant mod.</param>
+        /// <param name="mod">The mod using this instance.</param>
         /// <param name="contentPacks">The content packs loaded for this mod.</param>
         /// <param name="createContentPack">Create a temporary content pack.</param>
-        public ContentPackHelper(string modID, Lazy<IContentPack[]> contentPacks, Func<string, IManifest, IContentPack> createContentPack)
-            : base(modID)
+        public ContentPackHelper(IModMetadata mod, Lazy<IContentPack[]> contentPacks, Func<string, IManifest, IContentPack> createContentPack)
+            : base(mod)
         {
             this.ContentPacks = contentPacks;
             this.CreateContentPack = createContentPack;
@@ -43,7 +42,15 @@ namespace SoGModdingAPI.Framework.ModHelpers
         public IContentPack CreateFake(string directoryPath)
         {
             string id = Guid.NewGuid().ToString("N");
-            return this.CreateTemporary(directoryPath, id, id, id, id, new SemanticVersion(1, 0, 0));
+            string relativePath = Path.GetRelativePath(Constants.ModsPath, directoryPath);
+            return this.CreateTemporary(
+                directoryPath: directoryPath,
+                id: id,
+                name: $"{this.Mod.DisplayName} (fake content pack: {relativePath})",
+                description: $"A temporary content pack created by the {this.Mod.DisplayName} mod.",
+                author: "???",
+                new SemanticVersion(1, 0, 0)
+            );
         }
 
         /// <inheritdoc />

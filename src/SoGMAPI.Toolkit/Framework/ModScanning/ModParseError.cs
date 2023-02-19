@@ -21,7 +21,7 @@ namespace SoGModdingAPI.Toolkit.Framework.ModScanning
         /// <summary>The folder contains non-ignored and non-XNB files, but none of them are <c>manifest.json</c>.</summary>
         ManifestMissing,
 
-        /// <summary>The folder is an XNB mod, which can't be loaded through SMAPI.</summary>
+        /// <summary>The folder is an XNB mod, which can't be loaded through SoGMAPI.</summary>
         XnbMod
     }
 }

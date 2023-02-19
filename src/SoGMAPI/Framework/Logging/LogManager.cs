@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using SoGModdingAPI.Framework.Commands;
 using SoGModdingAPI.Framework.Models;
 using SoGModdingAPI.Framework.ModLoading;
+using SoGModdingAPI.Internal;
 using SoGModdingAPI.Internal.ConsoleWriting;
-using SoGModdingAPI.Toolkit;
 using SoGModdingAPI.Toolkit.Framework.ModData;
 using SoGModdingAPI.Toolkit.Utilities;
 
@@ -24,31 +25,34 @@ namespace SoGModdingAPI.Framework.Logging
         /// <summary>The log file to which to write messages.</summary>
         private readonly LogFileManager LogFile;
 
-        /// <summary>Prefixing a low-level message with this character indicates that the console interceptor should write the string without intercepting it. (The character itself is not written.)</summary>
-        private readonly char IgnoreChar = '\u200B';
+        /// <summary>The text writer which intercepts console output.</summary>
+        private readonly InterceptingTextWriter ConsoleInterceptor;
 
-        /// <summary>Get a named monitor instance.</summary>
-        private readonly Func<string, Monitor> GetMonitorImpl;
+        /// <summary>Prefixing a low-level message with this character indicates that the console interceptor should write the string without intercepting it. (The character itself is not written.)</summary>
+        private const char IgnoreChar = InterceptingTextWriter.IgnoreChar;
+
+        /// <summary>Create a monitor instance given the ID and name.</summary>
+        private readonly Func<string, string, Monitor> GetMonitorImpl;
 
         /// <summary>Regex patterns which match console non-error messages to suppress from the console and log.</summary>
         private readonly Regex[] SuppressConsolePatterns =
         {
-            new Regex(@"^TextBox\.Selected is now '(?:True|False)'\.$", RegexOptions.Compiled | RegexOptions.CultureInvariant),
-            new Regex(@"^loadPreferences\(\); begin", RegexOptions.Compiled | RegexOptions.CultureInvariant),
-            new Regex(@"^savePreferences\(\); async=", RegexOptions.Compiled | RegexOptions.CultureInvariant),
-            new Regex(@"^DebugOutput:\s+(?:added cricket|dismount tile|Ping|playerPos)", RegexOptions.Compiled | RegexOptions.CultureInvariant),
-            new Regex(@"^Ignoring keys: ", RegexOptions.Compiled | RegexOptions.CultureInvariant)
+            new(@"^TextBox\.Selected is now '(?:True|False)'\.$", RegexOptions.Compiled | RegexOptions.CultureInvariant),
+            new(@"^loadPreferences\(\); begin", RegexOptions.Compiled | RegexOptions.CultureInvariant),
+            new(@"^savePreferences\(\); async=", RegexOptions.Compiled | RegexOptions.CultureInvariant),
+            new(@"^DebugOutput:\s+(?:added cricket|dismount tile|Ping|playerPos)", RegexOptions.Compiled | RegexOptions.CultureInvariant),
+            new(@"^Ignoring keys: ", RegexOptions.Compiled | RegexOptions.CultureInvariant)
         };
 
         /// <summary>Regex patterns which match console messages to show a more friendly error for.</summary>
         private readonly ReplaceLogPattern[] ReplaceConsolePatterns =
         {
             // Steam not loaded
-            new ReplaceLogPattern(
+            new(
                 search: new Regex(@"^System\.InvalidOperationException: Steamworks is not initialized\.[\s\S]+$", RegexOptions.Compiled | RegexOptions.CultureInvariant),
                 replacement:
-#if SoGMAPI_FOR_WINDOWS
-                    "Oops! Steam achievements won't work because Steam isn't loaded. See 'Launch SoGMAPI through Steam or GOG Galaxy' in the install guide for more info: https://SoGMAPI.io/install.",
+#if true
+                    "Oops! Steam achievements won't work because Steam isn't loaded. See 'Configure your game client' in the install guide for more info: https://smapi.io/install.",
 #else
                     "Oops! Steam achievements won't work because Steam isn't loaded. You can launch the game through Steam to fix that.",
 #endif
@@ -56,7 +60,7 @@ namespace SoGModdingAPI.Framework.Logging
             ),
 
             // save file not found error
-            new ReplaceLogPattern(
+            new(
                 search: new Regex(@"^System\.IO\.FileNotFoundException: [^\n]+\n[^:]+: '[^\n]+[/\\]Saves[/\\]([^'\r\n]+)[/\\]([^'\r\n]+)'[\s\S]+LoadGameMenu\.FindSaveGames[\s\S]+$", RegexOptions.Compiled | RegexOptions.CultureInvariant),
                 replacement: "The game can't find the '$2' file for your '$1' save. See https://stardewvalleywiki.com/Saves#Troubleshooting for help.",
                 logLevel: LogLevel.Error
@@ -84,36 +88,47 @@ namespace SoGModdingAPI.Framework.Logging
         /// <param name="logPath">The log file path to write.</param>
         /// <param name="colorConfig">The colors to use for text written to the SoGMAPI console.</param>
         /// <param name="writeToConsole">Whether to output log messages to the console.</param>
-        /// <param name="isVerbose">Whether verbose logging is enabled. This enables more detailed diagnostic messages than are normally needed.</param>
+        /// <param name="verboseLogging">The log contexts for which to enable verbose logging, which may show a lot more information to simplify troubleshooting.</param>
         /// <param name="isDeveloperMode">Whether to enable full console output for developers.</param>
         /// <param name="getScreenIdForLog">Get the screen ID that should be logged to distinguish between players in split-screen mode, if any.</param>
-        public LogManager(string logPath, ColorSchemeConfig colorConfig, bool writeToConsole, bool isVerbose, bool isDeveloperMode, Func<int?> getScreenIdForLog)
+        public LogManager(string logPath, ColorSchemeConfig colorConfig, bool writeToConsole, HashSet<string> verboseLogging, bool isDeveloperMode, Func<int?> getScreenIdForLog)
         {
-            // init construction logic
-            this.GetMonitorImpl = name => new Monitor(name, this.IgnoreChar, this.LogFile, colorConfig, isVerbose, getScreenIdForLog)
+            // init log file
+            this.LogFile = new LogFileManager(logPath);
+
+            // init monitor
+            this.GetMonitorImpl = (id, name) => new Monitor(name, LogManager.IgnoreChar, this.LogFile, colorConfig, verboseLogging.Contains("*") || verboseLogging.Contains(id), getScreenIdForLog)
             {
                 WriteToConsole = writeToConsole,
                 ShowTraceInConsole = isDeveloperMode,
                 ShowFullStampInConsole = isDeveloperMode
             };
-
-            // init fields
-            this.LogFile = new LogFileManager(logPath);
-            this.Monitor = this.GetMonitor("SoGMAPI");
-            this.MonitorForGame = this.GetMonitor("game");
+            this.Monitor = this.GetMonitor("SoGMAPI", "SoGMAPI");
+            this.MonitorForGame = this.GetMonitor("game", "game");
 
             // redirect direct console output
-            var output = new InterceptingTextWriter(Console.Out, this.IgnoreChar);
-            if (writeToConsole)
-                output.OnMessageIntercepted += message => this.HandleConsoleMessage(this.MonitorForGame, message);
-            Console.SetOut(output);
+            this.ConsoleInterceptor = new InterceptingTextWriter(
+                output: Console.Out,
+                onMessageIntercepted: writeToConsole
+                    ? message => this.HandleConsoleMessage(this.MonitorForGame, message)
+                    : _ => { }
+            );
+            Console.SetOut(this.ConsoleInterceptor);
+
+            // enable Unicode handling on Windows
+            // (the terminal defaults to UTF-8 on Linux/macOS)
+#if true
+            Console.InputEncoding = Encoding.Unicode;
+            Console.OutputEncoding = Encoding.Unicode;
+#endif
         }
 
         /// <summary>Get a monitor instance derived from SoGMAPI's current settings.</summary>
+        /// <param name="id">The unique ID for the mod context.</param>
         /// <param name="name">The name of the module which will log messages with this instance.</param>
-        public Monitor GetMonitor(string name)
+        public Monitor GetMonitor(string id, string name)
         {
-            return this.GetMonitorImpl(name);
+            return this.GetMonitorImpl(id, name);
         }
 
         /// <summary>Set the title of the SoGMAPI console window.</summary>
@@ -133,15 +148,17 @@ namespace SoGModdingAPI.Framework.Logging
             // prepare console
             this.Monitor.Log("Type 'help' for help, or 'help <cmd>' for a command's usage", LogLevel.Info);
             commandManager
-                .Add(new HelpCommand(commandManager), this.Monitor);
+                .Add(new HelpCommand(commandManager), this.Monitor)
+                .Add(new HarmonySummaryCommand(), this.Monitor)
+                .Add(new ReloadI18nCommand(reloadTranslations), this.Monitor);
 
             // start handling command line input
-            Thread inputThread = new Thread(() =>
+            Thread inputThread = new(() =>
             {
                 while (true)
                 {
                     // get input
-                    string input = Console.ReadLine();
+                    string? input = Console.ReadLine();
                     if (string.IsNullOrWhiteSpace(input))
                         continue;
 
@@ -155,8 +172,6 @@ namespace SoGModdingAPI.Framework.Logging
             // keep console thread alive while the game is running
             while (continueWhile())
                 Thread.Sleep(1000 / 10);
-            if (inputThread.ThreadState == ThreadState.Running)
-                inputThread.Abort();
         }
 
         /// <summary>Show a 'press any key to exit' message, and exit when they press a key.</summary>
@@ -208,8 +223,8 @@ namespace SoGModdingAPI.Framework.Logging
             // show update alert
             if (File.Exists(Constants.UpdateMarker))
             {
-                string[] rawUpdateFound = File.ReadAllText(Constants.UpdateMarker).Split(new[] { '|' }, 2);
-                if (SemanticVersion.TryParse(rawUpdateFound[0], out ISemanticVersion updateFound))
+                string[] rawUpdateFound = File.ReadAllText(Constants.UpdateMarker).Split('|', 2);
+                if (SemanticVersion.TryParse(rawUpdateFound[0], out ISemanticVersion? updateFound))
                 {
                     if (Constants.ApiVersion.IsPrerelease() && updateFound.IsNewerThan(Constants.ApiVersion))
                     {
@@ -229,8 +244,8 @@ namespace SoGModdingAPI.Framework.Logging
             // show details if game crashed during last session
             if (File.Exists(Constants.FatalCrashMarker))
             {
-                this.Monitor.Log("The game crashed last time you played. If it happens repeatedly, see 'get help' on https://SoGMAPI.io.", LogLevel.Error);
-                this.Monitor.Log("If you ask for help, make sure to share your SoGMAPI log: https://SoGMAPI.io/log.", LogLevel.Error);
+                this.Monitor.Log("The game crashed last time you played. If it happens repeatedly, see 'get help' on https://smapi.io.", LogLevel.Error);
+                this.Monitor.Log("If you ask for help, make sure to share your SoGMAPI log: https://smapi.io/log.", LogLevel.Error);
                 this.Monitor.Log("Press any key to delete the crash data and continue playing.", LogLevel.Info);
                 Console.ReadKey();
                 File.Delete(Constants.FatalCrashLog);
@@ -242,36 +257,7 @@ namespace SoGModdingAPI.Framework.Logging
         /// <param name="exception">The exception details.</param>
         public void LogFatalLaunchError(Exception exception)
         {
-            switch (exception)
-            {
-                // audio crash
-                case InvalidOperationException ex when ex.Source == "Microsoft.Xna.Framework.Xact" && ex.StackTrace.Contains("Microsoft.Xna.Framework.Audio.AudioEngine..ctor"):
-                    this.Monitor.Log("The game couldn't load audio. Do you have speakers or headphones plugged in?", LogLevel.Error);
-                    this.Monitor.Log($"Technical details: {ex.GetLogSummary()}");
-                    break;
-
-                // missing content folder exception
-                case FileNotFoundException ex when ex.Message == "Couldn't find file 'C:\\Program Files (x86)\\Steam\\SteamApps\\common\\SecretsOfGrindea\\Content\\XACT\\FarmerSounds.xgs'.": // path in error is hardcoded regardless of install path
-                    this.Monitor.Log("The game can't find its Content\\XACT\\FarmerSounds.xgs file. You can usually fix this by resetting your content files (see https://SoGMAPI.io/troubleshoot#reset-content ), or by uninstalling and reinstalling the game.", LogLevel.Error);
-                    this.Monitor.Log($"Technical details: {ex.GetLogSummary()}");
-                    break;
-
-                // path too long exception
-                case PathTooLongException:
-                    {
-                        string[] affectedPaths = PathUtilities.GetTooLongPaths(Constants.ModsPath).ToArray();
-                        string message = affectedPaths.Any()
-                            ? $"SoGMAPI can't launch because some of your mod files exceed the maximum path length on {Constants.Platform}.\nIf you need help fixing this error, see https://SoGMAPI.io/help\n\nAffected paths:\n   {string.Join("\n   ", affectedPaths)}"
-                            : $"The game failed to launch: {exception.GetLogSummary()}";
-                        this.MonitorForGame.Log(message, LogLevel.Error);
-                    }
-                    break;
-
-                // generic exception
-                default:
-                    this.MonitorForGame.Log($"The game failed to launch: {exception.GetLogSummary()}", LogLevel.Error);
-                    break;
-            }
+            this.MonitorForGame.Log($"The game failed to launch: {exception.GetLogSummary()}", LogLevel.Error);
         }
 
         /****
@@ -280,16 +266,14 @@ namespace SoGModdingAPI.Framework.Logging
         /// <summary>Log the initial header with general SoGMAPI and system details.</summary>
         /// <param name="modsPath">The path from which mods will be loaded.</param>
         /// <param name="customSettings">The custom SoGMAPI settings.</param>
-        public void LogIntro(string modsPath, IDictionary<string, object> customSettings)
+        public void LogIntro(string modsPath, IDictionary<string, object?> customSettings)
         {
-            // log platform & patches
-            {
-                this.Monitor.Log($"SoGMAPI {Constants.ApiVersion} with Secrets Of Grindea {Constants.GameVersion} on {EnvironmentUtility.GetFriendlyPlatformName(Constants.Platform)}", LogLevel.Info);
-
-                string[] patchLabels = this.GetPatchLabels().ToArray();
-                if (patchLabels.Any())
-                    this.Monitor.Log($"Detected custom version: {string.Join(", ", patchLabels)}", LogLevel.Info);
-            }
+            // log platform
+            this.Monitor.Log($"SoGMAPI {Constants.ApiVersion} "
+#if !SOGMAPI_DEPRECATED
+                + "(strict mode) "
+#endif
+                + $"with Stardew Valley {Constants.GameVersion} (build {Constants.GetBuildVersionLabel()}) on {EnvironmentUtility.GetFriendlyPlatformName(Constants.Platform)}", LogLevel.Info);
 
             // log basic info
             this.Monitor.Log($"Mods go here: {modsPath}", LogLevel.Info);
@@ -300,6 +284,10 @@ namespace SoGModdingAPI.Framework.Logging
             // log custom settings
             if (customSettings.Any())
                 this.Monitor.Log($"Loaded with custom settings: {string.Join(", ", customSettings.OrderBy(p => p.Key).Select(p => $"{p.Key}: {p.Value}"))}");
+
+#if !SOGMAPI_DEPRECATED
+            this.Monitor.Log("SoGMAPI is running in 'strict mode', which removes all deprecated APIs. This can significantly improve performance, but some mods may not work. You can reinstall SoGMAPI to disable it if you run into problems.", LogLevel.Info);
+#endif
         }
 
         /// <summary>Log details for settings that don't match the default.</summary>
@@ -348,7 +336,7 @@ namespace SoGModdingAPI.Framework.Logging
             // log loaded content packs
             if (loadedContentPacks.Any())
             {
-                string GetModDisplayName(string id) => loadedMods.FirstOrDefault(p => p.HasID(id))?.DisplayName;
+                string? GetModDisplayName(string id) => loadedMods.FirstOrDefault(p => p.HasID(id))?.DisplayName;
 
                 this.Monitor.Log($"Loaded {loadedContentPacks.Length} content packs:", LogLevel.Info);
                 foreach (IModMetadata metadata in loadedContentPacks.OrderBy(p => p.DisplayName))
@@ -357,7 +345,7 @@ namespace SoGModdingAPI.Framework.Logging
                     this.Monitor.Log(
                         $"   {metadata.DisplayName} {manifest.Version}"
                         + (!string.IsNullOrWhiteSpace(manifest.Author) ? $" by {manifest.Author}" : "")
-                        + $" | for {GetModDisplayName(metadata.Manifest.ContentPackFor.UniqueID)}"
+                        + $" | for {GetModDisplayName(metadata.Manifest.ContentPackFor!.UniqueID)}"
                         + (!string.IsNullOrWhiteSpace(manifest.Description) ? $" | {manifest.Description}" : ""),
                         LogLevel.Info
                     );
@@ -390,7 +378,10 @@ namespace SoGModdingAPI.Framework.Logging
 
             // ignore suppressed message
             if (level != LogLevel.Error && this.SuppressConsolePatterns.Any(p => p.IsMatch(message)))
+            {
+                this.ConsoleInterceptor.IgnoreNextIfNewline = true;
                 return;
+            }
 
             // show friendly error if applicable
             foreach (ReplaceLogPattern entry in this.ReplaceConsolePatterns)
@@ -404,28 +395,20 @@ namespace SoGModdingAPI.Framework.Logging
                 }
             }
 
+            // simplify exception messages
+            if (level == LogLevel.Error)
+                message = ExceptionHelper.SimplifyExtensionMessage(message);
+
             // forward to monitor
             gameMonitor.Log(message, level);
-        }
-
-        /// <summary>Get human-readable labels to log for detected SoGMAPI and Secrets Of Grindea customizations.</summary>
-        private IEnumerable<string> GetPatchLabels()
-        {
-            // custom game framework
-            if (EarlyConstants.IsWindows64BitHack)
-                yield return $"running 64-bit SoGMAPI with {Constants.GameFramework}";
-            else if ((Constants.GameFramework == GameFramework.Xna) != (Constants.Platform == Platform.Windows))
-                yield return $"running {Constants.GameFramework}";
-
-            // patched by SecretsOfGrindea64Installer
-            if (Constants.IsPatchedBySecretsOfGrindea64Installer(out ISemanticVersion patchedByVersion))
-                yield return $"patched by SecretsOfGrindea64Installer {patchedByVersion}";
+            this.ConsoleInterceptor.IgnoreNextIfNewline = true;
         }
 
         /// <summary>Write a summary of mod warnings to the console and log.</summary>
         /// <param name="mods">The loaded mods.</param>
         /// <param name="skippedMods">The mods which could not be loaded.</param>
         /// <param name="logParanoidWarnings">Whether to log issues for mods which directly use potentially sensitive .NET APIs like file or shell access.</param>
+        [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract", Justification = "Manifests aren't guaranteed non-null at this point in the loading process.")]
         private void LogModWarnings(IEnumerable<IModMetadata> mods, IModMetadata[] skippedMods, bool logParanoidWarnings)
         {
             // get mods with warnings
@@ -459,7 +442,7 @@ namespace SoGModdingAPI.Framework.Logging
                             // duplicate mod: log first one only, don't show redundant version
                             if (mod.FailReason == ModFailReason.Duplicate && mod.HasManifest())
                             {
-                                if (loggedDuplicateIds.Add(mod.Manifest.UniqueID))
+                                if (loggedDuplicateIds.Add(mod.Manifest!.UniqueID))
                                     continue; // already logged
 
                                 message = $"      - {mod.DisplayName} because {mod.Error}";
@@ -536,11 +519,6 @@ namespace SoGModdingAPI.Framework.Logging
                 this.LogModWarningGroup(modsWithWarnings, ModWarning.NoUpdateKeys, LogLevel.Debug, "No update keys",
                     "These mods have no update keys in their manifest. SoGMAPI may not notify you about updates for these",
                     "mods. Consider notifying the mod authors about this problem."
-                );
-
-                // not crossplatform
-                this.LogModWarningGroup(modsWithWarnings, ModWarning.UsesDynamic, LogLevel.Debug, "Not crossplatform",
-                    "These mods use the 'dynamic' keyword, and won't work on Linux/macOS."
                 );
             }
         }
@@ -638,7 +616,7 @@ namespace SoGModdingAPI.Framework.Logging
         /// <param name="heading">A brief heading label for the group.</param>
         /// <param name="blurb">A detailed explanation of the warning, split into lines.</param>
         /// <param name="modLabel">Formats the mod label, or <c>null</c> to use the <see cref="IModMetadata.DisplayName"/>.</param>
-        private void LogModWarningGroup(IModMetadata[] mods, Func<IModMetadata, bool> match, LogLevel level, string heading, string[] blurb, Func<IModMetadata, string> modLabel = null)
+        private void LogModWarningGroup(IModMetadata[] mods, Func<IModMetadata, bool> match, LogLevel level, string heading, string[] blurb, Func<IModMetadata, string>? modLabel = null)
         {
             // get matching mods
             string[] modLabels = mods

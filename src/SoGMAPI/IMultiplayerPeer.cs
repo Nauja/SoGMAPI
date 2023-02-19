@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SoGModdingAPI
 {
@@ -17,7 +18,8 @@ namespace SoGModdingAPI
         /// <summary>Whether this a local player on the same computer in split-screen mote.</summary>
         bool IsSplitScreen { get; }
 
-        /// <summary>Whether the player has SMAPI installed.</summary>
+        /// <summary>Whether the player has SoGMAPI installed.</summary>
+        [MemberNotNullWhen(true, nameof(IMultiplayerPeer.Platform), nameof(IMultiplayerPeer.GameVersion), nameof(IMultiplayerPeer.ApiVersion), nameof(IMultiplayerPeer.Mods))]
         bool HasSmapi { get; }
 
         /// <summary>The player's screen ID, if applicable.</summary>
@@ -27,11 +29,11 @@ namespace SoGModdingAPI
         /// <summary>The player's OS platform, if <see cref="HasSmapi"/> is true.</summary>
         GamePlatform? Platform { get; }
 
-        /// <summary>The installed version of Secrets Of Grindea, if <see cref="HasSmapi"/> is true.</summary>
-        ISemanticVersion GameVersion { get; }
+        /// <summary>The installed version of Stardew Valley, if <see cref="HasSmapi"/> is true.</summary>
+        ISemanticVersion? GameVersion { get; }
 
-        /// <summary>The installed version of SMAPI, if <see cref="HasSmapi"/> is true.</summary>
-        ISemanticVersion ApiVersion { get; }
+        /// <summary>The installed version of SoGMAPI, if <see cref="HasSmapi"/> is true.</summary>
+        ISemanticVersion? ApiVersion { get; }
 
         /// <summary>The installed mods, if <see cref="HasSmapi"/> is true.</summary>
         IEnumerable<IMultiplayerPeerMod> Mods { get; }
@@ -43,6 +45,6 @@ namespace SoGModdingAPI
         /// <summary>Get metadata for a mod installed by the player.</summary>
         /// <param name="id">The unique mod ID.</param>
         /// <returns>Returns the mod info, or <c>null</c> if the player doesn't have that mod.</returns>
-        IMultiplayerPeerMod GetMod(string id);
+        IMultiplayerPeerMod? GetMod(string? id);
     }
 }

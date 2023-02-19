@@ -1,4 +1,5 @@
 using System.IO;
+using SoGModdingAPI.Toolkit.Framework;
 
 namespace SoGModdingAPI.Installer.Framework
 {
@@ -44,17 +45,20 @@ namespace SoGModdingAPI.Installer.Framework
         /// <summary>The full path to the user's config overrides file.</summary>
         public string ApiUserConfigPath { get; }
 
-        /// <summary>The full path to the installed game executable file.</summary>
-        public string ExecutablePath { get; private set; }
+        /// <summary>The full path to the installed game DLL.</summary>
+        public string GameDllPath { get; }
 
-        /// <summary>The full path to the vanilla game launcher on Linux/macOS.</summary>
-        public string UnixLauncherPath { get; }
+        /// <summary>The full path to the installed SoGMAPI executable file.</summary>
+        public string UnixSmapiExecutablePath { get; }
 
-        /// <summary>The full path to the installed SoGMAPI launcher on Linux/macOS before it's renamed.</summary>
-        public string UnixSogmapiLauncherPath { get; }
+        /// <summary>The full path to the vanilla game launch script on Linux/macOS.</summary>
+        public string VanillaLaunchScriptPath { get; }
 
-        /// <summary>The full path to the vanilla game launcher on Linux/macOS after SoGMAPI is installed.</summary>
-        public string UnixBackupLauncherPath { get; }
+        /// <summary>The full path to the installed SoGMAPI launch script on Linux/macOS before it's renamed.</summary>
+        public string NewLaunchScriptPath { get; }
+
+        /// <summary>The full path to the backed up game launch script on Linux/macOS after SoGMAPI is installed.</summary>
+        public string BackupLaunchScriptPath { get; }
 
 
         /*********
@@ -63,28 +67,24 @@ namespace SoGModdingAPI.Installer.Framework
         /// <summary>Construct an instance.</summary>
         /// <param name="bundleDir">The directory path containing the files to copy into the game folder.</param>
         /// <param name="gameDir">The directory path for the installed game.</param>
-        /// <param name="gameExecutableName">The name of the game's executable file for the current platform.</param>
-        public InstallerPaths(DirectoryInfo bundleDir, DirectoryInfo gameDir, string gameExecutableName)
+        public InstallerPaths(DirectoryInfo bundleDir, DirectoryInfo gameDir)
         {
+            // base paths
             this.BundleDir = bundleDir;
             this.GameDir = gameDir;
             this.ModsDir = new DirectoryInfo(Path.Combine(gameDir.FullName, "Mods"));
+            this.GameDllPath = Path.Combine(gameDir.FullName, Constants.GameDllName);
 
+            // launch scripts
+            this.VanillaLaunchScriptPath = Path.Combine(gameDir.FullName, "StardewValley");
+            this.NewLaunchScriptPath = Path.Combine(gameDir.FullName, "unix-launcher.sh");
+            this.BackupLaunchScriptPath = Path.Combine(gameDir.FullName, "StardewValley-original");
+            this.UnixSmapiExecutablePath = Path.Combine(gameDir.FullName, "SoGModdingAPI");
+
+            // internal files
             this.BundleApiUserConfigPath = Path.Combine(bundleDir.FullName, "sogmapi-internal", "config.user.json");
-
-            this.ExecutablePath = Path.Combine(gameDir.FullName, gameExecutableName);
-            this.UnixLauncherPath = Path.Combine(gameDir.FullName, "SecretsOfGrindea");
-            this.UnixSogmapiLauncherPath = Path.Combine(gameDir.FullName, "SoGModdingAPI");
-            this.UnixBackupLauncherPath = Path.Combine(gameDir.FullName, "SecretsOfGrindea-original");
             this.ApiConfigPath = Path.Combine(gameDir.FullName, "sogmapi-internal", "config.json");
             this.ApiUserConfigPath = Path.Combine(gameDir.FullName, "sogmapi-internal", "config.user.json");
-        }
-
-        /// <summary>Override the filename for the <see cref="ExecutablePath"/>.</summary>
-        /// <param name="filename">the file name.</param>
-        public void SetExecutableFileName(string filename)
-        {
-            this.ExecutablePath = Path.Combine(this.GamePath, filename);
         }
     }
 }

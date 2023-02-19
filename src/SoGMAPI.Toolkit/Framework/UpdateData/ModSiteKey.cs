@@ -1,6 +1,6 @@
 namespace SoGModdingAPI.Toolkit.Framework.UpdateData
 {
-    /// <summary>A mod site which SMAPI can check for updates.</summary>
+    /// <summary>A mod site which SoGMAPI can check for updates.</summary>
     public enum ModSiteKey
     {
         /// <summary>An unknown or invalid mod repository.</summary>

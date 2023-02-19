@@ -1,4 +1,3 @@
-#if HARMONY_2
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -6,10 +5,12 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 
-namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member: This is internal code to support rewriters that shouldn't be called directly.
+
+namespace SoGModdingAPI.Framework.ModLoading.RewriteFacades
 {
     /// <summary>Maps Harmony 1.x <code>HarmonyInstance</code> methods to Harmony 2.x's <see cref="Harmony"/> to avoid breaking older mods.</summary>
-    /// <remarks>This is public to support SMAPI rewriting and should not be referenced directly by mods.</remarks>
+    /// <remarks>This is public to support SoGMAPI rewriting and should not be referenced directly by mods.</remarks>
     [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Used via assembly rewriting")]
     [SuppressMessage("ReSharper", "CS1591", Justification = "Documentation not needed for facade classes.")]
     public class HarmonyInstanceFacade : Harmony
@@ -27,7 +28,8 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
             return new Harmony(id);
         }
 
-        public DynamicMethod Patch(MethodBase original, HarmonyMethod prefix = null, HarmonyMethod postfix = null, HarmonyMethod transpiler = null)
+        [SuppressMessage("ReSharper", "ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract", Justification = "If the user passes a null original method, we let it fail in the underlying Harmony instance instead of handling it here.")]
+        public DynamicMethod Patch(MethodBase original, HarmonyMethod? prefix = null, HarmonyMethod? postfix = null, HarmonyMethod? transpiler = null)
         {
             // In Harmony 1.x you could target a virtual method that's not implemented by the
             // target type, but in Harmony 2.0 you need to target the concrete implementation.
@@ -57,7 +59,7 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
         /// <param name="prefix">The prefix method, if any.</param>
         /// <param name="postfix">The postfix method, if any.</param>
         /// <param name="transpiler">The transpiler method, if any.</param>
-        private string GetPatchTypesLabel(HarmonyMethod prefix = null, HarmonyMethod postfix = null, HarmonyMethod transpiler = null)
+        private string GetPatchTypesLabel(HarmonyMethod? prefix = null, HarmonyMethod? postfix = null, HarmonyMethod? transpiler = null)
         {
             var patchTypes = new List<string>();
 
@@ -73,7 +75,7 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
 
         /// <summary>Get a human-readable label for the method being patched.</summary>
         /// <param name="method">The method being patched.</param>
-        private string GetMethodLabel(MethodBase method)
+        private string GetMethodLabel(MethodBase? method)
         {
             return method != null
                 ? $"method {method.DeclaringType?.FullName}.{method.Name}"
@@ -81,4 +83,3 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
         }
     }
 }
-#endif

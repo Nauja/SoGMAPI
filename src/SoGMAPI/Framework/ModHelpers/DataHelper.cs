@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using SoGModdingAPI.Enums;
 using SoGModdingAPI.Toolkit.Serialization;
 using SoGModdingAPI.Toolkit.Utilities;
+using SoG;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {
@@ -14,7 +15,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
         /*********
         ** Fields
         *********/
-        /// <summary>Encapsulates SMAPI's JSON file parsing.</summary>
+        /// <summary>Encapsulates SoGMAPI's JSON file parsing.</summary>
         private readonly JsonHelper JsonHelper;
 
         /// <summary>The absolute path to the mod folder.</summary>
@@ -25,11 +26,11 @@ namespace SoGModdingAPI.Framework.ModHelpers
         ** Public methods
         *********/
         /// <summary>Construct an instance.</summary>
-        /// <param name="modID">The unique ID of the relevant mod.</param>
+        /// <param name="mod">The mod using this instance.</param>
         /// <param name="modFolderPath">The absolute path to the mod folder.</param>
         /// <param name="jsonHelper">The absolute path to the mod folder.</param>
-        public DataHelper(string modID, string modFolderPath, JsonHelper jsonHelper)
-            : base(modID)
+        public DataHelper(IModMetadata mod, string modFolderPath, JsonHelper jsonHelper)
+            : base(mod)
         {
             this.ModFolderPath = modFolderPath;
             this.JsonHelper = jsonHelper;
@@ -39,32 +40,39 @@ namespace SoGModdingAPI.Framework.ModHelpers
         ** JSON file
         ****/
         /// <inheritdoc />
-        public TModel ReadJsonFile<TModel>(string path) where TModel : class
+        public TModel? ReadJsonFile<TModel>(string path)
+            where TModel : class
         {
             if (!PathUtilities.IsSafeRelativePath(path))
                 throw new InvalidOperationException($"You must call {nameof(IModHelper.Data)}.{nameof(this.ReadJsonFile)} with a relative path.");
 
             path = Path.Combine(this.ModFolderPath, PathUtilities.NormalizePath(path));
-            return this.JsonHelper.ReadJsonFileIfExists(path, out TModel data)
+            return this.JsonHelper.ReadJsonFileIfExists(path, out TModel? data)
                 ? data
                 : null;
         }
 
         /// <inheritdoc />
-        public void WriteJsonFile<TModel>(string path, TModel data) where TModel : class
+        public void WriteJsonFile<TModel>(string path, TModel? data)
+            where TModel : class
         {
             if (!PathUtilities.IsSafeRelativePath(path))
                 throw new InvalidOperationException($"You must call {nameof(IMod.Helper)}.{nameof(IModHelper.Data)}.{nameof(this.WriteJsonFile)} with a relative path (without directory climbing).");
 
             path = Path.Combine(this.ModFolderPath, PathUtilities.NormalizePath(path));
-            this.JsonHelper.WriteJsonFile(path, data);
+
+            if (data != null)
+                this.JsonHelper.WriteJsonFile(path, data);
+            else
+                File.Delete(path);
         }
 
         /****
         ** Save file
         ****/
         /// <inheritdoc />
-        public TModel ReadSaveData<TModel>(string key) where TModel : class
+        public TModel? ReadSaveData<TModel>(string key)
+            where TModel : class
         {
             if (Context.LoadStage == LoadStage.None)
                 throw new InvalidOperationException($"Can't use {nameof(IMod.Helper)}.{nameof(IModHelper.Data)}.{nameof(this.ReadSaveData)} when a save file isn't loaded.");
@@ -75,14 +83,15 @@ namespace SoGModdingAPI.Framework.ModHelpers
             string internalKey = this.GetSaveFileKey(key);
             foreach (IDictionary<string, string> dataField in this.GetDataFields(Context.LoadStage))
             {
-                if (dataField.TryGetValue(internalKey, out string value))
+                if (dataField.TryGetValue(internalKey, out string? value))
                     return this.JsonHelper.Deserialize<TModel>(value);
             }
             return null;
         }
 
         /// <inheritdoc />
-        public void WriteSaveData<TModel>(string key, TModel model) where TModel : class
+        public void WriteSaveData<TModel>(string key, TModel? model)
+            where TModel : class
         {
             if (Context.LoadStage == LoadStage.None)
                 throw new InvalidOperationException($"Can't use {nameof(IMod.Helper)}.{nameof(IModHelper.Data)}.{nameof(this.WriteSaveData)} when a save file isn't loaded.");
@@ -90,7 +99,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
                 throw new InvalidOperationException($"Can't use {nameof(IMod.Helper)}.{nameof(IModHelper.Data)}.{nameof(this.WriteSaveData)} when connected to a remote host. (Save files are stored on the main player's computer.)");
 
             string internalKey = this.GetSaveFileKey(key);
-            string data = model != null
+            string? data = model != null
                 ? this.JsonHelper.Serialize(model, Formatting.None)
                 : null;
 
@@ -107,16 +116,18 @@ namespace SoGModdingAPI.Framework.ModHelpers
         ** Global app data
         ****/
         /// <inheritdoc />
-        public TModel ReadGlobalData<TModel>(string key) where TModel : class
+        public TModel? ReadGlobalData<TModel>(string key)
+            where TModel : class
         {
             string path = this.GetGlobalDataPath(key);
-            return this.JsonHelper.ReadJsonFileIfExists(path, out TModel data)
+            return this.JsonHelper.ReadJsonFileIfExists(path, out TModel? data)
                 ? data
                 : null;
         }
 
         /// <inheritdoc />
-        public void WriteGlobalData<TModel>(string key, TModel data) where TModel : class
+        public void WriteGlobalData<TModel>(string key, TModel? data)
+            where TModel : class
         {
             string path = this.GetGlobalDataPath(key);
             if (data != null)
@@ -134,15 +145,19 @@ namespace SoGModdingAPI.Framework.ModHelpers
         private string GetSaveFileKey(string key)
         {
             this.AssertSlug(key, nameof(key));
-            return $"smapi/mod-data/{this.ModID}/{key}".ToLower();
+            return $"sogmapi/mod-data/{this.ModID}/{key}".ToLower();
         }
 
         /// <summary>Get the data fields to read/write for save data.</summary>
         /// <param name="stage">The current load stage.</param>
         private IEnumerable<IDictionary<string, string>> GetDataFields(LoadStage stage)
         {
-            // @todo
-            yield return new Dictionary<string, string>();
+            if (stage == LoadStage.None)
+                yield break;
+
+            yield return Game1.CustomData;
+            if (SaveGame.loaded != null)
+                yield return SaveGame.loaded.CustomData;
         }
 
         /// <summary>Get the absolute path for a global data file.</summary>
@@ -150,7 +165,7 @@ namespace SoGModdingAPI.Framework.ModHelpers
         private string GetGlobalDataPath(string key)
         {
             this.AssertSlug(key, nameof(key));
-            return Path.Combine(Constants.DataPath, ".smapi", "mod-data", this.ModID.ToLower(), $"{key}.json".ToLower());
+            return Path.Combine(Constants.DataPath, ".sogmapi", "mod-data", this.ModID.ToLower(), $"{key}.json".ToLower());
         }
 
         /// <summary>Assert that a key contains only characters that are safe in all contexts.</summary>

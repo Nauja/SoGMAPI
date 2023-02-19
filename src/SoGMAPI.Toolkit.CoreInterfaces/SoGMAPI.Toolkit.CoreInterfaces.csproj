@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>SoGModdingAPI</RootNamespace>
     <Description>Provides toolkit interfaces which are available to SoGMAPI mods.</Description>
-    <TargetFrameworks>net4.5;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net5.0; netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 

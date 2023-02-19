@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json.Linq;

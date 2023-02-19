@@ -1,18 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using SoGModdingApi.Installer.Enums;
+using StardewModdingApi.Installer.Enums;
 using SoGModdingAPI.Installer.Framework;
 using SoGModdingAPI.Internal.ConsoleWriting;
 using SoGModdingAPI.Toolkit;
+using SoGModdingAPI.Toolkit.Framework;
+using SoGModdingAPI.Toolkit.Framework.GameScanning;
 using SoGModdingAPI.Toolkit.Framework.ModScanning;
 using SoGModdingAPI.Toolkit.Utilities;
 
-namespace SoGModdingApi.Installer
+namespace StardewModdingApi.Installer
 {
     /// <summary>Interactively performs the install and uninstall logic.</summary>
     internal class InteractiveInstaller
@@ -31,25 +34,29 @@ namespace SoGModdingApi.Installer
         };
 
         /// <summary>Get the absolute file or folder paths to remove when uninstalling SoGMAPI.</summary>
-        /// <param name="installDir">The folder for Secrets of Grindea and SoGMAPI.</param>
+        /// <param name="installDir">The folder for Stardew Valley and SoGMAPI.</param>
         /// <param name="modsDir">The folder for SoGMAPI mods.</param>
+        [SuppressMessage("ReSharper", "StringLiteralTypo", Justification = "These are valid file names.")]
         private IEnumerable<string> GetUninstallPaths(DirectoryInfo installDir, DirectoryInfo modsDir)
         {
             string GetInstallPath(string path) => Path.Combine(installDir.FullName, path);
 
             // current files
-            yield return GetInstallPath("libgdiplus.dylib");           // Linux/macOS only
             yield return GetInstallPath("SoGModdingAPI");          // Linux/macOS only
+            yield return GetInstallPath("SoGModdingAPI.deps.json");
+            yield return GetInstallPath("SoGModdingAPI.dll");
             yield return GetInstallPath("SoGModdingAPI.exe");
             yield return GetInstallPath("SoGModdingAPI.exe.config");
             yield return GetInstallPath("SoGModdingAPI.exe.mdb");  // Linux/macOS only
             yield return GetInstallPath("SoGModdingAPI.pdb");      // Windows only
+            yield return GetInstallPath("SoGModdingAPI.runtimeconfig.json");
             yield return GetInstallPath("SoGModdingAPI.xml");
-            yield return GetInstallPath("SoGModdingAPI-x64.exe");  // not normally added to game folder, but may be mistakenly added by a manual install
             yield return GetInstallPath("sogmapi-internal");
             yield return GetInstallPath("steam_appid.txt");
 
+#if SOGMAPI_DEPRECATED
             // obsolete
+            yield return GetInstallPath("libgdiplus.dylib");                 // before 3.13 (macOS only)
             yield return GetInstallPath(Path.Combine("Mods", ".cache"));     // 1.3-1.4
             yield return GetInstallPath(Path.Combine("Mods", "TrainerMod")); // *–2.0 (renamed to ConsoleCommands)
             yield return GetInstallPath("Mono.Cecil.Rocks.dll");             // 1.3–1.8
@@ -67,19 +74,18 @@ namespace SoGModdingApi.Installer
             yield return GetInstallPath("SoGModdingAPI.Toolkit.pdb");   // moved in 2.8
             yield return GetInstallPath("SoGModdingAPI.Toolkit.xml");   // moved in 2.8
             yield return GetInstallPath("SoGModdingAPI.Toolkit.CoreInterfaces.dll"); // moved in 2.8
-            yield return GetInstallPath(".Toolkit.CoreInterfaces.pdb"); // moved in 2.8
+            yield return GetInstallPath("SoGModdingAPI.Toolkit.CoreInterfaces.pdb"); // moved in 2.8
             yield return GetInstallPath("SoGModdingAPI.Toolkit.CoreInterfaces.xml"); // moved in 2.8
-            yield return GetInstallPath("System.Numerics.dll");               // moved in 2.8
-            yield return GetInstallPath("System.Runtime.Caching.dll");        // moved in 2.8
-            yield return GetInstallPath("System.ValueTuple.dll");             // moved in 2.8
+            yield return GetInstallPath("SoGModdingAPI-x86.exe");         // before 3.13
 
             if (modsDir.Exists)
             {
                 foreach (DirectoryInfo modDir in modsDir.EnumerateDirectories())
                     yield return Path.Combine(modDir.FullName, ".cache"); // 1.4–1.7
             }
+#endif
 
-            yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Secrets of Grindea", "ErrorLogs"); // remove old log files
+            yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StardewValley", "ErrorLogs"); // remove old log files
         }
 
         /// <summary>Handles writing text to the console.</summary>
@@ -124,7 +130,7 @@ namespace SoGModdingApi.Installer
             /****
             ** Get basic info & set window title
             ****/
-            ModToolkit toolkit = new ModToolkit();
+            ModToolkit toolkit = new();
             var context = new InstallerContext();
             Console.Title = $"SoGMAPI {context.GetInstallerVersion()} installer on {context.Platform} {context.PlatformName}";
             Console.WriteLine();
@@ -132,7 +138,7 @@ namespace SoGModdingApi.Installer
             /****
             ** Check if correct installer
             ****/
-#if SOGMAPI_FOR_WINDOWS
+#if true
             if (context.IsUnix)
             {
                 this.PrintError($"This is the installer for Windows. Run the 'install on {context.Platform}.{(context.Platform == Platform.Mac ? "command" : "sh")}' file instead.");
@@ -149,30 +155,6 @@ namespace SoGModdingApi.Installer
 #endif
 
             /****
-            ** Check Windows dependencies
-            ****/
-            if (context.IsWindows)
-            {
-                // .NET Framework 4.5+
-                if (!context.HasNetFramework45())
-                {
-                    this.PrintError(context.CanInstallLatestNetFramework()
-                            ? "Please install the latest version of .NET Framework before installing SoGMAPI."
-                            : "Please install .NET Framework 4.5 before installing SoGMAPI."
-                    );
-                    this.PrintError("See the download page at https://www.microsoft.com/net/download/framework for details.");
-                    Console.ReadLine();
-                    return;
-                }
-                if (!context.HasXna())
-                {
-                    this.PrintError("You don't seem to have XNA Framework installed. Please run the game at least once before installing SoGMAPI, so it can perform its first-time setup.");
-                    Console.ReadLine();
-                    return;
-                }
-            }
-
-            /****
             ** read command-line arguments
             ****/
             // get action from CLI
@@ -186,7 +168,7 @@ namespace SoGModdingApi.Installer
             }
 
             // get game path from CLI
-            string gamePathArg = null;
+            string? gamePathArg = null;
             {
                 int pathIndex = Array.LastIndexOf(args, "--game-path") + 1;
                 if (pathIndex >= 1 && args.Length >= pathIndex)
@@ -211,8 +193,8 @@ namespace SoGModdingApi.Installer
                 ** show theme selector
                 ****/
                 // get theme writers
-                var lightBackgroundWriter = new ColorfulConsoleWriter(context.Platform, ColorfulConsoleWriter.GetDefaultColorSchemeConfig(MonitorColorScheme.LightBackground));
-                var darkBackgroundWriter = new ColorfulConsoleWriter(context.Platform, ColorfulConsoleWriter.GetDefaultColorSchemeConfig(MonitorColorScheme.DarkBackground));
+                ColorfulConsoleWriter lightBackgroundWriter = new(context.Platform, ColorfulConsoleWriter.GetDefaultColorSchemeConfig(MonitorColorScheme.LightBackground));
+                ColorfulConsoleWriter darkBackgroundWriter = new(context.Platform, ColorfulConsoleWriter.GetDefaultColorSchemeConfig(MonitorColorScheme.DarkBackground));
 
                 // print question
                 this.PrintPlain("Which text looks more readable?");
@@ -224,7 +206,7 @@ namespace SoGModdingApi.Installer
                 Console.WriteLine();
 
                 // handle choice
-                string choice = this.InteractivelyChoose("Type 1 or 2, then press enter.", new[] { "1", "2" });
+                string choice = this.InteractivelyChoose("Type 1 or 2, then press enter.", new[] { "1", "2" }, printLine: Console.WriteLine);
                 switch (choice)
                 {
                     case "1":
@@ -259,7 +241,7 @@ namespace SoGModdingApi.Installer
                 ** collect details
                 ****/
                 // get game path
-                DirectoryInfo installDir = this.InteractivelyGetInstallPath(toolkit, context, gamePathArg);
+                DirectoryInfo? installDir = this.InteractivelyGetInstallPath(toolkit, context, gamePathArg);
                 if (installDir == null)
                 {
                     this.PrintError("Failed finding your game path.");
@@ -268,50 +250,26 @@ namespace SoGModdingApi.Installer
                 }
 
                 // get folders
-                DirectoryInfo bundleDir = new DirectoryInfo(this.BundlePath);
-                paths = new InstallerPaths(bundleDir, installDir, context.ExecutableName);
+                DirectoryInfo bundleDir = new(this.BundlePath);
+                paths = new InstallerPaths(bundleDir, installDir);
+            }
+
+
+            /*********
+            ** Step 4: validate assumptions
+            *********/
+            // executable exists
+            if (!File.Exists(paths.GameDllPath))
+            {
+                this.PrintError("The detected game install path doesn't contain a Stardew Valley executable.");
+                Console.ReadLine();
+                return;
             }
             Console.Clear();
 
 
             /*********
-            ** Step 4: detect 64-bit Secrets of Grindea
-            *********/
-            // detect 64-bit mode
-            bool isWindows64Bit = false;
-            if (context.Platform == Platform.Windows)
-            {
-                FileInfo linuxExecutable = new FileInfo(Path.Combine(paths.GamePath, "Secrets Of Grindea.exe"));
-                isWindows64Bit = linuxExecutable.Exists && this.Is64Bit(linuxExecutable.FullName);
-                if (isWindows64Bit)
-                    paths.SetExecutableFileName(linuxExecutable.Name);
-            }
-
-            /*********
-            ** Step 5: validate assumptions
-            *********/
-            // executable exists
-            if (!File.Exists(paths.ExecutablePath))
-            {
-                this.PrintError("The detected game install path doesn't contain a Secrets of Grindea executable.");
-                Console.ReadLine();
-                return;
-            }
-
-            // game folder doesn't contain paths beyond the max limit
-            {
-                string[] tooLongPaths = PathUtilities.GetTooLongPaths(Path.Combine(paths.GamePath, "Mods")).ToArray();
-                if (tooLongPaths.Any())
-                {
-                    this.PrintError($"SoGMAPI can't install to the detected game folder, because some of its files exceed the maximum {context.Platform} path length.\nIf you need help fixing this error, see https://smapi.io/help\n\nAffected paths:\n   {string.Join("\n   ", tooLongPaths)}");
-                    Console.ReadLine();
-                    return;
-                }
-            }
-
-
-            /*********
-            ** Step 6: ask what to do
+            ** Step 5: ask what to do
             *********/
             ScriptAction action;
             {
@@ -319,7 +277,7 @@ namespace SoGModdingApi.Installer
                 ** print header
                 ****/
                 this.PrintInfo("Hi there! I'll help you install or remove SoGMAPI. Just one question first.");
-                this.PrintDebug($"Game path: {paths.GamePath}{(context.IsWindows ? $" [{(isWindows64Bit ? "64-bit" : "32-bit")}]" : "")}");
+                this.PrintDebug($"Game path: {paths.GamePath}");
                 this.PrintDebug($"Color scheme: {this.GetDisplayText(scheme)}");
                 this.PrintDebug("----------------------------------------------------------------------------");
                 Console.WriteLine();
@@ -357,14 +315,14 @@ namespace SoGModdingApi.Installer
 
 
             /*********
-            ** Step 7: apply
+            ** Step 6: apply
             *********/
             {
                 /****
                 ** print header
                 ****/
                 this.PrintInfo($"That's all I need! I'll {action.ToString().ToLower()} SoGMAPI now.");
-                this.PrintDebug($"Game path: {paths.GamePath}{(context.IsWindows ? $" [{(isWindows64Bit ? "64-bit" : "32-bit")}]" : "")}");
+                this.PrintDebug($"Game path: {paths.GamePath}");
                 this.PrintDebug($"Color scheme: {this.GetDisplayText(scheme)}");
                 this.PrintDebug("----------------------------------------------------------------------------");
                 Console.WriteLine();
@@ -379,11 +337,11 @@ namespace SoGModdingApi.Installer
                 ** Always uninstall old files
                 ****/
                 // restore game launcher
-                if (context.IsUnix && File.Exists(paths.UnixBackupLauncherPath))
+                if (context.IsUnix && File.Exists(paths.BackupLaunchScriptPath))
                 {
                     this.PrintDebug("Removing SoGMAPI launcher...");
-                    this.InteractivelyDelete(paths.UnixLauncherPath);
-                    File.Move(paths.UnixBackupLauncherPath, paths.UnixLauncherPath);
+                    this.InteractivelyDelete(paths.VanillaLaunchScriptPath);
+                    File.Move(paths.BackupLaunchScriptPath, paths.VanillaLaunchScriptPath);
                 }
 
                 // remove old files
@@ -399,9 +357,9 @@ namespace SoGModdingApi.Installer
 
                 // move global save data folder (changed in 3.2)
                 {
-                    string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Secrets of Grindea");
-                    DirectoryInfo oldDir = new DirectoryInfo(Path.Combine(dataPath, "Saves", ".sogmapi"));
-                    DirectoryInfo newDir = new DirectoryInfo(Path.Combine(dataPath, ".sogmapi"));
+                    string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StardewValley");
+                    DirectoryInfo oldDir = new(Path.Combine(dataPath, "Saves", ".sogmapi"));
+                    DirectoryInfo newDir = new(Path.Combine(dataPath, ".sogmapi"));
 
                     if (oldDir.Exists)
                     {
@@ -425,54 +383,46 @@ namespace SoGModdingApi.Installer
                         this.RecursiveCopy(sourceEntry, paths.GameDir);
                     }
 
-                    // handle 64-bit file
-                    {
-                        FileInfo x64Executable = new FileInfo(Path.Combine(paths.GameDir.FullName, "SoGModdingAPI-x64.exe"));
-                        if (isWindows64Bit)
-                        {
-                            this.PrintDebug("Making SoGMAPI 64-bit...");
-                            if (x64Executable.Exists)
-                            {
-                                string targetPath = Path.Combine(paths.GameDir.FullName, "SoGModdingAPI.exe");
-                                this.InteractivelyDelete(targetPath);
-                                x64Executable.MoveTo(targetPath);
-                            }
-                            else
-                                this.PrintError($"Oops! Could not find the required '{x64Executable.Name}' installer file. SoGMAPI may not work correctly.");
-                        }
-                        else if (x64Executable.Exists)
-                            x64Executable.Delete();
-                    }
-
                     // replace mod launcher (if possible)
                     if (context.IsUnix)
                     {
                         this.PrintDebug("Safely replacing game launcher...");
 
                         // back up & remove current launcher
-                        if (File.Exists(paths.UnixLauncherPath))
+                        if (File.Exists(paths.VanillaLaunchScriptPath))
                         {
-                            if (!File.Exists(paths.UnixBackupLauncherPath))
-                                File.Move(paths.UnixLauncherPath, paths.UnixBackupLauncherPath);
+                            if (!File.Exists(paths.BackupLaunchScriptPath))
+                                File.Move(paths.VanillaLaunchScriptPath, paths.BackupLaunchScriptPath);
                             else
-                                this.InteractivelyDelete(paths.UnixLauncherPath);
+                                this.InteractivelyDelete(paths.VanillaLaunchScriptPath);
                         }
 
                         // add new launcher
-                        File.Move(paths.UnixSogmapiLauncherPath, paths.UnixLauncherPath);
+                        File.Move(paths.NewLaunchScriptPath, paths.VanillaLaunchScriptPath);
 
-                        // mark file executable
+                        // mark files executable
                         // (MSBuild doesn't keep permission flags for files zipped in a build task.)
-                        new Process
+                        foreach (string path in new[] { paths.VanillaLaunchScriptPath, paths.UnixSmapiExecutablePath })
                         {
-                            StartInfo = new ProcessStartInfo
+                            new Process
                             {
-                                FileName = "chmod",
-                                Arguments = $"755 \"{paths.UnixLauncherPath}\"",
-                                CreateNoWindow = true
-                            }
-                        }.Start();
+                                StartInfo = new ProcessStartInfo
+                                {
+                                    FileName = "chmod",
+                                    Arguments = $"755 \"{path}\"",
+                                    CreateNoWindow = true
+                                }
+                            }.Start();
+                        }
                     }
+
+                    // copy the game's deps.json file
+                    // (This is needed to resolve native DLLs like libSkiaSharp.)
+                    File.Copy(
+                        sourceFileName: Path.Combine(paths.GamePath, "Stardew Valley.deps.json"),
+                        destFileName: Path.Combine(paths.GamePath, "SoGModdingAPI.deps.json"),
+                        overwrite: true
+                    );
 
                     // create mods directory (if needed)
                     if (!paths.ModsDir.Exists)
@@ -482,13 +432,13 @@ namespace SoGModdingApi.Installer
                     }
 
                     // add or replace bundled mods
-                    DirectoryInfo bundledModsDir = new DirectoryInfo(Path.Combine(paths.BundlePath, "Mods"));
+                    DirectoryInfo bundledModsDir = new(Path.Combine(paths.BundlePath, "Mods"));
                     if (bundledModsDir.Exists && bundledModsDir.EnumerateDirectories().Any())
                     {
                         this.PrintDebug("Adding bundled mods...");
 
-                        ModFolder[] targetMods = toolkit.GetModFolders(paths.ModsPath).ToArray();
-                        foreach (ModFolder sourceMod in toolkit.GetModFolders(bundledModsDir.FullName))
+                        ModFolder[] targetMods = toolkit.GetModFolders(paths.ModsPath, useCaseInsensitiveFilePaths: true).ToArray();
+                        foreach (ModFolder sourceMod in toolkit.GetModFolders(bundledModsDir.FullName, useCaseInsensitiveFilePaths: true))
                         {
                             // validate source mod
                             if (sourceMod.Manifest == null)
@@ -503,8 +453,9 @@ namespace SoGModdingApi.Installer
                             }
 
                             // find target folder
-                            ModFolder targetMod = targetMods.FirstOrDefault(p => p.Manifest?.UniqueID?.Equals(sourceMod.Manifest.UniqueID, StringComparison.OrdinalIgnoreCase) == true);
-                            DirectoryInfo defaultTargetFolder = new DirectoryInfo(Path.Combine(paths.ModsPath, sourceMod.Directory.Name));
+                            // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract -- avoid error if the Mods folder has invalid mods, since they're not validated yet
+                            ModFolder? targetMod = targetMods.FirstOrDefault(p => p.Manifest?.UniqueID?.Equals(sourceMod.Manifest.UniqueID, StringComparison.OrdinalIgnoreCase) == true);
+                            DirectoryInfo defaultTargetFolder = new(Path.Combine(paths.ModsPath, sourceMod.Directory.Name));
                             DirectoryInfo targetFolder = targetMod?.Directory ?? defaultTargetFolder;
                             this.PrintDebug(targetFolder.FullName == defaultTargetFolder.FullName
                                 ? $"   adding {sourceMod.Manifest.Name}..."
@@ -529,8 +480,10 @@ namespace SoGModdingApi.Installer
                         File.WriteAllText(paths.ApiConfigPath, text);
                     }
 
+#if SOGMAPI_DEPRECATED
                     // remove obsolete appdata mods
                     this.InteractivelyRemoveAppDataMods(paths.ModsDir, bundledModsDir);
+#endif
                 }
             }
             Console.WriteLine();
@@ -544,7 +497,7 @@ namespace SoGModdingApi.Installer
             {
                 if (action == ScriptAction.Install)
                 {
-                    this.PrintSuccess("SoGMAPI is installed! If you use Steam, set your launch options to enable achievements (see sogmapi.io/install):");
+                    this.PrintSuccess("SoGMAPI is installed! If you use Steam, set your launch options to enable achievements (see smapi.io/install):");
                     this.PrintSuccess($"    \"{Path.Combine(paths.GamePath, "SoGModdingAPI.exe")}\" %command%");
                     Console.WriteLine();
                     this.PrintSuccess("If you don't use Steam, launch SoGModdingAPI.exe in your game folder to play with mods.");
@@ -567,13 +520,6 @@ namespace SoGModdingApi.Installer
         /*********
         ** Private methods
         *********/
-        /// <summary>Get whether an executable is 64-bit.</summary>
-        /// <param name="executablePath">The absolute path to the executable file.</param>
-        private bool Is64Bit(string executablePath)
-        {
-            return AssemblyName.GetAssemblyName(executablePath).ProcessorArchitecture != ProcessorArchitecture.X86;
-        }
-
         /// <summary>Get the display text for a color scheme.</summary>
         /// <param name="scheme">The color scheme.</param>
         private string GetDisplayText(MonitorColorScheme scheme)
@@ -593,27 +539,45 @@ namespace SoGModdingApi.Installer
 
         /// <summary>Print a message without formatting.</summary>
         /// <param name="text">The text to print.</param>
-        private void PrintPlain(string text) => Console.WriteLine(text);
+        private void PrintPlain(string text)
+        {
+            Console.WriteLine(text);
+        }
 
         /// <summary>Print a debug message.</summary>
         /// <param name="text">The text to print.</param>
-        private void PrintDebug(string text) => this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Debug);
+        private void PrintDebug(string text)
+        {
+            this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Debug);
+        }
 
         /// <summary>Print a debug message.</summary>
         /// <param name="text">The text to print.</param>
-        private void PrintInfo(string text) => this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Info);
+        private void PrintInfo(string text)
+        {
+            this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Info);
+        }
 
         /// <summary>Print a warning message.</summary>
         /// <param name="text">The text to print.</param>
-        private void PrintWarning(string text) => this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Warn);
+        private void PrintWarning(string text)
+        {
+            this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Warn);
+        }
 
         /// <summary>Print a warning message.</summary>
         /// <param name="text">The text to print.</param>
-        private void PrintError(string text) => this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Error);
+        private void PrintError(string text)
+        {
+            this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Error);
+        }
 
         /// <summary>Print a success message.</summary>
         /// <param name="text">The text to print.</param>
-        private void PrintSuccess(string text) => this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Success);
+        private void PrintSuccess(string text)
+        {
+            this.ConsoleWriter.WriteLine(text, ConsoleLogLevel.Success);
+        }
 
         /// <summary>Interactively delete a file or folder path, and block until deletion completes.</summary>
         /// <param name="path">The file or folder path.</param>
@@ -623,7 +587,7 @@ namespace SoGModdingApi.Installer
             {
                 try
                 {
-                    FileUtilities.ForceDelete(Directory.Exists(path) ? new DirectoryInfo(path) : (FileSystemInfo)new FileInfo(path));
+                    FileUtilities.ForceDelete(Directory.Exists(path) ? new DirectoryInfo(path) : new FileInfo(path));
                     break;
                 }
                 catch (Exception ex)
@@ -639,7 +603,7 @@ namespace SoGModdingApi.Installer
         /// <param name="source">The file or folder to copy.</param>
         /// <param name="targetFolder">The folder to copy into.</param>
         /// <param name="filter">A filter which matches directories and files to copy, or <c>null</c> to match all.</param>
-        private void RecursiveCopy(FileSystemInfo source, DirectoryInfo targetFolder, Func<FileSystemInfo, bool> filter = null)
+        private void RecursiveCopy(FileSystemInfo source, DirectoryInfo targetFolder, Func<FileSystemInfo, bool>? filter = null)
         {
             if (filter != null && !filter(source))
                 return;
@@ -654,8 +618,8 @@ namespace SoGModdingApi.Installer
                     break;
 
                 case DirectoryInfo sourceDir:
-                    DirectoryInfo targetSubfolder = new DirectoryInfo(Path.Combine(targetFolder.FullName, sourceDir.Name));
-                    foreach (var entry in sourceDir.EnumerateFileSystemInfos())
+                    DirectoryInfo targetSubfolder = new(Path.Combine(targetFolder.FullName, sourceDir.Name));
+                    foreach (FileSystemInfo entry in sourceDir.EnumerateFileSystemInfos())
                         this.RecursiveCopy(entry, targetSubfolder, filter);
                     break;
 
@@ -665,22 +629,22 @@ namespace SoGModdingApi.Installer
         }
 
         /// <summary>Interactively ask the user to choose a value.</summary>
-        /// <param name="print">A callback which prints a message to the console.</param>
+        /// <param name="printLine">A callback which prints a message to the console.</param>
         /// <param name="message">The message to print.</param>
         /// <param name="options">The allowed options (not case sensitive).</param>
         /// <param name="indent">The indentation to prefix to output.</param>
-        private string InteractivelyChoose(string message, string[] options, string indent = "", Action<string> print = null)
+        private string InteractivelyChoose(string message, string[] options, string indent = "", Action<string>? printLine = null)
         {
-            print ??= this.PrintInfo;
+            printLine ??= this.PrintInfo;
 
             while (true)
             {
-                print(indent + message);
+                printLine(indent + message);
                 Console.Write(indent);
-                string input = Console.ReadLine()?.Trim().ToLowerInvariant();
-                if (!options.Contains(input))
+                string? input = Console.ReadLine()?.Trim().ToLowerInvariant();
+                if (input == null || !options.Contains(input))
                 {
-                    print($"{indent}That's not a valid option.");
+                    printLine($"{indent}That's not a valid option.");
                     continue;
                 }
                 return input;
@@ -691,23 +655,44 @@ namespace SoGModdingApi.Installer
         /// <param name="toolkit">The mod toolkit.</param>
         /// <param name="context">The installer context.</param>
         /// <param name="specifiedPath">The path specified as a command-line argument (if any), which should override automatic path detection.</param>
-        private DirectoryInfo InteractivelyGetInstallPath(ModToolkit toolkit, InstallerContext context, string specifiedPath)
+        private DirectoryInfo? InteractivelyGetInstallPath(ModToolkit toolkit, InstallerContext context, string? specifiedPath)
         {
             // use specified path
             if (specifiedPath != null)
             {
+                string errorPrefix = $"You specified --game-path \"{specifiedPath}\", but";
+
                 var dir = new DirectoryInfo(specifiedPath);
                 if (!dir.Exists)
                 {
-                    this.PrintError($"You specified --game-path \"{specifiedPath}\", but that folder doesn't exist.");
+                    this.PrintError($"{errorPrefix} that folder doesn't exist.");
                     return null;
                 }
-                if (!context.LooksLikeGameFolder(dir))
+
+                switch (context.GetGameFolderType(dir))
                 {
-                    this.PrintError($"You specified --game-path \"{specifiedPath}\", but that folder doesn't contain the Secrets of Grindea executable.");
-                    return null;
+                    case GameFolderType.Valid:
+                        return dir;
+
+                    case GameFolderType.Legacy154OrEarlier:
+                        this.PrintWarning($"{errorPrefix} that directory seems to have Stardew Valley 1.5.4 or earlier.");
+                        this.PrintWarning("Please update your game to the latest version to use SoGMAPI.");
+                        return null;
+
+                    case GameFolderType.LegacyCompatibilityBranch:
+                        this.PrintWarning($"{errorPrefix} that directory seems to have the Stardew Valley legacy 'compatibility' branch.");
+                        this.PrintWarning("Unfortunately SoGMAPI is only compatible with the modern version of the game.");
+                        this.PrintWarning("Please update your game to the main branch to use SoGMAPI.");
+                        return null;
+
+                    case GameFolderType.NoGameFound:
+                        this.PrintWarning($"{errorPrefix} that directory doesn't contain a Stardew Valley executable.");
+                        return null;
+
+                    default:
+                        this.PrintWarning($"{errorPrefix} that directory doesn't seem to contain a valid game install.");
+                        return null;
                 }
-                return dir;
             }
 
             // let user choose detected path
@@ -736,8 +721,8 @@ namespace SoGModdingApi.Installer
             {
                 // get path from user
                 Console.WriteLine();
-                this.PrintInfo($"Type the file path to the game directory (the one containing '{context.ExecutableName}'), then press enter.");
-                string path = Console.ReadLine()?.Trim();
+                this.PrintInfo($"Type the file path to the game directory (the one containing '{Constants.GameDllName}'), then press enter.");
+                string? path = Console.ReadLine()?.Trim();
                 if (string.IsNullOrWhiteSpace(path))
                 {
                     this.PrintWarning("You must specify a directory path to continue.");
@@ -750,14 +735,14 @@ namespace SoGModdingApi.Installer
                     : path.Replace("\\ ", " "); // in Linux/macOS, spaces in paths may be escaped if copied from the command line
                 if (path.StartsWith("~/"))
                 {
-                    string home = Environment.GetEnvironmentVariable("HOME") ?? Environment.GetEnvironmentVariable("USERPROFILE");
+                    string home = Environment.GetEnvironmentVariable("HOME") ?? Environment.GetEnvironmentVariable("USERPROFILE")!;
                     path = Path.Combine(home, path.Substring(2));
                 }
 
                 // get directory
                 if (File.Exists(path))
-                    path = Path.GetDirectoryName(path);
-                DirectoryInfo directory = new DirectoryInfo(path);
+                    path = Path.GetDirectoryName(path)!;
+                DirectoryInfo directory = new(path);
 
                 // validate path
                 if (!directory.Exists)
@@ -765,15 +750,32 @@ namespace SoGModdingApi.Installer
                     this.PrintWarning("That directory doesn't seem to exist.");
                     continue;
                 }
-                if (!context.LooksLikeGameFolder(directory))
-                {
-                    this.PrintWarning("That directory doesn't contain a Secrets of Grindea executable.");
-                    continue;
-                }
 
-                // looks OK
-                this.PrintInfo("   OK!");
-                return directory;
+                switch (context.GetGameFolderType(directory))
+                {
+                    case GameFolderType.Valid:
+                        this.PrintInfo("   OK!");
+                        return directory;
+
+                    case GameFolderType.Legacy154OrEarlier:
+                        this.PrintWarning("That directory seems to have Stardew Valley 1.5.4 or earlier.");
+                        this.PrintWarning("Please update your game to the latest version to use SoGMAPI.");
+                        continue;
+
+                    case GameFolderType.LegacyCompatibilityBranch:
+                        this.PrintWarning("That directory seems to have the Stardew Valley legacy 'compatibility' branch.");
+                        this.PrintWarning("Unfortunately SoGMAPI is only compatible with the modern version of the game.");
+                        this.PrintWarning("Please update your game to the main branch to use SoGMAPI.");
+                        continue;
+
+                    case GameFolderType.NoGameFound:
+                        this.PrintWarning("That directory doesn't contain a Stardew Valley executable.");
+                        continue;
+
+                    default:
+                        this.PrintWarning("That directory doesn't seem to contain a valid game install.");
+                        continue;
+                }
             }
         }
 
@@ -786,7 +788,7 @@ namespace SoGModdingApi.Installer
 
             // game folder which contains the installer, if any
             {
-                DirectoryInfo curPath = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory;
+                DirectoryInfo? curPath = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory;
                 while (curPath?.Parent != null) // must be in a folder (not at the root)
                 {
                     if (context.LooksLikeGameFolder(curPath))
@@ -808,7 +810,8 @@ namespace SoGModdingApi.Installer
             }
         }
 
-        /// <summary>Interactively move mods out of the appdata directory.</summary>
+#if SOGMAPI_DEPRECATED
+        /// <summary>Interactively move mods out of the app data directory.</summary>
         /// <param name="properModsDir">The directory which should contain all mods.</param>
         /// <param name="packagedModsDir">The installer directory containing packaged mods.</param>
         private void InteractivelyRemoveAppDataMods(DirectoryInfo properModsDir, DirectoryInfo packagedModsDir)
@@ -817,8 +820,8 @@ namespace SoGModdingApi.Installer
             string[] packagedModNames = packagedModsDir.GetDirectories().Select(p => p.Name).ToArray();
 
             // get path
-            string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Secrets of Grindea");
-            DirectoryInfo modDir = new DirectoryInfo(Path.Combine(appDataPath, "Mods"));
+            string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "StardewValley");
+            DirectoryInfo modDir = new(Path.Combine(appDataPath, "Mods"));
 
             // check if migration needed
             if (!modDir.Exists)
@@ -831,7 +834,7 @@ namespace SoGModdingApi.Installer
             {
                 // get type
                 bool isDir = entry is DirectoryInfo;
-                if (!isDir && !(entry is FileInfo))
+                if (!isDir && entry is not FileInfo)
                     continue; // should never happen
 
                 // delete packaged mods (newer version bundled into SoGMAPI)
@@ -868,7 +871,7 @@ namespace SoGModdingApi.Installer
         /// <summary>Move a filesystem entry to a new parent directory.</summary>
         /// <param name="entry">The filesystem entry to move.</param>
         /// <param name="newPath">The destination path.</param>
-        /// <remarks>We can't use <see cref="FileInfo.MoveTo"/> or <see cref="DirectoryInfo.MoveTo"/>, because those don't work across partitions.</remarks>
+        /// <remarks>We can't use <see cref="FileInfo.MoveTo(string)"/> or <see cref="DirectoryInfo.MoveTo"/>, because those don't work across partitions.</remarks>
         private void Move(FileSystemInfo entry, string newPath)
         {
             // file
@@ -890,20 +893,18 @@ namespace SoGModdingApi.Installer
                 directory.Delete(recursive: true);
             }
         }
+#endif
 
         /// <summary>Get whether a file or folder should be copied from the installer files.</summary>
         /// <param name="entry">The file or folder info.</param>
         private bool ShouldCopy(FileSystemInfo entry)
         {
-            switch (entry.Name)
+            return entry.Name switch
             {
-                case "mcs":
-                    return false; // ignore macOS symlink
-                case "Mods":
-                    return false; // Mods folder handled separately
-                default:
-                    return true;
-            }
+                "mcs" => false, // ignore macOS symlink
+                "Mods" => false, // Mods folder handled separately
+                _ => true
+            };
         }
     }
 }

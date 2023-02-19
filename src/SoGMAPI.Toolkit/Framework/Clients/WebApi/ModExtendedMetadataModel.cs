@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
@@ -17,10 +18,10 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
         ** Mod info
         ****/
         /// <summary>The mod's unique ID. A mod may have multiple current IDs in rare cases (e.g. due to parallel releases or unofficial updates).</summary>
-        public string[] ID { get; set; } = new string[0];
+        public string[] ID { get; set; } = Array.Empty<string>();
 
         /// <summary>The mod's display name.</summary>
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>The mod ID on Nexus.</summary>
         public int? NexusID { get; set; }
@@ -32,31 +33,31 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
         public int? CurseForgeID { get; set; }
 
         /// <summary>The mod key in the CurseForge mod repo (used in mod page URLs).</summary>
-        public string CurseForgeKey { get; set; }
+        public string? CurseForgeKey { get; set; }
 
         /// <summary>The mod ID in the ModDrop mod repo.</summary>
         public int? ModDropID { get; set; }
 
         /// <summary>The GitHub repository in the form 'owner/repo'.</summary>
-        public string GitHubRepo { get; set; }
+        public string? GitHubRepo { get; set; }
 
         /// <summary>The URL to a non-GitHub source repo.</summary>
-        public string CustomSourceUrl { get; set; }
+        public string? CustomSourceUrl { get; set; }
 
         /// <summary>The custom mod page URL (if applicable).</summary>
-        public string CustomUrl { get; set; }
+        public string? CustomUrl { get; set; }
 
         /// <summary>The main version.</summary>
-        public ModEntryVersionModel Main { get; set; }
+        public ModEntryVersionModel? Main { get; set; }
 
         /// <summary>The latest optional version, if newer than <see cref="Main"/>.</summary>
-        public ModEntryVersionModel Optional { get; set; }
+        public ModEntryVersionModel? Optional { get; set; }
 
         /// <summary>The latest unofficial version, if newer than <see cref="Main"/> and <see cref="Optional"/>.</summary>
-        public ModEntryVersionModel Unofficial { get; set; }
+        public ModEntryVersionModel? Unofficial { get; set; }
 
         /// <summary>The latest unofficial version for the current Stardew Valley or SoGMAPI beta, if any.</summary>
-        public ModEntryVersionModel UnofficialForBeta { get; set; }
+        public ModEntryVersionModel? UnofficialForBeta { get; set; }
 
         /****
         ** Stable compatibility
@@ -66,32 +67,35 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
         public WikiCompatibilityStatus? CompatibilityStatus { get; set; }
 
         /// <summary>The human-readable summary of the compatibility status or workaround, without HTML formatting.</summary>
-        public string CompatibilitySummary { get; set; }
+        public string? CompatibilitySummary { get; set; }
 
-        /// <summary>The game or SMAPI version which broke this mod, if applicable.</summary>
-        public string BrokeIn { get; set; }
+        /// <summary>The game or SoGMAPI version which broke this mod, if applicable.</summary>
+        public string? BrokeIn { get; set; }
 
         /****
         ** Beta compatibility
         ****/
-        /// <summary>The compatibility status for the Secrets Of Grindea beta (if any).</summary>
+        /// <summary>The compatibility status for the Stardew Valley beta (if any).</summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public WikiCompatibilityStatus? BetaCompatibilityStatus { get; set; }
 
-        /// <summary>The human-readable summary of the compatibility status or workaround for the Secrets Of Grindea beta (if any), without HTML formatting.</summary>
-        public string BetaCompatibilitySummary { get; set; }
+        /// <summary>The human-readable summary of the compatibility status or workaround for the Stardew Valley beta (if any), without HTML formatting.</summary>
+        public string? BetaCompatibilitySummary { get; set; }
 
-        /// <summary>The beta game or SMAPI version which broke this mod, if applicable.</summary>
-        public string BetaBrokeIn { get; set; }
+        /// <summary>The beta game or SoGMAPI version which broke this mod, if applicable.</summary>
+        public string? BetaBrokeIn { get; set; }
 
         /****
         ** Version mappings
         ****/
-        /// <summary>Maps local versions to a semantic version for update checks.</summary>
-        public IDictionary<string, string> MapLocalVersions { get; set; }
+        /// <summary>A serialized change descriptor to apply to the local version during update checks (see <see cref="ChangeDescriptor"/>).</summary>
+        public string? ChangeLocalVersions { get; set; }
 
-        /// <summary>Maps remote versions to a semantic version for update checks.</summary>
-        public IDictionary<string, string> MapRemoteVersions { get; set; }
+        /// <summary>A serialized change descriptor to apply to the remote version during update checks (see <see cref="ChangeDescriptor"/>).</summary>
+        public string? ChangeRemoteVersions { get; set; }
+
+        /// <summary>A serialized change descriptor to apply to the update keys during update checks (see <see cref="ChangeDescriptor"/>).</summary>
+        public string? ChangeUpdateKeys { get; set; }
 
 
         /*********
@@ -102,12 +106,12 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
 
         /// <summary>Construct an instance.</summary>
         /// <param name="wiki">The mod metadata from the wiki (if available).</param>
-        /// <param name="db">The mod metadata from SMAPI's internal DB (if available).</param>
+        /// <param name="db">The mod metadata from SoGMAPI's internal DB (if available).</param>
         /// <param name="main">The main version.</param>
         /// <param name="optional">The latest optional version, if newer than <paramref name="main"/>.</param>
         /// <param name="unofficial">The latest unofficial version, if newer than <paramref name="main"/> and <paramref name="optional"/>.</param>
-        /// <param name="unofficialForBeta">The latest unofficial version for the current Secrets Of Grindea or SoGMAPI beta, if any.</param>
-        public ModExtendedMetadataModel(WikiModEntry wiki, ModDataRecord db, ModEntryVersionModel main, ModEntryVersionModel optional, ModEntryVersionModel unofficial, ModEntryVersionModel unofficialForBeta)
+        /// <param name="unofficialForBeta">The latest unofficial version for the current Stardew Valley or SoGMAPI beta, if any.</param>
+        public ModExtendedMetadataModel(WikiModEntry? wiki, ModDataRecord? db, ModEntryVersionModel? main, ModEntryVersionModel? optional, ModEntryVersionModel? unofficial, ModEntryVersionModel? unofficialForBeta)
         {
             // versions
             this.Main = main;
@@ -137,8 +141,9 @@ namespace SoGModdingAPI.Toolkit.Framework.Clients.WebApi
                 this.BetaCompatibilitySummary = wiki.BetaCompatibility?.Summary;
                 this.BetaBrokeIn = wiki.BetaCompatibility?.BrokeIn;
 
-                this.MapLocalVersions = wiki.MapLocalVersions;
-                this.MapRemoteVersions = wiki.MapRemoteVersions;
+                this.ChangeLocalVersions = wiki.Overrides?.ChangeLocalVersions?.ToString();
+                this.ChangeRemoteVersions = wiki.Overrides?.ChangeRemoteVersions?.ToString();
+                this.ChangeUpdateKeys = wiki.Overrides?.ChangeUpdateKeys?.ToString();
             }
 
             // internal DB data

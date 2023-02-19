@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SoGModdingAPI.Framework.Input;
-using static SoGModdingAPI.Framework.Input.InputState;
 
 namespace SoGModdingAPI.Events
 {
@@ -59,7 +58,7 @@ namespace SoGModdingAPI.Events
             foreach (var state in new[] { SButtonState.Pressed, SButtonState.Held, SButtonState.Released })
             {
                 if (!lookup.ContainsKey(state))
-                    lookup[state] = new SButton[0];
+                    lookup[state] = Array.Empty<SButton>();
             }
 
             return lookup;

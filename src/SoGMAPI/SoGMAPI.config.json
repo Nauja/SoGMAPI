@@ -3,7 +3,7 @@
 
 
 This file contains advanced configuration for SoGMAPI. You generally shouldn't change this file.
-The default values are mirrored in StardewModdingAPI.Framework.Models.SConfig to log custom changes.
+The default values are mirrored in SoGModdingAPI.Framework.Models.SConfig to log custom changes.
 
 
 This file is overwritten each time you update or reinstall SoGMAPI. To avoid losing custom settings,
@@ -16,9 +16,17 @@ copy all the settings, or you may cause bugs due to overridden changes in future
 */
 {
     /**
-     * Whether SoGMAPI should log more information about the game context.
+     * The logs for which to enable verbose logging, which may show a lot more information to
+     * simplify troubleshooting.
+     *
+     * The possible values are:
+     *   - "*" for everything (not recommended);
+     *   - "SoGMAPI" for messages from SoGMAPI itself;
+     *   - mod IDs from their manifest.json files.
+     *
+     * For example: [ "SoGMAPI", "Pathoschild.ContentPatcher" ]
      */
-    "VerboseLogging": false,
+    "VerboseLogging": [],
 
     /**
      * Whether SoGMAPI should check for newer versions of SoGMAPI and mods when you load the game. If new
@@ -34,17 +42,23 @@ copy all the settings, or you may cause bugs due to overridden changes in future
     "DeveloperMode": true,
 
     /**
+     * Whether SoGMAPI should listen for console input. Disabling this will prevent you from using
+     * console commands. On some specific Linux systems, disabling this may reduce CPU usage.
+     */
+    "ListenForConsoleInput": true,
+
+    /**
      * Whether SoGMAPI should rewrite mods for compatibility. This may prevent older mods from
      * loading, but bypasses a Visual Studio crash when debugging.
      */
     "RewriteMods": true,
 
     /**
-     * Whether to enable more aggressive memory optimizations.
-     * If you get frequent 'OutOfMemoryException' errors, you can try enabling this to reduce their
-     * frequency. This may cause crashes for farmhands in multiplayer.
+     * Whether to make SoGMAPI file APIs case-insensitive (even if the filesystem is case-sensitive).
+     *
+     * If null, it's only enabled on Android and Linux.
      */
-    "AggressiveMemoryOptimizations": false,
+    "UseCaseInsensitivePaths": null,
 
     /**
      * Whether to add a section to the 'mod issues' list for mods which directly use potentially
@@ -52,34 +66,26 @@ copy all the settings, or you may cause bugs due to overridden changes in future
      * part of their normal functionality, so these warnings are meaningless without further
      * investigation.
      *
-     * When this is commented out, it'll be true for local debug builds and false otherwise.
+     * If null, it's only enabled for local debug builds.
      */
-    //"ParanoidWarnings": true,
+    "ParanoidWarnings": null,
 
     /**
      * Whether SoGMAPI should show newer beta versions as an available update.
      *
-     * When this is commented out, it'll be true if the current SoGMAPI version is beta, and false
-     * otherwise.
+     * If null, it's only enabled if the current SoGMAPI version is beta.
      */
-    //"UseBetaChannel": true,
+    "UseBetaChannel": null,
 
     /**
      * SoGMAPI's GitHub project name, used to perform update checks.
      */
-    "GitHubProjectName": "Nauja/SoGMAPI",
-
-    /**
-     * Stardew64Installer's GitHub project name, used to perform update checks.
-     */
-    "Stardew64InstallerGitHubProjectName": "Steviegt6/Stardew64Installer",
+    "GitHubProjectName": "Pathoschild/SoGMAPI",
 
     /**
      * The base URL for SoGMAPI's web API, used to perform update checks.
-     * Note: the protocol will be changed to http:// on Linux/macOS due to OpenSSL issues with the
-     * game's bundled Mono.
      */
-    "WebApiBaseUrl": "https://SoGMAPI.io/api/",
+    "WebApiBaseUrl": "https://smapi.io/api/",
 
     /**
      * Whether SoGMAPI should log network traffic (may be very verbose). Best combined with VerboseLogging, which includes network metadata.
@@ -127,11 +133,31 @@ copy all the settings, or you may cause bugs due to overridden changes in future
     },
 
     /**
+     * Whether to prevent mods from enabling Harmony's debug mode, which impacts performance and
+     * creates a file on your desktop. Debug mode should never be enabled by a released mod.
+     *
+     * If you actually need debug mode to test your own mod, set this to false.
+     */
+    "SuppressHarmonyDebugMode": true,
+
+    /**
      * The mod IDs SoGMAPI should ignore when performing update checks or validating update keys.
      */
     "SuppressUpdateChecks": [
         "SoGMAPI.ConsoleCommands",
         "SoGMAPI.ErrorHandler",
         "SoGMAPI.SaveBackup"
-    ]
+    ],
+
+    /**
+     * The mod IDs SoGMAPI should load before any other mods (except those needed to load them)
+     * or after any other mods.
+     *
+     * This lets you manually fix the load order if needed, but this is a last resort — SoGMAPI
+     * automatically adjusts the load order based on mods' dependencies, so needing to manually
+     * edit the order is usually a problem with one or both mods' metadata that can be reported to
+     * the mod author.
+     */
+    "ModsToLoadEarly": [],
+    "ModsToLoadLate": []
 }

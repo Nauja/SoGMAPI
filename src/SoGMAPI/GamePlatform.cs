@@ -1,4 +1,4 @@
-﻿using SoGModdingAPI.Toolkit.Utilities;
+using SoGModdingAPI.Toolkit.Utilities;
 
 namespace SoGModdingAPI
 {

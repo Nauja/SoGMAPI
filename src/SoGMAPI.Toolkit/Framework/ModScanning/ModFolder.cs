@@ -22,13 +22,13 @@ namespace SoGModdingAPI.Toolkit.Framework.ModScanning
         public ModType Type { get; }
 
         /// <summary>The mod manifest.</summary>
-        public Manifest Manifest { get; }
+        public Manifest? Manifest { get; }
 
         /// <summary>The error which occurred parsing the manifest, if any.</summary>
         public ModParseError ManifestParseError { get; set; }
 
         /// <summary>A human-readable message for the <see cref="ManifestParseError"/>, if any.</summary>
-        public string ManifestParseErrorText { get; set; }
+        public string? ManifestParseErrorText { get; set; }
 
 
         /*********
@@ -49,7 +49,7 @@ namespace SoGModdingAPI.Toolkit.Framework.ModScanning
         /// <param name="manifest">The mod manifest.</param>
         /// <param name="manifestParseError">The error which occurred parsing the manifest, if any.</param>
         /// <param name="manifestParseErrorText">A human-readable message for the <paramref name="manifestParseError"/>, if any.</param>
-        public ModFolder(DirectoryInfo root, DirectoryInfo directory, ModType type, Manifest manifest, ModParseError manifestParseError, string manifestParseErrorText)
+        public ModFolder(DirectoryInfo root, DirectoryInfo directory, ModType type, Manifest? manifest, ModParseError manifestParseError, string? manifestParseErrorText)
         {
             // save info
             this.Directory = directory;
@@ -59,9 +59,9 @@ namespace SoGModdingAPI.Toolkit.Framework.ModScanning
             this.ManifestParseErrorText = manifestParseErrorText;
 
             // set display name
-            this.DisplayName = manifest?.Name;
-            if (string.IsNullOrWhiteSpace(this.DisplayName))
-                this.DisplayName = PathUtilities.GetRelativePath(root.FullName, directory.FullName);
+            this.DisplayName = !string.IsNullOrWhiteSpace(manifest?.Name)
+                ? manifest.Name
+                : PathUtilities.GetRelativePath(root.FullName, directory.FullName);
         }
 
         /// <summary>Get the update keys for a mod.</summary>

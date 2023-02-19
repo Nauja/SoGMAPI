@@ -1,7 +1,6 @@
 using System;
 using SoGModdingAPI.Framework.Input;
 using SoGModdingAPI.Utilities;
-using static SoGModdingAPI.Framework.Input.InputState;
 
 namespace SoGModdingAPI.Framework.ModHelpers
 {
@@ -19,10 +18,10 @@ namespace SoGModdingAPI.Framework.ModHelpers
         ** Public methods
         *********/
         /// <summary>Construct an instance.</summary>
-        /// <param name="modID">The unique ID of the relevant mod.</param>
+        /// <param name="mod">The mod using this instance.</param>
         /// <param name="currentInputState">Manages the game's input state for the current player instance. That may not be the main player in split-screen mode.</param>
-        public InputHelper(string modID, Func<SInputState> currentInputState)
-            : base(modID)
+        public InputHelper(IModMetadata mod, Func<SInputState> currentInputState)
+            : base(mod)
         {
             this.CurrentInputState = currentInputState;
         }

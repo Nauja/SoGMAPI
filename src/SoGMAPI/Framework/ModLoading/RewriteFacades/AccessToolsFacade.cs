@@ -1,14 +1,15 @@
-#if HARMONY_2
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using HarmonyLib;
 
-namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member: This is internal code to support rewriters that shouldn't be called directly.
+
+namespace SoGModdingAPI.Framework.ModLoading.RewriteFacades
 {
     /// <summary>Maps Harmony 1.x <see cref="AccessTools"/> methods to Harmony 2.x to avoid breaking older mods.</summary>
-    /// <remarks>This is public to support SMAPI rewriting and should not be referenced directly by mods.</remarks>
+    /// <remarks>This is public to support SoGMAPI rewriting and should not be referenced directly by mods.</remarks>
     [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Used via assembly rewriting")]
     [SuppressMessage("ReSharper", "CS1591", Justification = "Documentation not needed for facade classes.")]
     public class AccessToolsFacade
@@ -16,7 +17,7 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
         /*********
         ** Public methods
         *********/
-        public static ConstructorInfo DeclaredConstructor(Type type, Type[] parameters = null)
+        public static ConstructorInfo DeclaredConstructor(Type type, Type[]? parameters = null)
         {
             // Harmony 1.x matched both static and instance constructors
             return
@@ -24,7 +25,7 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
                 ?? AccessTools.DeclaredConstructor(type, parameters, searchForStatic: true);
         }
 
-        public static ConstructorInfo Constructor(Type type, Type[] parameters = null)
+        public static ConstructorInfo Constructor(Type type, Type[]? parameters = null)
         {
             // Harmony 1.x matched both static and instance constructors
             return
@@ -41,4 +42,3 @@ namespace StardewModdingAPI.Framework.ModLoading.RewriteFacades
         }
     }
 }
-#endif

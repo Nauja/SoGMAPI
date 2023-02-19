@@ -1,10 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using SoG;
-using SoGModdingAPI.Framework;
 
 namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
 {
     /// <summary>A command which edits the player's current money.</summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Loaded using reflection")]
     internal class SetMoneyCommand : ConsoleCommand
     {
         /*********
@@ -20,12 +21,10 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
         /// <param name="args">The command arguments.</param>
         public override void Handle(IMonitor monitor, string command, ArgumentParser args)
         {
-            Inventory inventory = SGame.Instance.xLocalPlayer.xInventory;
-
             // validate
             if (!args.Any())
             {
-                monitor.Log($"You currently have {inventory.GetMoney()} gold. Specify a value to change it.", LogLevel.Info);
+                monitor.Log($"You currently have {Game1.player.Money} gold. Specify a value to change it.", LogLevel.Info);
                 return;
             }
 
@@ -33,8 +32,8 @@ namespace SoGModdingAPI.Mods.ConsoleCommands.Framework.Commands.Player
             string amountStr = args[0];
             if (int.TryParse(amountStr, out int amount))
             {
-                inventory.SetMoney(amount);
-                monitor.Log($"OK, you now have {inventory.GetMoney()} gold.", LogLevel.Info);
+                Game1.player.Money = amount;
+                monitor.Log($"OK, you now have {Game1.player.Money} gold.", LogLevel.Info);
             }
             else
                 this.LogArgumentNotInt(monitor);

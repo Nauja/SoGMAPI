@@ -3,28 +3,71 @@ using SoGModdingAPI.Events;
 
 namespace SoGModdingAPI.Framework.Events
 {
-    /// <summary>Events related to UI and drawing to the screen.</summary>
+    /// <inheritdoc cref="IDisplayEvents" />
     internal class ModDisplayEvents : ModEventsBase, IDisplayEvents
     {
         /*********
         ** Accessors
         *********/
 
-        /// <summary>Raised before the game draws anything to the screen in a draw tick, as soon as the sprite batch is opened. The sprite batch may be closed and reopened multiple times after this event is called, but it's only raised once per draw tick. This event isn't useful for drawing to the screen, since the game will draw over it.</summary>
+
+        /// <inheritdoc />
         public event EventHandler<RenderingEventArgs> Rendering
         {
             add => this.EventManager.Rendering.Add(value, this.Mod);
             remove => this.EventManager.Rendering.Remove(value);
         }
 
-        /// <summary>Raised after the game draws to the sprite patch in a draw tick, just before the final sprite batch is rendered to the screen. Since the game may open/close the sprite batch multiple times in a draw tick, the sprite batch may not contain everything being drawn and some things may already be rendered to the screen. Content drawn to the sprite batch at this point will be drawn over all vanilla content (including menus, HUD, and cursor).</summary>
+        /// <inheritdoc />
         public event EventHandler<RenderedEventArgs> Rendered
         {
             add => this.EventManager.Rendered.Add(value, this.Mod);
             remove => this.EventManager.Rendered.Remove(value);
         }
 
-        /// <summary>Raised after the game window is resized.</summary>
+        /// <inheritdoc />
+        public event EventHandler<RenderingWorldEventArgs> RenderingWorld
+        {
+            add => this.EventManager.RenderingWorld.Add(value, this.Mod);
+            remove => this.EventManager.RenderingWorld.Remove(value);
+        }
+
+        /// <inheritdoc />
+        public event EventHandler<RenderedWorldEventArgs> RenderedWorld
+        {
+            add => this.EventManager.RenderedWorld.Add(value, this.Mod);
+            remove => this.EventManager.RenderedWorld.Remove(value);
+        }
+
+        /// <inheritdoc />
+        public event EventHandler<RenderingActiveMenuEventArgs> RenderingActiveMenu
+        {
+            add => this.EventManager.RenderingActiveMenu.Add(value, this.Mod);
+            remove => this.EventManager.RenderingActiveMenu.Remove(value);
+        }
+
+        /// <inheritdoc />
+        public event EventHandler<RenderedActiveMenuEventArgs> RenderedActiveMenu
+        {
+            add => this.EventManager.RenderedActiveMenu.Add(value, this.Mod);
+            remove => this.EventManager.RenderedActiveMenu.Remove(value);
+        }
+
+        /// <inheritdoc />
+        public event EventHandler<RenderingHudEventArgs> RenderingHud
+        {
+            add => this.EventManager.RenderingHud.Add(value, this.Mod);
+            remove => this.EventManager.RenderingHud.Remove(value);
+        }
+
+        /// <inheritdoc />
+        public event EventHandler<RenderedHudEventArgs> RenderedHud
+        {
+            add => this.EventManager.RenderedHud.Add(value, this.Mod);
+            remove => this.EventManager.RenderedHud.Remove(value);
+        }
+
+        /// <inheritdoc />
         public event EventHandler<WindowResizedEventArgs> WindowResized
         {
             add => this.EventManager.WindowResized.Add(value, this.Mod);

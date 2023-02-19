@@ -9,7 +9,7 @@ namespace SoGModdingAPI.Toolkit.Framework.ModData
         /// <summary>No issues detected.</summary>
         None = 0,
 
-        /// <summary>SMAPI detected incompatible code in the mod, but was configured to load it anyway.</summary>
+        /// <summary>SoGMAPI detected incompatible code in the mod, but was configured to load it anyway.</summary>
         BrokenCodeLoaded = 1,
 
         /// <summary>The mod affects the save serializer in a way that may make saves unloadable without the mod.</summary>
@@ -18,8 +18,11 @@ namespace SoGModdingAPI.Toolkit.Framework.ModData
         /// <summary>The mod patches the game in a way that may impact stability.</summary>
         PatchesGame = 4,
 
+#if SOGMAPI_DEPRECATED
         /// <summary>The mod uses the <c>dynamic</c> keyword which won't work on Linux/macOS.</summary>
+        [Obsolete("This value is no longer used by SoGMAPI and will be removed in the upcoming SoGMAPI 4.0.0.")]
         UsesDynamic = 8,
+#endif
 
         /// <summary>The mod references specialized 'unvalidated update tick' events which may impact stability.</summary>
         UsesUnvalidatedUpdateTick = 16,
@@ -34,6 +37,17 @@ namespace SoGModdingAPI.Toolkit.Framework.ModData
         AccessesFilesystem = 128,
 
         /// <summary>Uses .NET APIs for shell or process access.</summary>
-        AccessesShell = 256
+        AccessesShell = 256,
+
+#if SOGMAPI_DEPRECATED
+        /// <summary>References the legacy <c>System.Configuration.ConfigurationManager</c> assembly and doesn't include a copy in the mod folder, so it'll break in SoGMAPI 4.0.0.</summary>
+        DetectedLegacyConfigurationDll = 512,
+
+        /// <summary>References the legacy <c>System.Runtime.Caching</c> assembly and doesn't include a copy in the mod folder, so it'll break in SoGMAPI 4.0.0.</summary>
+        DetectedLegacyCachingDll = 1024,
+
+        /// <summary>References the legacy <c>System.Security.Permissions</c> assembly and doesn't include a copy in the mod folder, so it'll break in SoGMAPI 4.0.0.</summary>
+        DetectedLegacyPermissionsDll = 2048
+#endif
     }
 }

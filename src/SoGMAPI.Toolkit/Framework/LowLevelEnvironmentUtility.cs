@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-#if SOGMAPI_FOR_WINDOWS
+using System.Reflection;
+#if true
 using System.Management;
 #endif
 using System.Runtime.InteropServices;
@@ -11,7 +12,7 @@ using SoGModdingAPI.Toolkit.Utilities;
 namespace SoGModdingAPI.Toolkit.Framework
 {
     /// <summary>Provides low-level methods for fetching environment information.</summary>
-    /// <remarks>This is used by the SMAPI core before the toolkit DLL is available; most code should use <see cref="EnvironmentUtility"/> instead.</remarks>
+    /// <remarks>This is used by the SoGMAPI core before the toolkit DLL is available; most code should use <see cref="EnvironmentUtility"/> instead.</remarks>
     internal static class LowLevelEnvironmentUtility
     {
         /*********
@@ -20,7 +21,8 @@ namespace SoGModdingAPI.Toolkit.Framework
         /// <summary>Get the OS name from the system uname command.</summary>
         /// <param name="buffer">The buffer to fill with the resulting string.</param>
         [DllImport("libc")]
-        static extern int uname(IntPtr buffer);
+        [SuppressMessage("ReSharper", "IdentifierTypo", Justification = "This is the actual external command name.")]
+        private static extern int uname(IntPtr buffer);
 
 
         /*********
@@ -48,22 +50,25 @@ namespace SoGModdingAPI.Toolkit.Framework
             }
         }
 
-
         /// <summary>Get the human-readable OS name and version.</summary>
         /// <param name="platform">The current platform.</param>
-        [SuppressMessage("ReSharper", "EmptyGeneralCatchClause", Justification = "Error suppressed deliberately to fallback to default behaviour.")]
         public static string GetFriendlyPlatformName(string platform)
         {
-#if SOGMAPI_FOR_WINDOWS
+#if true
             try
             {
-                return new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem")
+                string? result = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem")
                     .Get()
                     .Cast<ManagementObject>()
                     .Select(entry => entry.GetPropertyValue("Caption").ToString())
                     .FirstOrDefault();
+
+                return result ?? "Windows";
             }
-            catch { }
+            catch
+            {
+                // fallback to default behavior
+            }
 #endif
 
             string name = Environment.OSVersion.ToString();
@@ -80,13 +85,11 @@ namespace SoGModdingAPI.Toolkit.Framework
             return name;
         }
 
-        /// <summary>Get the name of the Secrets Of Grindea executable.</summary>
-        /// <param name="platform">The current platform.</param>
-        public static string GetExecutableName(string platform)
+        /// <summary>Get whether an executable is 64-bit.</summary>
+        /// <param name="path">The absolute path to the assembly file.</param>
+        public static bool Is64BitAssembly(string path)
         {
-            return platform == nameof(Platform.Windows)
-                ? "Secrets of Grindea.exe"
-                : "SecretsofGrindea.exe";
+            return AssemblyName.GetAssemblyName(path).ProcessorArchitecture != ProcessorArchitecture.X86;
         }
 
 
@@ -100,7 +103,7 @@ namespace SoGModdingAPI.Toolkit.Framework
         /// </remarks>
         private static bool IsRunningAndroid()
         {
-            using Process process = new Process
+            using Process process = new()
             {
                 StartInfo =
                 {
@@ -137,7 +140,7 @@ namespace SoGModdingAPI.Toolkit.Framework
                 buffer = Marshal.AllocHGlobal(8192);
                 if (LowLevelEnvironmentUtility.uname(buffer) == 0)
                 {
-                    string os = Marshal.PtrToStringAnsi(buffer);
+                    string? os = Marshal.PtrToStringAnsi(buffer);
                     return os == "Darwin";
                 }
                 return false;

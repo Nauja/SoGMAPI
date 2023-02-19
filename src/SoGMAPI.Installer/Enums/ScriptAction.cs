@@ -1,4 +1,4 @@
-﻿namespace SoGModdingApi.Installer.Enums
+﻿namespace StardewModdingApi.Installer.Enums
 {
     /// <summary>The action to perform.</summary>
     internal enum ScriptAction

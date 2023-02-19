@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using SoGModdingAPI.Toolkit.Utilities;
 
 namespace SoGModdingAPI.Internal.ConsoleWriting
@@ -11,10 +12,11 @@ namespace SoGModdingAPI.Internal.ConsoleWriting
         ** Fields
         *********/
         /// <summary>The console text color for each log level.</summary>
-        private readonly IDictionary<ConsoleLogLevel, ConsoleColor> Colors;
+        private readonly IDictionary<ConsoleLogLevel, ConsoleColor>? Colors;
 
         /// <summary>Whether the current console supports color formatting.</summary>
-        private readonly bool SupportsColor;
+        [MemberNotNullWhen(true, nameof(ColorfulConsoleWriter.Colors))]
+        private bool SupportsColor { get; }
 
 
         /*********
@@ -27,7 +29,7 @@ namespace SoGModdingAPI.Internal.ConsoleWriting
 
         /// <summary>Construct an instance.</summary>
         /// <param name="platform">The target platform.</param>
-        /// <param name="colorConfig">The colors to use for text written to the SMAPI console.</param>
+        /// <param name="colorConfig">The colors to use for text written to the SoGMAPI console.</param>
         public ColorfulConsoleWriter(Platform platform, ColorSchemeConfig colorConfig)
         {
             if (colorConfig.UseScheme == MonitorColorScheme.None)
@@ -69,13 +71,12 @@ namespace SoGModdingAPI.Internal.ConsoleWriting
 
         /// <summary>Get the default color scheme config for cases where it's not configurable (e.g. the installer).</summary>
         /// <param name="useScheme">The default color scheme ID to use, or <see cref="MonitorColorScheme.AutoDetect"/> to select one automatically.</param>
-        /// <remarks>The colors here should be kept in sync with the SMAPI config file.</remarks>
+        /// <remarks>The colors here should be kept in sync with the SoGMAPI config file.</remarks>
         public static ColorSchemeConfig GetDefaultColorSchemeConfig(MonitorColorScheme useScheme)
         {
-            return new ColorSchemeConfig
-            {
-                UseScheme = useScheme,
-                Schemes = new Dictionary<MonitorColorScheme, IDictionary<ConsoleLogLevel, ConsoleColor>>
+            return new ColorSchemeConfig(
+                useScheme: useScheme,
+                schemes: new Dictionary<MonitorColorScheme, IDictionary<ConsoleLogLevel, ConsoleColor>>
                 {
                     [MonitorColorScheme.DarkBackground] = new Dictionary<ConsoleLogLevel, ConsoleColor>
                     {
@@ -98,7 +99,7 @@ namespace SoGModdingAPI.Internal.ConsoleWriting
                         [ConsoleLogLevel.Success] = ConsoleColor.DarkGreen
                     }
                 }
-            };
+            );
         }
 
 
@@ -121,7 +122,7 @@ namespace SoGModdingAPI.Internal.ConsoleWriting
 
         /// <summary>Get the color scheme to use for the current console.</summary>
         /// <param name="platform">The target platform.</param>
-        /// <param name="colorConfig">The colors to use for text written to the SMAPI console.</param>
+        /// <param name="colorConfig">The colors to use for text written to the SoGMAPI console.</param>
         private IDictionary<ConsoleLogLevel, ConsoleColor> GetConsoleColorScheme(Platform platform, ColorSchemeConfig colorConfig)
         {
             // get color scheme ID
@@ -134,7 +135,7 @@ namespace SoGModdingAPI.Internal.ConsoleWriting
             }
 
             // get colors for scheme
-            return colorConfig.Schemes.TryGetValue(schemeID, out IDictionary<ConsoleLogLevel, ConsoleColor> scheme)
+            return colorConfig.Schemes.TryGetValue(schemeID, out IDictionary<ConsoleLogLevel, ConsoleColor>? scheme)
                 ? scheme
                 : throw new NotSupportedException($"Unknown color scheme '{schemeID}'.");
         }
